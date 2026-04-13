@@ -9,6 +9,6 @@ python -m streamlit run app.py
 ```
 
 ## 這版更新
-- 拿掉自訂 HTML 卡片包覆，改用 Streamlit 原生 container(border=True)
-- 修正每個區塊頂部出現白色長條的問題
-- Excel 匯出的上線色塊維持原本純紅
+- 嘗試隱藏流程設定最左側多餘勾選欄
+- 新增「快速隱藏提供素材」按鈕
+- 各區塊改成淡白色墊底感

@@ -75,7 +75,6 @@ EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
 # UI / 預覽色彩
-UI_COLOR_BG = "#FAFAF8"
 UI_COLOR_BORDER = "#ECE8E1"
 UI_COLOR_TEXT = "#2F2A24"
 UI_COLOR_MUTED = "#7A736A"
@@ -93,22 +92,29 @@ html, body, [data-testid="stAppViewContainer"] {{
   background: linear-gradient(180deg, #FCFBF9 0%, #F8F6F2 100%);
   color: {UI_COLOR_TEXT};
 }}
-
-[data-testid="stHeader"] {{
-  background: rgba(255,255,255,0);
-}}
-
+[data-testid="stHeader"] {{ background: rgba(255,255,255,0); }}
 .block-container {{
   padding-top: 2rem !important;
   padding-bottom: 3rem !important;
   max-width: 1400px;
 }}
-
 [data-testid="stSidebar"] {{
   background: #FBFAF8;
   border-right: 1px solid {UI_COLOR_BORDER};
 }}
 
+/* 淡白色墊底卡片 */
+[data-testid="stVerticalBlockBorderWrapper"] {{
+  background: rgba(255,255,255,0.72);
+  border: 1px solid {UI_COLOR_BORDER} !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 24px rgba(68,54,37,0.04);
+}}
+[data-testid="stVerticalBlockBorderWrapper"] > div {{
+  border-radius: 20px !important;
+}}
+
+/* 按鈕 */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
     background-color: {UI_COLOR_PRIMARY} !important;
@@ -123,7 +129,6 @@ div.stDownloadButton > button[kind="primary"]:hover {{
     background-color: {UI_COLOR_PRIMARY_HOVER} !important;
     border-color: {UI_COLOR_PRIMARY_HOVER} !important;
 }}
-
 div.stButton > button[kind="secondary"] {{
     border-radius: 10px !important;
     border: 1px solid {UI_COLOR_BORDER} !important;
@@ -135,10 +140,6 @@ div.stButton > button[kind="secondary"] {{
 [data-baseweb="select"] > div,
 [data-testid="stNumberInput"] input {{
     border-radius: 12px !important;
-}}
-
-[data-testid="stDataFrame"], [data-testid="stTable"] {{
-    border-radius: 12px;
 }}
 
 .section-title {{
@@ -168,7 +169,7 @@ div.stButton > button[kind="secondary"] {{
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    background: #F8F6F3;
+    background: rgba(255,255,255,0.82);
     border: 1px solid {UI_COLOR_BORDER};
     border-radius: 999px;
     font-size: 12px;
@@ -181,7 +182,6 @@ div.stButton > button[kind="secondary"] {{
     border-radius: 16px;
     background: #fff;
 }}
-
 .gantt-table {{
     border-collapse: collapse;
     width: max-content;
@@ -234,9 +234,7 @@ div.stButton > button[kind="secondary"] {{
     font-size: 11px;
     background: #fff;
 }}
-.gantt-table .weekend-head {{
-    background: #F4F4F4;
-}}
+.gantt-table .weekend-head {{ background: #F4F4F4; }}
 .gantt-table .break-head, .gantt-table .break-cell {{
     width: 26px;
     min-width: 26px;
@@ -245,24 +243,12 @@ div.stButton > button[kind="secondary"] {{
     color: #777;
     font-weight: 700;
 }}
-.gantt-table .empty-cell {{
-    background: #fff;
-}}
-.gantt-table .weekend-cell {{
-    background: #F3F3F3;
-}}
-.gantt-table .bar-ad2 {{
-    background: {UI_COLOR_AD2};
-}}
-.gantt-table .bar-client {{
-    background: {UI_COLOR_CLIENT};
-}}
-.gantt-table .bar-launch {{
-    background: {UI_COLOR_LAUNCH};
-}}
-.gantt-table .bar-prep {{
-    background: {UI_COLOR_PREP};
-}}
+.gantt-table .empty-cell {{ background: #fff; }}
+.gantt-table .weekend-cell {{ background: #F3F3F3; }}
+.gantt-table .bar-ad2 {{ background: {UI_COLOR_AD2}; }}
+.gantt-table .bar-client {{ background: {UI_COLOR_CLIENT}; }}
+.gantt-table .bar-launch {{ background: {UI_COLOR_LAUNCH}; }}
+.gantt-table .bar-prep {{ background: {UI_COLOR_PREP}; }}
 
 .legend {{
     display: flex;
@@ -283,15 +269,21 @@ div.stButton > button[kind="secondary"] {{
     border-radius: 4px;
     display: inline-block;
 }}
-
 .small-gap {{ height: 0.35rem; }}
 .large-gap {{ height: 1.8rem; }}
+
+/* 隱藏 data editor 最左側多餘選取欄 */
+[data-testid="stDataEditor"] [role="gridcell"][data-column="0"],
+[data-testid="stDataEditor"] [role="columnheader"][data-column="0"] {{
+  display: none !important;
+}}
+/* 保底：縮掉左側 row header */
+[data-testid="stDataEditor"] [data-testid="stDataFrameRowHeader"] {{
+  display: none !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# Session state
-# =========================
 def init_state():
     defaults = {
         "project_name": DEFAULT_PROJECT_NAME,
@@ -314,9 +306,6 @@ def init_state():
 
 init_state()
 
-# =========================
-# 工具函式
-# =========================
 def parse_holidays(text: str) -> dict:
     holidays = {}
     for line in text.splitlines():
@@ -649,7 +638,6 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
         worksheet.set_column(col, col, 4.5)
 
     last_task_row = row_start + len(df_schedule) - 1
-
     for c in break_cols_excel:
         worksheet.merge_range(2, c, last_task_row, c, "～", fmt_break_merge)
 
@@ -833,9 +821,13 @@ def reset_defaults():
     st.session_state.display_columns = None
     st.session_state.holidays_dt = None
 
-# =========================
+def hide_material_task():
+    df = st.session_state.tasks_df.copy()
+    if "任務名稱" in df.columns:
+        df = df[df["任務名稱"].astype(str).str.strip() != "提供素材"].reset_index(drop=True)
+    st.session_state.tasks_df = df
+
 # 介面
-# =========================
 st.title("製作時程排程工具")
 st.caption("快速設定專案日期與流程後，即可產出 Excel 時程表；下方預覽會用色塊顯示整體節奏。")
 
@@ -915,8 +907,13 @@ if st.session_state.schedule_df is not None:
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。</div>', unsafe_allow_html=True)
+    top_left, top_right = st.columns([4.8, 1.4])
+    with top_left:
+        st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。</div>', unsafe_allow_html=True)
+    with top_right:
+        st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+        st.button("快速隱藏提供素材", use_container_width=True, on_click=hide_material_task)
 
     st.session_state.tasks_df = st.data_editor(
         st.session_state.tasks_df,
@@ -930,5 +927,5 @@ with st.container(border=True):
             "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
             "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
         },
-        key="tasks_editor_v8",
+        key="tasks_editor_v9",
     )
