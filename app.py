@@ -717,7 +717,7 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
     while i < len(display_columns):
         item = display_columns[i]
         if item == "BREAK":
-            month_cells.append('<th class="break-head" rowspan="2">～</th>')
+            month_cells.append('<th class="break-head"></th>')
             i += 1
             continue
         month = item.strftime("%m月")
