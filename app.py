@@ -1,5 +1,6 @@
 
 import io
+import uuid
 from datetime import date, datetime, timedelta
 
 import pandas as pd
@@ -18,13 +19,13 @@ MODE_MAP = {
 }
 
 DEFAULT_TASKS = [
-    {"顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3, "上線日": False},
-    {"顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2, "上線日": False},
-    {"顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1, "上線日": False},
-    {"顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
+    {"id": "task_1", "顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"id": "task_2", "顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3, "上線日": False},
+    {"id": "task_3", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"id": "task_4", "顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2, "上線日": False},
+    {"id": "task_5", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"id": "task_6", "顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1, "上線日": False},
+    {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
 ]
 
 DEFAULT_HOLIDAYS = {
@@ -217,6 +218,17 @@ def init_state():
         st.session_state.status_msg = ""
 
 init_state()
+
+def ensure_task_ids():
+    tasks = st.session_state.tasks
+    existing = set()
+    for i, row in enumerate(tasks):
+        rid = row.get("id")
+        if not rid or rid in existing:
+            row["id"] = f"task_{i+1}_{uuid.uuid4().hex[:6]}"
+        existing.add(row["id"])
+
+ensure_task_ids()
 
 # =========================
 # helpers
@@ -669,8 +681,21 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
     </div>
     """
 
+def sync_task_field(task_id: str, field: str, widget_key: str):
+    for row in st.session_state.tasks:
+        if row.get("id") == task_id:
+            row[field] = st.session_state.get(widget_key)
+            break
+
 def add_task():
-    st.session_state.tasks.append({"顯示": True, "任務名稱": "", "Action By": "Ad2", "工作天數": 1, "上線日": False})
+    st.session_state.tasks.append({
+        "id": f"task_new_{uuid.uuid4().hex[:6]}",
+        "顯示": True,
+        "任務名稱": "",
+        "Action By": "Ad2",
+        "工作天數": 1,
+        "上線日": False,
+    })
 
 def move_task_up(idx: int):
     if 0 < idx < len(st.session_state.tasks):
@@ -799,66 +824,74 @@ if st.session_state.schedule_df is not None:
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 
+
 with st.container(border=True):
-    h1, h2 = st.columns([5,1.1], vertical_alignment="center")
+    h1, h2 = st.columns([5,1.05], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-sub">可直接新增、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7 = st.columns([0.7, 2.6, 1.25, 0.9, 0.9, 0.9, 0.5], vertical_alignment="center")
-    with hc1:
-        st.markdown('<div class="task-head-label">顯示</div>', unsafe_allow_html=True)
-    with hc2:
-        st.markdown('<div class="task-head-label">任務名稱</div>', unsafe_allow_html=True)
-    with hc3:
-        st.markdown('<div class="task-head-label">Action By</div>', unsafe_allow_html=True)
-    with hc4:
-        st.markdown('<div class="task-head-label">工作天數</div>', unsafe_allow_html=True)
-    with hc5:
-        st.markdown('<div class="task-head-label">上線日</div>', unsafe_allow_html=True)
-    with hc6:
-        st.markdown('<div class="task-head-label">排序</div>', unsafe_allow_html=True)
-    with hc7:
-        st.markdown('<div class="task-head-label"></div>', unsafe_allow_html=True)
+    hc1, hc2, hc3, hc4, hc5, hc6, hc7 = st.columns([0.72, 2.7, 1.2, 0.9, 0.9, 1.0, 0.45], vertical_alignment="center")
+    headers = [
+        (hc1, "顯示"),
+        (hc2, "任務名稱"),
+        (hc3, "Action By"),
+        (hc4, "工作天數"),
+        (hc5, "上線日"),
+        (hc6, "排序"),
+        (hc7, ""),
+    ]
+    for col, label in headers:
+        with col:
+            st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
-        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 2.6, 1.25, 0.9, 0.9, 0.9, 0.5], vertical_alignment="center")
+        rid = row["id"]
+        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.72, 2.7, 1.2, 0.9, 0.9, 1.0, 0.45], vertical_alignment="center")
+
         with c1:
-            st.session_state.tasks[idx]["顯示"] = st.checkbox(
-                "顯示", value=row["顯示"], key=f"show_{idx}", label_visibility="collapsed"
-            )
+            key = f"show_{rid}"
+            if key not in st.session_state:
+                st.session_state[key] = row["顯示"]
+            st.checkbox("顯示", key=key, label_visibility="collapsed",
+                        on_change=sync_task_field, args=(rid, "顯示", key))
         with c2:
-            st.session_state.tasks[idx]["任務名稱"] = st.text_input(
-                "任務名稱", value=row["任務名稱"], key=f"task_{idx}", label_visibility="collapsed"
-            )
+            key = f"task_{rid}"
+            if key not in st.session_state:
+                st.session_state[key] = row["任務名稱"]
+            st.text_input("任務名稱", key=key, label_visibility="collapsed",
+                          on_change=sync_task_field, args=(rid, "任務名稱", key))
         with c3:
-            st.session_state.tasks[idx]["Action By"] = st.selectbox(
-                "Action By", ["Ad2", "客戶"],
-                index=0 if row["Action By"] == "Ad2" else 1,
-                key=f"owner_{idx}", label_visibility="collapsed"
-            )
+            key = f"owner_{rid}"
+            if key not in st.session_state:
+                st.session_state[key] = row["Action By"]
+            st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
+                         on_change=sync_task_field, args=(rid, "Action By", key))
         with c4:
-            st.session_state.tasks[idx]["工作天數"] = st.number_input(
-                "工作天數", min_value=1, step=1, value=int(row["工作天數"]),
-                key=f"days_{idx}", label_visibility="collapsed"
-            )
+            key = f"days_{rid}"
+            if key not in st.session_state:
+                st.session_state[key] = int(row["工作天數"])
+            st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
+                            on_change=sync_task_field, args=(rid, "工作天數", key))
         with c5:
-            st.session_state.tasks[idx]["上線日"] = st.checkbox(
-                "上線日", value=row["上線日"], key=f"launch_{idx}", label_visibility="collapsed"
-            )
+            key = f"launch_{rid}"
+            if key not in st.session_state:
+                st.session_state[key] = row["上線日"]
+            st.checkbox("上線日", key=key, label_visibility="collapsed",
+                        on_change=sync_task_field, args=(rid, "上線日", key))
         with c6:
             s1, s2 = st.columns([1,1], vertical_alignment="center")
             with s1:
-                if st.button("↑", key=f"up_{idx}", use_container_width=True, disabled=(idx == 0)):
+                if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
             with s2:
-                if st.button("↓", key=f"down_{idx}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
+                if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
         with c7:
-            if st.button("✕", key=f"del_{idx}", use_container_width=True):
+            if st.button("✕", key=f"del_{rid}", use_container_width=True):
                 remove_task(idx)
                 st.rerun()
