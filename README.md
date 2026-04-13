@@ -9,6 +9,6 @@ python -m streamlit run app.py
 ```
 
 ## 這版更新
-- Excel 匯出的上線色塊恢復為原本純紅
-- 網頁預覽與按鈕維持較柔和色調
-- 整體 UI 重新整理，增加卡片層次、留白與資訊提示
+- 拿掉自訂 HTML 卡片包覆，改用 Streamlit 原生 container(border=True)
+- 修正每個區塊頂部出現白色長條的問題
+- Excel 匯出的上線色塊維持原本純紅

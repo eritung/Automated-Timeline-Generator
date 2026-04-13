@@ -68,7 +68,7 @@ MODE_MAP = {
 # Excel 輸出色彩
 EXCEL_COLOR_CLIENT_BAR = '#EA9B56'
 EXCEL_COLOR_AD2_BAR = '#4BACC6'
-EXCEL_COLOR_LAUNCH_BAR = '#FF0000'   # 回到原本純紅
+EXCEL_COLOR_LAUNCH_BAR = '#FF0000'
 EXCEL_COLOR_PREP_BAR = '#92D050'
 EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
@@ -76,34 +76,22 @@ MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
 # UI / 預覽色彩
 UI_COLOR_BG = "#FAFAF8"
-UI_COLOR_CARD = "#FFFFFF"
 UI_COLOR_BORDER = "#ECE8E1"
 UI_COLOR_TEXT = "#2F2A24"
 UI_COLOR_MUTED = "#7A736A"
-UI_COLOR_PRIMARY = "#C97B7B"   # 柔和主色
+UI_COLOR_PRIMARY = "#C97B7B"
 UI_COLOR_PRIMARY_HOVER = "#B86A6A"
 UI_COLOR_AD2 = "#4BACC6"
 UI_COLOR_CLIENT = "#EA9B56"
-UI_COLOR_LAUNCH = "#D47B7B"    # 預覽可柔和
+UI_COLOR_LAUNCH = "#D47B7B"
 UI_COLOR_PREP = "#92D050"
 UI_COLOR_WEEKEND = "#F2F2F2"
-UI_COLOR_BREAK = "#F7F7F7"
 
 st.markdown(f"""
 <style>
-:root {{
-  --bg: {UI_COLOR_BG};
-  --card: {UI_COLOR_CARD};
-  --border: {UI_COLOR_BORDER};
-  --text: {UI_COLOR_TEXT};
-  --muted: {UI_COLOR_MUTED};
-  --primary: {UI_COLOR_PRIMARY};
-  --primary-hover: {UI_COLOR_PRIMARY_HOVER};
-}}
-
 html, body, [data-testid="stAppViewContainer"] {{
   background: linear-gradient(180deg, #FCFBF9 0%, #F8F6F2 100%);
-  color: var(--text);
+  color: {UI_COLOR_TEXT};
 }}
 
 [data-testid="stHeader"] {{
@@ -116,19 +104,15 @@ html, body, [data-testid="stAppViewContainer"] {{
   max-width: 1400px;
 }}
 
-h1, h2, h3 {{
-  letter-spacing: 0.01em;
-}}
-
 [data-testid="stSidebar"] {{
   background: #FBFAF8;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid {UI_COLOR_BORDER};
 }}
 
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
-    background-color: var(--primary) !important;
-    border: 1px solid var(--primary) !important;
+    background-color: {UI_COLOR_PRIMARY} !important;
+    border: 1px solid {UI_COLOR_PRIMARY} !important;
     color: white !important;
     border-radius: 12px !important;
     font-weight: 600 !important;
@@ -136,13 +120,13 @@ div.stDownloadButton > button[kind="primary"] {{
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-    background-color: var(--primary-hover) !important;
-    border-color: var(--primary-hover) !important;
+    background-color: {UI_COLOR_PRIMARY_HOVER} !important;
+    border-color: {UI_COLOR_PRIMARY_HOVER} !important;
 }}
 
 div.stButton > button[kind="secondary"] {{
     border-radius: 10px !important;
-    border: 1px solid var(--border) !important;
+    border: 1px solid {UI_COLOR_BORDER} !important;
     background: white !important;
 }}
 
@@ -157,35 +141,22 @@ div.stButton > button[kind="secondary"] {{
     border-radius: 12px;
 }}
 
-.tool-card {{
-    background: rgba(255,255,255,0.92);
-    border: 1px solid var(--border);
-    border-radius: 22px;
-    padding: 20px 22px 10px 22px;
-    box-shadow: 0 10px 30px rgba(68,54,37,0.05);
-    backdrop-filter: blur(6px);
-}}
-
 .section-title {{
-    font-size: 1.1rem;
+    font-size: 1.08rem;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.2rem;
 }}
-
 .section-sub {{
-    color: var(--muted);
+    color: {UI_COLOR_MUTED};
     font-size: 0.92rem;
-    margin-top: -0.15rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
 }}
-
 .preview-note {{
-    color: var(--muted);
+    color: {UI_COLOR_MUTED};
     font-size: 0.9rem;
-    margin-top: -0.25rem;
+    margin-top: -0.15rem;
     margin-bottom: 0.75rem;
 }}
-
 .info-chip-wrap {{
     display: flex;
     gap: 8px;
@@ -198,15 +169,15 @@ div.stButton > button[kind="secondary"] {{
     gap: 6px;
     padding: 6px 10px;
     background: #F8F6F3;
-    border: 1px solid var(--border);
+    border: 1px solid {UI_COLOR_BORDER};
     border-radius: 999px;
     font-size: 12px;
-    color: var(--muted);
+    color: {UI_COLOR_MUTED};
 }}
 
 .gantt-wrap {{
     overflow-x: auto;
-    border: 1px solid var(--border);
+    border: 1px solid {UI_COLOR_BORDER};
     border-radius: 16px;
     background: #fff;
 }}
@@ -217,14 +188,12 @@ div.stButton > button[kind="secondary"] {{
     min-width: 100%;
     font-size: 13px;
 }}
-
 .gantt-table th, .gantt-table td {{
     border: 1px solid #F0ECE6;
     text-align: center;
     padding: 0;
     height: 36px;
 }}
-
 .gantt-table .sticky-left {{
     position: sticky;
     left: 0;
@@ -237,7 +206,6 @@ div.stButton > button[kind="secondary"] {{
     z-index: 3;
     background: #fff;
 }}
-
 .gantt-table .task-col {{
     width: 190px;
     min-width: 190px;
@@ -253,13 +221,11 @@ div.stButton > button[kind="secondary"] {{
     padding: 0 8px;
     text-align: center;
 }}
-
 .gantt-table .month-row th {{
     background: #FBFAF8;
     font-weight: 700;
     height: 32px;
 }}
-
 .gantt-table .date-head {{
     width: 38px;
     min-width: 38px;
@@ -304,7 +270,7 @@ div.stButton > button[kind="secondary"] {{
     flex-wrap: wrap;
     margin-bottom: 12px;
     font-size: 12px;
-    color: var(--muted);
+    color: {UI_COLOR_MUTED};
 }}
 .legend-item {{
     display: inline-flex;
@@ -318,12 +284,8 @@ div.stButton > button[kind="secondary"] {{
     display: inline-block;
 }}
 
-.small-gap {{
-    height: 0.35rem;
-}}
-.large-gap {{
-    height: 1.8rem;
-}}
+.small-gap {{ height: 0.35rem; }}
+.large-gap {{ height: 1.8rem; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -883,38 +845,35 @@ with st.sidebar:
     st.text_area("假日清單（每行一筆，格式：YYYY-MM-DD,名稱）", key="holidays_text", height=420)
     st.caption("建議保留預設國定假日，再視需要補上公司內部休假日。")
 
-st.markdown('<div class="tool-card">', unsafe_allow_html=True)
+with st.container(border=True):
+    header_col1, header_col2 = st.columns([5.2, 1.1])
+    with header_col1:
+        st.markdown('<div class="section-title">專案設定</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>', unsafe_allow_html=True)
+    with header_col2:
+        st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+        st.button("重設", use_container_width=True, on_click=reset_defaults)
 
-header_col1, header_col2 = st.columns([5.2, 1.1])
-with header_col1:
-    st.markdown('<div class="section-title">專案設定</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>', unsafe_allow_html=True)
-with header_col2:
-    st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-    st.button("重設", use_container_width=True, on_click=reset_defaults)
+    row1_col1, row1_col2, row1_col3 = st.columns([2.5, 1.6, 1.0])
+    with row1_col1:
+        st.text_input("專案名稱", key="project_name")
+    with row1_col2:
+        st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
+    with row1_col3:
+        st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
-row1_col1, row1_col2, row1_col3 = st.columns([2.5, 1.6, 1.0])
-with row1_col1:
-    st.text_input("專案名稱", key="project_name")
-with row1_col2:
-    st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
-with row1_col3:
-    st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
+    current_mode = st.session_state.mode_display
+    start_disabled = current_mode == "從上線日期往前推"
+    launch_disabled = current_mode == "從開始日期往後排"
 
-current_mode = st.session_state.mode_display
-start_disabled = current_mode == "從上線日期往前推"
-launch_disabled = current_mode == "從開始日期往後排"
-
-row2_col1, row2_col2, row2_col3 = st.columns([1.5, 1.5, 1.1])
-with row2_col1:
-    st.date_input("開始日期", key="start_date_value", disabled=start_disabled, help="在「從上線日期往前推」模式下，此欄位不需填寫。")
-with row2_col2:
-    st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="在「從開始日期往後排」模式下，此欄位不需填寫。")
-with row2_col3:
-    st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
-    st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
-
-st.markdown('</div>', unsafe_allow_html=True)
+    row2_col1, row2_col2, row2_col3 = st.columns([1.5, 1.5, 1.1])
+    with row2_col1:
+        st.date_input("開始日期", key="start_date_value", disabled=start_disabled, help="在「從上線日期往前推」模式下，此欄位不需填寫。")
+    with row2_col2:
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="在「從開始日期往後排」模式下，此欄位不需填寫。")
+    with row2_col3:
+        st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
+        st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
@@ -922,55 +881,54 @@ if st.session_state.warning_msg:
     st.warning(st.session_state.warning_msg)
 
 if st.session_state.schedule_df is not None:
-    st.markdown('<div class="tool-card">', unsafe_allow_html=True)
-    preview_header_col, download_col = st.columns([5.2, 1.25])
-    with preview_header_col:
-        st.markdown('<div class="section-title">排程預覽</div>', unsafe_allow_html=True)
-        st.markdown('<div class="preview-note">預覽使用柔和色塊輔助閱讀；實際 Excel 會維持原本的上線純紅色塊。</div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="info-chip-wrap">
-            <span class="info-chip">可左右滑動查看完整日期</span>
-            <span class="info-chip">表頭已加入星期幾</span>
-            <span class="info-chip">假日與週末會以灰底標示</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with download_col:
-        filename = f"{datetime.now().strftime('%m%d')}_{st.session_state.last_generated_name}.xlsx"
-        st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
-        st.download_button(
-            "下載 Excel",
-            data=st.session_state.excel_bytes,
-            file_name=filename,
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            type="primary",
-        )
+    with st.container(border=True):
+        preview_header_col, download_col = st.columns([5.2, 1.25])
+        with preview_header_col:
+            st.markdown('<div class="section-title">排程預覽</div>', unsafe_allow_html=True)
+            st.markdown('<div class="preview-note">預覽使用柔和色塊輔助閱讀；實際 Excel 會維持原本的上線純紅色塊。</div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div class="info-chip-wrap">
+                <span class="info-chip">可左右滑動查看完整日期</span>
+                <span class="info-chip">表頭已加入星期幾</span>
+                <span class="info-chip">假日與週末會以灰底標示</span>
+            </div>
+            """, unsafe_allow_html=True)
+        with download_col:
+            filename = f"{datetime.now().strftime('%m%d')}_{st.session_state.last_generated_name}.xlsx"
+            st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
+            st.download_button(
+                "下載 Excel",
+                data=st.session_state.excel_bytes,
+                file_name=filename,
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                type="primary",
+            )
 
-    gantt_html = render_gantt_html(
-        st.session_state.schedule_df,
-        st.session_state.display_columns,
-        st.session_state.holidays_dt,
-    )
-    st.markdown(gantt_html, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        gantt_html = render_gantt_html(
+            st.session_state.schedule_df,
+            st.session_state.display_columns,
+            st.session_state.holidays_dt,
+        )
+        st.markdown(gantt_html, unsafe_allow_html=True)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-st.markdown('<div class="tool-card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-sub">可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。</div>', unsafe_allow_html=True)
 
-st.session_state.tasks_df = st.data_editor(
-    st.session_state.tasks_df,
-    use_container_width=True,
-    num_rows="dynamic",
-    hide_index=True,
-    column_order=["任務名稱", "Action By", "工作天數", "上線日"],
-    column_config={
-        "任務名稱": st.column_config.TextColumn("任務名稱", required=True, width="large"),
-        "Action By": st.column_config.SelectboxColumn("Action By", options=["Ad2", "客戶"], required=True, width="medium"),
-        "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
-        "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
-    },
-    key="tasks_editor_v7",
-)
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-sub">可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。</div>', unsafe_allow_html=True)
+
+    st.session_state.tasks_df = st.data_editor(
+        st.session_state.tasks_df,
+        use_container_width=True,
+        num_rows="dynamic",
+        hide_index=True,
+        column_order=["任務名稱", "Action By", "工作天數", "上線日"],
+        column_config={
+            "任務名稱": st.column_config.TextColumn("任務名稱", required=True, width="large"),
+            "Action By": st.column_config.SelectboxColumn("Action By", options=["Ad2", "客戶"], required=True, width="medium"),
+            "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
+            "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
+        },
+        key="tasks_editor_v8",
+    )
