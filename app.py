@@ -746,7 +746,9 @@ with st.container(border=True):
         st.markdown('<div class="section-title">專案設定</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>', unsafe_allow_html=True)
     with c2:
-        st.button("重設", on_click=reset_defaults)
+        st.markdown('<div class="mini-reset">', unsafe_allow_html=True)
+        st.button("重設", on_click=reset_defaults, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     r1c1, r1c2, r1c3 = st.columns([2.6,1.5,0.9], vertical_alignment="bottom")
     with r1c1:
@@ -796,50 +798,67 @@ if st.session_state.schedule_df is not None:
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
+
 with st.container(border=True):
-    h1, h2 = st.columns([5,1.2])
+    h1, h2 = st.columns([5,1.1], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-sub">可直接新增、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
+    hc1, hc2, hc3, hc4, hc5, hc6, hc7 = st.columns([0.7, 2.6, 1.25, 0.9, 0.9, 0.9, 0.5], vertical_alignment="center")
+    with hc1:
+        st.markdown('<div class="task-head-label">顯示</div>', unsafe_allow_html=True)
+    with hc2:
+        st.markdown('<div class="task-head-label">任務名稱</div>', unsafe_allow_html=True)
+    with hc3:
+        st.markdown('<div class="task-head-label">Action By</div>', unsafe_allow_html=True)
+    with hc4:
+        st.markdown('<div class="task-head-label">工作天數</div>', unsafe_allow_html=True)
+    with hc5:
+        st.markdown('<div class="task-head-label">上線日</div>', unsafe_allow_html=True)
+    with hc6:
+        st.markdown('<div class="task-head-label">排序</div>', unsafe_allow_html=True)
+    with hc7:
+        st.markdown('<div class="task-head-label"></div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="task-grid-head"><div>顯示</div><div>任務名稱</div><div>Action By</div><div>工作天數</div><div>上線日</div><div>排序</div><div></div></div>', unsafe_allow_html=True)
-
-    remove_idx = None
-    move_up_idx = None
-    move_down_idx = None
     for idx, row in enumerate(st.session_state.tasks):
-        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.6, 2.2, 1.1, 0.8, 0.8, 0.8, 0.35], vertical_alignment="center")
+        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.7, 2.6, 1.25, 0.9, 0.9, 0.9, 0.5], vertical_alignment="center")
         with c1:
-            st.session_state.tasks[idx]["顯示"] = st.checkbox("顯示", value=row["顯示"], key=f"show_{idx}", label_visibility="collapsed")
+            st.session_state.tasks[idx]["顯示"] = st.checkbox(
+                "顯示", value=row["顯示"], key=f"show_{idx}", label_visibility="collapsed"
+            )
         with c2:
-            st.session_state.tasks[idx]["任務名稱"] = st.text_input("任務名稱", value=row["任務名稱"], key=f"task_{idx}", label_visibility="collapsed")
+            st.session_state.tasks[idx]["任務名稱"] = st.text_input(
+                "任務名稱", value=row["任務名稱"], key=f"task_{idx}", label_visibility="collapsed"
+            )
         with c3:
-            st.session_state.tasks[idx]["Action By"] = st.selectbox("Action By", ["Ad2", "客戶"], index=0 if row["Action By"] == "Ad2" else 1, key=f"owner_{idx}", label_visibility="collapsed")
+            st.session_state.tasks[idx]["Action By"] = st.selectbox(
+                "Action By", ["Ad2", "客戶"],
+                index=0 if row["Action By"] == "Ad2" else 1,
+                key=f"owner_{idx}", label_visibility="collapsed"
+            )
         with c4:
-            st.session_state.tasks[idx]["工作天數"] = st.number_input("工作天數", min_value=1, step=1, value=int(row["工作天數"]), key=f"days_{idx}", label_visibility="collapsed")
+            st.session_state.tasks[idx]["工作天數"] = st.number_input(
+                "工作天數", min_value=1, step=1, value=int(row["工作天數"]),
+                key=f"days_{idx}", label_visibility="collapsed"
+            )
         with c5:
-            st.session_state.tasks[idx]["上線日"] = st.checkbox("上線日", value=row["上線日"], key=f"launch_{idx}", label_visibility="collapsed")
+            st.session_state.tasks[idx]["上線日"] = st.checkbox(
+                "上線日", value=row["上線日"], key=f"launch_{idx}", label_visibility="collapsed"
+            )
         with c6:
-            u1, u2 = st.columns(2)
-            with u1:
-                if st.button("↑", key=f"up_{idx}", disabled=(idx == 0)):
-                    move_up_idx = idx
-            with u2:
-                if st.button("↓", key=f"down_{idx}", disabled=(idx == len(st.session_state.tasks) - 1)):
-                    move_down_idx = idx
+            s1, s2 = st.columns([1,1], vertical_alignment="center")
+            with s1:
+                if st.button("↑", key=f"up_{idx}", use_container_width=True, disabled=(idx == 0)):
+                    move_task_up(idx)
+                    st.rerun()
+            with s2:
+                if st.button("↓", key=f"down_{idx}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
+                    move_task_down(idx)
+                    st.rerun()
         with c7:
-            if st.button("✕", key=f"del_{idx}"):
-                remove_idx = idx
-
-    if move_up_idx is not None:
-        move_task_up(move_up_idx)
-        st.rerun()
-    if move_down_idx is not None:
-        move_task_down(move_down_idx)
-        st.rerun()
-    if remove_idx is not None:
-        remove_task(remove_idx)
-        st.rerun()
+            if st.button("✕", key=f"del_{idx}", use_container_width=True):
+                remove_task(idx)
+                st.rerun()
