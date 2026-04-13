@@ -9,6 +9,6 @@ python -m streamlit run app.py
 ```
 
 ## 這版更新
-- 流程列上下間距縮小
-- 複製按鈕改為 icon 樣式
-- 斑馬紋底色加深，閱讀更清楚
+- 流程設定列高度再次壓縮
+- input、select、checkbox、按鈕高度同步縮小
+- 表頭與列之間的留白減少
