@@ -659,7 +659,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     last_task_row = row_start + len(df_schedule) - 1
 
     for c in break_cols_excel:
-        worksheet.merge_range(2, c, last_task_row, c, "～", fmt_break_merge)
+        worksheet.merge_range(1, c, last_task_row, c, "～", fmt_break_merge)
 
     for idx, item in df_schedule.iterrows():
         row = row_start + idx
@@ -706,20 +706,25 @@ def get_effective_dates(mode_display):
         return None, st.session_state.launch_date_value
     return st.session_state.start_date_value, st.session_state.launch_date_value
 
+
 def render_gantt_html(df_schedule, display_columns, holidays_dt):
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
 
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
+    total_body_rows = len(df_schedule)
+    break_rowspan = total_body_rows + 2  # 日期列 + 星期列 + 任務列
 
+    # 月份列：BREAK 也要是同一大格的起點，因此這裡放 rowspan
     month_cells = []
     i = 0
     while i < len(display_columns):
         item = display_columns[i]
         if item == "BREAK":
-            month_cells.append('<th class="break-head"></th>')
+            month_cells.append(f'<th class="break-head" rowspan="{break_rowspan + 1}">～</th>')
             i += 1
             continue
+
         month = item.strftime("%m月")
         span = 1
         j = i + 1
@@ -732,26 +737,32 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
         month_cells.append(f'<th colspan="{span}">{month}</th>')
         i = j
 
+    # 第二列：只放非 BREAK 的日期
     header_row = []
     for item in display_columns:
         if item == "BREAK":
-            header_row.append('<th class="break-head">～</th>')
-        else:
-            d = item.date()
-            cls = "date-head weekend-head" if not is_workday(d) else "date-head"
-            header_row.append(f'<th class="{cls}">{item.strftime("%m/%d")}<br>{weekday_map[item.weekday()]}</th>')
+            continue
+        d = item.date()
+        cls = "date-head weekend-head" if not is_workday(d) else "date-head"
+        header_row.append(f'<th class="{cls}">{item.strftime("%m/%d")}</th>')
+
+    # 第三列：只放非 BREAK 的星期
+    weekday_row = []
+    for item in display_columns:
+        if item == "BREAK":
+            continue
+        d = item.date()
+        cls = "date-head weekend-head" if not is_workday(d) else "date-head"
+        weekday_row.append(f'<th class="{cls}">{weekday_map[item.weekday()]}</th>')
 
     body_rows = []
-    total_rows = len(df_schedule)
-    for row_idx, (_, row) in enumerate(df_schedule.iterrows()):
+    for _, row in df_schedule.iterrows():
         cells = [
             f'<td class="task-col sticky-left">{row["Task"]}</td>',
             f'<td class="owner-col sticky-left-2">{row["Owner"]}</td>',
         ]
         for item in display_columns:
             if item == "BREAK":
-                if row_idx == 0:
-                    cells.append(f'<td class="break-merged" rowspan="{total_rows}">～</td>')
                 continue
 
             d = item.date()
@@ -784,12 +795,15 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
         <table class="gantt-table">
             <thead>
                 <tr class="month-row">
-                    <th class="task-col sticky-left" rowspan="2">任務名稱</th>
-                    <th class="owner-col sticky-left-2" rowspan="2">Action By</th>
+                    <th class="task-col sticky-left" rowspan="3">任務名稱</th>
+                    <th class="owner-col sticky-left-2" rowspan="3">Action By</th>
                     {''.join(month_cells)}
                 </tr>
                 <tr>
                     {''.join(header_row)}
+                </tr>
+                <tr>
+                    {''.join(weekday_row)}
                 </tr>
             </thead>
             <tbody>
