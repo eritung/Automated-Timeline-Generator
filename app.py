@@ -93,7 +93,7 @@ div.stDownloadButton > button[kind="primary"] {{
   background: {UI_PRIMARY} !important;
   border: 1px solid {UI_PRIMARY} !important;
   color: white !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   font-weight: 600 !important;
 }}
 div.stButton > button[kind="primary"]:hover,
@@ -840,7 +840,7 @@ with st.container(border=True):
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.55, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
+    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
     headers = [
         (hc1, "顯示"),
         (hc2, "任務名稱"),
@@ -849,18 +849,18 @@ with st.container(border=True):
         (hc5, "上線日"),
         (hc6, "排序"),
         (hc7, "複製"),
-        (hc8, ""),
+        (hc8, "刪除"),
     ]
     for col, label in headers:
         with col:
             st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
-        zebra_class = "task-row-even" if idx % 2 == 0 else "task-row-odd"
-        st.markdown(f'<div class="task-row-wrap {zebra_class}">', unsafe_allow_html=True)
-
         rid = row["id"]
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.55, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
+        zebra_class = "task-row-plain-alt" if idx % 2 else "task-row-plain"
+        st.markdown(f'<div class="{zebra_class}">', unsafe_allow_html=True)
+
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
 
         with c1:
             key = f"show_{rid}"
@@ -868,47 +868,62 @@ with st.container(border=True):
                 st.session_state[key] = row["顯示"]
             st.checkbox("顯示", key=key, label_visibility="collapsed",
                         on_change=sync_task_field, args=(rid, "顯示", key))
+
         with c2:
             key = f"task_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = row["任務名稱"]
             st.text_input("任務名稱", key=key, label_visibility="collapsed",
                           on_change=sync_task_field, args=(rid, "任務名稱", key))
+
         with c3:
             key = f"owner_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = row["Action By"]
             st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
                          on_change=sync_task_field, args=(rid, "Action By", key))
+
         with c4:
             key = f"days_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = int(row["工作天數"])
             st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
                             on_change=sync_task_field, args=(rid, "工作天數", key))
+
         with c5:
             key = f"launch_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = row["上線日"]
             st.checkbox("上線日", key=key, label_visibility="collapsed",
                         on_change=sync_task_field, args=(rid, "上線日", key))
+
         with c6:
-            s1, s2 = st.columns([1,1], vertical_alignment="center")
+            s1, s2 = st.columns([1, 1], vertical_alignment="center")
             with s1:
+                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
                 if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
             with s2:
+                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
                 if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+
         with c7:
+            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("複", key=f"copy_{rid}", use_container_width=True):
                 copy_task(idx)
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
         with c8:
+            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("✕", key=f"del_{rid}", use_container_width=True):
                 remove_task(idx)
                 st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
