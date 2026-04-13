@@ -709,6 +709,12 @@ def remove_task(idx: int):
     if 0 <= idx < len(st.session_state.tasks):
         st.session_state.tasks.pop(idx)
 
+def copy_task(idx: int):
+    if 0 <= idx < len(st.session_state.tasks):
+        row = st.session_state.tasks[idx].copy()
+        row["id"] = f"task_copy_{uuid.uuid4().hex[:6]}"
+        st.session_state.tasks.insert(idx + 1, row)
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
@@ -825,15 +831,16 @@ st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 
 
+
 with st.container(border=True):
     h1, h2 = st.columns([5,1.05], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可直接新增、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">可直接新增、複製、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7 = st.columns([0.72, 2.7, 1.2, 0.9, 0.9, 1.0, 0.45], vertical_alignment="center")
+    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.55, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
     headers = [
         (hc1, "顯示"),
         (hc2, "任務名稱"),
@@ -841,15 +848,19 @@ with st.container(border=True):
         (hc4, "工作天數"),
         (hc5, "上線日"),
         (hc6, "排序"),
-        (hc7, ""),
+        (hc7, "複製"),
+        (hc8, ""),
     ]
     for col, label in headers:
         with col:
             st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
+        zebra_class = "task-row-even" if idx % 2 == 0 else "task-row-odd"
+        st.markdown(f'<div class="task-row-wrap {zebra_class}">', unsafe_allow_html=True)
+
         rid = row["id"]
-        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.72, 2.7, 1.2, 0.9, 0.9, 1.0, 0.45], vertical_alignment="center")
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.55, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
 
         with c1:
             key = f"show_{rid}"
@@ -892,6 +903,12 @@ with st.container(border=True):
                     move_task_down(idx)
                     st.rerun()
         with c7:
+            if st.button("複", key=f"copy_{rid}", use_container_width=True):
+                copy_task(idx)
+                st.rerun()
+        with c8:
             if st.button("✕", key=f"del_{rid}", use_container_width=True):
                 remove_task(idx)
                 st.rerun()
+
+        st.markdown('</div>', unsafe_allow_html=True)
