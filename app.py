@@ -213,8 +213,6 @@ def init_state():
         st.session_state.warning_msg = ""
     if "last_generated_name" not in st.session_state:
         st.session_state.last_generated_name = "未命名專案"
-    if "batch_text" not in st.session_state:
-        st.session_state.batch_text = ""
 
 init_state()
 
@@ -666,32 +664,6 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
     </div>
     """
 
-def apply_batch_paste():
-    lines = [line.strip() for line in st.session_state.batch_text.splitlines() if line.strip()]
-    if not lines:
-        return
-    new_rows = []
-    for line in lines:
-        parts = [p.strip() for p in line.split("\t")]
-        if len(parts) < 3:
-            parts = [p.strip() for p in line.split(",")]
-        if len(parts) < 3:
-            raise ValueError(f"無法解析：{line}")
-        task = parts[0]
-        owner = parts[1] if parts[1] in ["Ad2", "客戶"] else "Ad2"
-        days = int(parts[2])
-        is_launch = False
-        if len(parts) >= 4:
-            is_launch = parts[3] in ["1", "true", "True", "是", "上線", "Y", "y"]
-        new_rows.append({
-            "顯示": True,
-            "任務名稱": task,
-            "Action By": owner,
-            "工作天數": days,
-            "上線日": is_launch,
-        })
-    st.session_state.tasks = new_rows
-
 def add_task():
     st.session_state.tasks.append({"顯示": True, "任務名稱": "", "Action By": "Ad2", "工作天數": 1, "上線日": False})
 
@@ -741,13 +713,12 @@ def reset_defaults():
     st.session_state.holidays_dt = None
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
-    st.session_state.batch_text = ""
 
 # =========================
 # UI
 # =========================
 st.title("製作時程排程工具")
-st.caption("預覽改成穩定版樣式；正式結果仍以 Excel 為準。流程設定改成表單式編輯，避免貼上整塊時資料跳掉。")
+st.caption("快速設定專案日期與流程後，即可產出 Excel 時程表。")
 
 with st.sidebar:
     st.subheader("假日設定")
@@ -819,19 +790,9 @@ with st.container(border=True):
     h1, h2 = st.columns([5,1.2])
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">改成表單式編輯，比較不會在整塊複製貼上時噴錯或資料跳掉。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">可直接新增、刪除或修改任務內容。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
-
-    with st.expander("批次貼上任務"):
-        st.caption("每行一筆，建議格式：任務名稱[TAB]Action By[TAB]工作天數[TAB]上線日(可省略)")
-        st.text_area("批次貼上內容", key="batch_text", height=140)
-        if st.button("套用批次貼上", type="secondary"):
-            try:
-                apply_batch_paste()
-                st.success("已套用貼上內容。")
-            except Exception as e:
-                st.error(f"套用失敗：{e}")
 
     st.markdown('<div class="task-grid-head"><div>顯示</div><div>任務名稱</div><div>Action By</div><div>工作天數</div><div>上線日</div><div></div></div>', unsafe_allow_html=True)
 
