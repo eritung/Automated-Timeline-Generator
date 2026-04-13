@@ -213,6 +213,8 @@ def init_state():
         st.session_state.warning_msg = ""
     if "last_generated_name" not in st.session_state:
         st.session_state.last_generated_name = "未命名專案"
+    if "status_msg" not in st.session_state:
+        st.session_state.status_msg = ""
 
 init_state()
 
@@ -637,15 +639,18 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
             d = item.date()
             base_cls = "weekend-cell" if not is_workday(d) else "empty-cell"
             if row["Start Date"] <= d <= row["End Date"]:
-                if row["Type"] == "Launch":
-                    cls = "bar-launch"
-                elif row["Type"] == "Prep":
-                    cls = "bar-prep"
-                elif "客戶" in row["Owner"]:
-                    cls = "bar-client"
+                if row["Type"] in ["Launch", "Prep"] or is_workday(d):
+                    if row["Type"] == "Launch":
+                        cls = "bar-launch"
+                    elif row["Type"] == "Prep":
+                        cls = "bar-prep"
+                    elif "客戶" in row["Owner"]:
+                        cls = "bar-client"
+                    else:
+                        cls = "bar-ad2"
+                    cells.append(f'<td class="{cls}"></td>')
                 else:
-                    cls = "bar-ad2"
-                cells.append(f'<td class="{cls}"></td>')
+                    cells.append(f'<td class="{base_cls}"></td>')
             else:
                 cells.append(f'<td class="{base_cls}"></td>')
         rows.append("<tr>" + "".join(cells) + "</tr>")
@@ -667,11 +672,20 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
 def add_task():
     st.session_state.tasks.append({"顯示": True, "任務名稱": "", "Action By": "Ad2", "工作天數": 1, "上線日": False})
 
+def move_task_up(idx: int):
+    if 0 < idx < len(st.session_state.tasks):
+        st.session_state.tasks[idx - 1], st.session_state.tasks[idx] = st.session_state.tasks[idx], st.session_state.tasks[idx - 1]
+
+def move_task_down(idx: int):
+    if 0 <= idx < len(st.session_state.tasks) - 1:
+        st.session_state.tasks[idx + 1], st.session_state.tasks[idx] = st.session_state.tasks[idx], st.session_state.tasks[idx + 1]
+
 def remove_task(idx: int):
     if 0 <= idx < len(st.session_state.tasks):
         st.session_state.tasks.pop(idx)
 
 def generate_schedule():
+    had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
     tasks = get_active_tasks()
     calculation_mode = MODE_MAP[st.session_state.mode_display]
@@ -699,6 +713,7 @@ def generate_schedule():
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
     st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
+    st.session_state.status_msg = "時程表已更新。" if had_previous_output else "已產出時程表。"
 
 def reset_defaults():
     st.session_state.project_name = ""
@@ -713,6 +728,7 @@ def reset_defaults():
     st.session_state.holidays_dt = None
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
+    st.session_state.status_msg = ""
 
 # =========================
 # UI
@@ -725,15 +741,14 @@ with st.sidebar:
     st.text_area("假日清單（每行一筆，格式：YYYY-MM-DD,名稱）", key="holidays_text", height=420)
 
 with st.container(border=True):
-    c1, c2 = st.columns([5,1.1])
+    c1, c2 = st.columns([6,0.65], vertical_alignment="center")
     with c1:
         st.markdown('<div class="section-title">專案設定</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>', unsafe_allow_html=True)
     with c2:
-        st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-        st.button("重設", use_container_width=True, on_click=reset_defaults)
+        st.button("重設", on_click=reset_defaults)
 
-    r1c1, r1c2, r1c3 = st.columns([2.5,1.6,1.0])
+    r1c1, r1c2, r1c3 = st.columns([2.6,1.5,0.9], vertical_alignment="bottom")
     with r1c1:
         st.text_input("專案名稱", key="project_name", placeholder="請輸入專案名稱")
     with r1c2:
@@ -744,13 +759,12 @@ with st.container(border=True):
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3 = st.columns([1.5,1.5,1.1])
+    r2c1, r2c2, r2c3 = st.columns([1.5,1.5,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
         st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled)
     with r2c3:
-        st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
@@ -758,20 +772,16 @@ st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 if st.session_state.warning_msg:
     st.warning(st.session_state.warning_msg)
 
+if st.session_state.status_msg:
+    st.success(st.session_state.status_msg)
+
 if st.session_state.schedule_df is not None:
     with st.container(border=True):
-        p1, p2 = st.columns([5.2,1.25])
+        p1, p2 = st.columns([5.4,1.05], vertical_alignment="center")
         with p1:
             st.markdown('<div class="section-title">排程預覽</div>', unsafe_allow_html=True)
-            st.markdown("""
-            <div class="info-chip-wrap">
-              <span class="info-chip">穩定版預覽樣式，不做複雜合併表頭</span>
-              <span class="info-chip">可左右滑動查看完整日期</span>
-            </div>
-            """, unsafe_allow_html=True)
         with p2:
             filename = f"{datetime.now().strftime('%m%d')}_{st.session_state.last_generated_name}.xlsx"
-            st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
             st.download_button("下載 Excel", data=st.session_state.excel_bytes, file_name=filename,
                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                use_container_width=True, type="primary")
@@ -790,15 +800,18 @@ with st.container(border=True):
     h1, h2 = st.columns([5,1.2])
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可直接新增、刪除或修改任務內容。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">可直接新增、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    st.markdown('<div class="task-grid-head"><div>顯示</div><div>任務名稱</div><div>Action By</div><div>工作天數</div><div>上線日</div><div></div></div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="task-grid-head"><div>顯示</div><div>任務名稱</div><div>Action By</div><div>工作天數</div><div>上線日</div><div>排序</div><div></div></div>', unsafe_allow_html=True)
 
     remove_idx = None
+    move_up_idx = None
+    move_down_idx = None
     for idx, row in enumerate(st.session_state.tasks):
-        c1, c2, c3, c4, c5, c6 = st.columns([0.6, 2.2, 1.2, 0.8, 0.8, 0.4])
+        c1, c2, c3, c4, c5, c6, c7 = st.columns([0.6, 2.2, 1.1, 0.8, 0.8, 0.8, 0.35], vertical_alignment="center")
         with c1:
             st.session_state.tasks[idx]["顯示"] = st.checkbox("顯示", value=row["顯示"], key=f"show_{idx}", label_visibility="collapsed")
         with c2:
@@ -810,9 +823,23 @@ with st.container(border=True):
         with c5:
             st.session_state.tasks[idx]["上線日"] = st.checkbox("上線日", value=row["上線日"], key=f"launch_{idx}", label_visibility="collapsed")
         with c6:
+            u1, u2 = st.columns(2)
+            with u1:
+                if st.button("↑", key=f"up_{idx}", disabled=(idx == 0)):
+                    move_up_idx = idx
+            with u2:
+                if st.button("↓", key=f"down_{idx}", disabled=(idx == len(st.session_state.tasks) - 1)):
+                    move_down_idx = idx
+        with c7:
             if st.button("✕", key=f"del_{idx}"):
                 remove_idx = idx
 
+    if move_up_idx is not None:
+        move_task_up(move_up_idx)
+        st.rerun()
+    if move_down_idx is not None:
+        move_task_down(move_down_idx)
+        st.rerun()
     if remove_idx is not None:
         remove_task(remove_idx)
         st.rerun()
