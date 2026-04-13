@@ -5,22 +5,17 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(
-    page_title="製作時程排程工具",
-    page_icon="📅",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+st.set_page_config(page_title="製作時程排程工具", page_icon="📅", layout="wide", initial_sidebar_state="collapsed")
 
 # =========================
 # 基本設定
 # =========================
-DEFAULT_PROJECT_NAME = ""
 MODE_OPTIONS = ["製作日推進", "上線日回推", "同時指定開始與上線日期"]
-DEFAULT_MODE = MODE_OPTIONS[0]
-DEFAULT_START_DATE = date.today()
-DEFAULT_LAUNCH_DATE = date.today()
-DEFAULT_COLLAPSE_THRESHOLD = 2
+MODE_MAP = {
+    "製作日推進": "forward",
+    "上線日回推": "backward",
+    "同時指定開始與上線日期": "double",
+}
 
 DEFAULT_TASKS = [
     {"顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
@@ -59,12 +54,7 @@ DEFAULT_HOLIDAYS = {
     '2026-12-25': '行憲紀念日連假',
 }
 
-MODE_MAP = {
-    "製作日推進": "forward",
-    "上線日回推": "backward",
-    "同時指定開始與上線日期": "double",
-}
-
+# Excel colors
 EXCEL_COLOR_CLIENT_BAR = '#EA9B56'
 EXCEL_COLOR_AD2_BAR = '#4BACC6'
 EXCEL_COLOR_LAUNCH_BAR = '#FF0000'
@@ -73,215 +63,164 @@ EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
-UI_COLOR_BORDER = "#ECE8E1"
-UI_COLOR_TEXT = "#2F2A24"
-UI_COLOR_MUTED = "#7A736A"
-UI_COLOR_PRIMARY = "#C97B7B"
-UI_COLOR_PRIMARY_HOVER = "#B86A6A"
-UI_COLOR_AD2 = "#4BACC6"
-UI_COLOR_CLIENT = "#EA9B56"
-UI_COLOR_LAUNCH = "#D47B7B"
-UI_COLOR_PREP = "#92D050"
-UI_COLOR_WEEKEND = "#F2F2F2"
+# UI colors
+UI_PRIMARY = "#C97B7B"
+UI_PRIMARY_HOVER = "#B86A6A"
+UI_BORDER = "#ECE8E1"
+UI_MUTED = "#7A736A"
+UI_AD2 = "#4BACC6"
+UI_CLIENT = "#EA9B56"
+UI_LAUNCH = "#D47B7B"
+UI_PREP = "#92D050"
 
 st.markdown(f"""
 <style>
 html, body, [data-testid="stAppViewContainer"] {{
   background: linear-gradient(180deg, #FCFBF9 0%, #F8F6F2 100%);
-  color: {UI_COLOR_TEXT};
 }}
-[data-testid="stHeader"] {{ background: rgba(255,255,255,0); }}
 .block-container {{
-  padding-top: 2rem !important;
+  max-width: 1450px;
+  padding-top: 1.8rem !important;
   padding-bottom: 3rem !important;
-  max-width: 1400px;
 }}
 [data-testid="stSidebar"] {{
   background: #FBFAF8;
-  border-right: 1px solid {UI_COLOR_BORDER};
+  border-right: 1px solid {UI_BORDER};
 }}
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
-    background-color: {UI_COLOR_PRIMARY} !important;
-    border: 1px solid {UI_COLOR_PRIMARY} !important;
-    color: white !important;
-    border-radius: 12px !important;
-    font-weight: 600 !important;
-    box-shadow: 0 6px 18px rgba(201,123,123,0.18);
+  background: {UI_PRIMARY} !important;
+  border: 1px solid {UI_PRIMARY} !important;
+  color: white !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-    background-color: {UI_COLOR_PRIMARY_HOVER} !important;
-    border-color: {UI_COLOR_PRIMARY_HOVER} !important;
-}}
-div.stButton > button[kind="secondary"] {{
-    border-radius: 10px !important;
-    border: 1px solid {UI_COLOR_BORDER} !important;
-    background: white !important;
-}}
-[data-testid="stTextInputRootElement"],
-[data-testid="stDateInputField"],
-[data-baseweb="select"] > div,
-[data-testid="stNumberInput"] input {{
-    border-radius: 12px !important;
+  background: {UI_PRIMARY_HOVER} !important;
+  border-color: {UI_PRIMARY_HOVER} !important;
 }}
 .section-title {{
-    font-size: 1.08rem;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
 }}
 .section-sub {{
-    color: {UI_COLOR_MUTED};
-    font-size: 0.92rem;
-    margin-bottom: 0.9rem;
+  color: {UI_MUTED};
+  font-size: 0.92rem;
+  margin-bottom: 0.9rem;
 }}
-.info-chip-wrap {{
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+.timeline-wrap {{
+  overflow-x: auto;
+  border: 1px solid {UI_BORDER};
+  border-radius: 16px;
+  background: white;
 }}
-.info-chip {{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: #F8F6F3;
-    border: 1px solid {UI_COLOR_BORDER};
-    border-radius: 999px;
-    font-size: 12px;
-    color: {UI_COLOR_MUTED};
+.timeline-table {{
+  border-collapse: collapse;
+  width: max-content;
+  min-width: 100%;
+  font-size: 13px;
 }}
-.gantt-wrap {{
-    overflow-x: auto;
-    border: 1px solid {UI_COLOR_BORDER};
-    border-radius: 16px;
-    background: #fff;
+.timeline-table th, .timeline-table td {{
+  border: 1px solid #F0ECE6;
+  text-align: center;
+  padding: 0;
+  height: 36px;
 }}
-.gantt-table {{
-    border-collapse: collapse;
-    width: max-content;
-    min-width: 100%;
-    font-size: 13px;
+.timeline-table .task-col {{
+  min-width: 190px; max-width: 190px; width: 190px;
+  text-align: left; padding: 0 12px; font-weight: 600; background: white;
+  position: sticky; left: 0; z-index: 2;
 }}
-.gantt-table th, .gantt-table td {{
-    border: 1px solid #F0ECE6;
-    text-align: center;
-    padding: 0;
-    height: 36px;
+.timeline-table .owner-col {{
+  min-width: 96px; max-width: 96px; width: 96px;
+  background: white; position: sticky; left: 190px; z-index: 2;
 }}
-.gantt-table .sticky-left {{
-    position: sticky;
-    left: 0;
-    z-index: 3;
-    background: #fff;
+.timeline-table .month-row th {{
+  height: 30px; background: #FBFAF8; font-weight: 700;
 }}
-.gantt-table .sticky-left-2 {{
-    position: sticky;
-    left: 190px;
-    z-index: 3;
-    background: #fff;
+.timeline-table .date-head {{
+  width: 38px; min-width: 38px; max-width: 38px;
+  font-size: 11px; line-height: 1.15;
 }}
-.gantt-table .task-col {{
-    width: 190px;
-    min-width: 190px;
-    max-width: 190px;
-    padding: 0 12px;
-    text-align: left;
-    font-weight: 600;
+.timeline-table .weekend-head, .timeline-table .weekend-cell {{
+  background: #F3F3F3;
 }}
-.gantt-table .owner-col {{
-    width: 96px;
-    min-width: 96px;
-    max-width: 96px;
-    padding: 0 8px;
-    text-align: center;
+.timeline-table .empty-cell {{ background: white; }}
+.timeline-table .break-cell {{
+  width: 28px; min-width: 28px; max-width: 28px;
+  background: #F7F7F7; color: #777; font-weight: 700;
 }}
-.gantt-table .month-row th {{
-    background: #FBFAF8;
-    font-weight: 700;
-    height: 32px;
-}}
-.gantt-table .date-head {{
-    width: 38px;
-    min-width: 38px;
-    max-width: 38px;
-    line-height: 1.15;
-    font-size: 11px;
-    background: #fff;
-}}
-.gantt-table .weekend-head {{ background: #F4F4F4; }}
-.gantt-table .break-head {{
-    width: 26px;
-    min-width: 26px;
-    max-width: 26px;
-    background: #F7F7F7;
-    color: #777;
-    font-weight: 700;
-}}
-.gantt-table .break-merged {{
-    background: #F7F7F7;
-    color: #777;
-    font-weight: 700;
-    min-width: 26px;
-    width: 26px;
-}}
-.gantt-table .empty-cell {{ background: #fff; }}
-.gantt-table .weekend-cell {{ background: #F3F3F3; }}
-.gantt-table .bar-ad2 {{ background: {UI_COLOR_AD2}; }}
-.gantt-table .bar-client {{ background: {UI_COLOR_CLIENT}; }}
-.gantt-table .bar-launch {{ background: {UI_COLOR_LAUNCH}; }}
-.gantt-table .bar-prep {{ background: {UI_COLOR_PREP}; }}
+.timeline-table .bar-ad2 {{ background: {UI_AD2}; }}
+.timeline-table .bar-client {{ background: {UI_CLIENT}; }}
+.timeline-table .bar-launch {{ background: {UI_LAUNCH}; }}
+.timeline-table .bar-prep {{ background: {UI_PREP}; }}
 .legend {{
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-    font-size: 12px;
-    color: {UI_COLOR_MUTED};
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+  font-size: 12px; color: {UI_MUTED};
 }}
-.legend-item {{
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}}
-.legend-dot {{
-    width: 12px;
-    height: 12px;
-    border-radius: 4px;
-    display: inline-block;
-}}
+.legend-item {{ display: inline-flex; align-items: center; gap: 6px; }}
+.legend-dot {{ width: 12px; height: 12px; border-radius: 4px; display: inline-block; }}
 .small-gap {{ height: 0.35rem; }}
 .large-gap {{ height: 1.8rem; }}
-[data-testid="stDataEditor"] [role="grid"] [aria-colindex="1"],
-[data-testid="stDataEditor"] [role="columnheader"][aria-colindex="1"] {{
-    display: none !important;
+.task-grid-row {{
+  display: grid;
+  grid-template-columns: 72px 1.8fr 1fr 0.8fr 0.8fr 52px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}}
+.task-grid-head {{
+  display: grid;
+  grid-template-columns: 72px 1.8fr 1fr 0.8fr 0.8fr 52px;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: {UI_MUTED};
+  font-size: 12px;
+  font-weight: 600;
 }}
 </style>
 """, unsafe_allow_html=True)
 
+# =========================
+# state
+# =========================
 def init_state():
-    defaults = {
-        "project_name": DEFAULT_PROJECT_NAME,
-        "mode_display": DEFAULT_MODE,
-        "start_date_value": DEFAULT_START_DATE,
-        "launch_date_value": DEFAULT_LAUNCH_DATE,
-        "collapse_threshold": DEFAULT_COLLAPSE_THRESHOLD,
-        "tasks_df": pd.DataFrame(DEFAULT_TASKS),
-        "holidays_text": "\n".join([f"{k},{v}" for k, v in DEFAULT_HOLIDAYS.items()]),
-        "schedule_df": None,
-        "excel_bytes": None,
-        "warning_msg": "",
-        "last_generated_name": DEFAULT_PROJECT_NAME,
-        "display_columns": None,
-        "holidays_dt": None,
-    }
-    for k, v in defaults.items():
-        if k not in st.session_state:
-            st.session_state[k] = v
+    if "project_name" not in st.session_state:
+        st.session_state.project_name = ""
+    if "mode_display" not in st.session_state:
+        st.session_state.mode_display = MODE_OPTIONS[0]
+    if "start_date_value" not in st.session_state:
+        st.session_state.start_date_value = date.today()
+    if "launch_date_value" not in st.session_state:
+        st.session_state.launch_date_value = date.today()
+    if "collapse_threshold" not in st.session_state:
+        st.session_state.collapse_threshold = 2
+    if "tasks" not in st.session_state:
+        st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
+    if "holidays_text" not in st.session_state:
+        st.session_state.holidays_text = "\n".join(f"{k},{v}" for k, v in DEFAULT_HOLIDAYS.items())
+    if "schedule_df" not in st.session_state:
+        st.session_state.schedule_df = None
+    if "excel_bytes" not in st.session_state:
+        st.session_state.excel_bytes = None
+    if "display_columns" not in st.session_state:
+        st.session_state.display_columns = None
+    if "holidays_dt" not in st.session_state:
+        st.session_state.holidays_dt = None
+    if "warning_msg" not in st.session_state:
+        st.session_state.warning_msg = ""
+    if "last_generated_name" not in st.session_state:
+        st.session_state.last_generated_name = "未命名專案"
+    if "batch_text" not in st.session_state:
+        st.session_state.batch_text = ""
 
 init_state()
 
+# =========================
+# helpers
+# =========================
 def parse_holidays(text: str) -> dict:
     holidays = {}
     for line in text.splitlines():
@@ -291,49 +230,32 @@ def parse_holidays(text: str) -> dict:
         if "," not in line:
             raise ValueError(f"假日格式錯誤：{line}，請使用 YYYY-MM-DD,名稱")
         d, name = line.split(",", 1)
-        d = d.strip()
-        name = name.strip()
-        pd.to_datetime(d)
-        holidays[d] = name
+        pd.to_datetime(d.strip())
+        holidays[d.strip()] = name.strip()
     return holidays
 
-def normalize_tasks(df: pd.DataFrame) -> list[dict]:
-    if df is None or df.empty:
-        raise ValueError("請至少保留一筆任務。")
-    df = df.copy()
-    required_cols = ["顯示", "任務名稱", "Action By", "工作天數", "上線日"]
-    for c in required_cols:
-        if c not in df.columns:
-            raise ValueError(f"缺少欄位：{c}")
-
-    df["顯示"] = df["顯示"].fillna(True).astype(bool)
-    df["任務名稱"] = df["任務名稱"].fillna("").astype(str).str.strip()
-    df["Action By"] = df["Action By"].fillna("Ad2").astype(str).str.strip()
-    df["工作天數"] = pd.to_numeric(df["工作天數"], errors="coerce")
-    df["上線日"] = df["上線日"].fillna(False).astype(bool)
-    df = df[(df["顯示"] == True) & (df["任務名稱"] != "")].copy()
-
-    if df.empty:
+def get_active_tasks():
+    tasks = []
+    visible_rows = [row for row in st.session_state.tasks if row.get("顯示", True) and str(row.get("任務名稱", "")).strip()]
+    if not visible_rows:
         raise ValueError("目前沒有可排程的任務，請至少保留一筆顯示中的任務。")
-    if (df["工作天數"].isna()).any() or (df["工作天數"] <= 0).any():
-        raise ValueError("工作天數必須為大於 0 的整數。")
 
-    launch_count = int(df["上線日"].sum())
+    launch_count = sum(bool(r.get("上線日", False)) for r in visible_rows)
     if launch_count > 1:
         raise ValueError("「上線日」只能勾選一筆。")
     if launch_count == 0:
-        df.loc[df.index[-1], "上線日"] = True
+        visible_rows[-1]["上線日"] = True
 
-    tasks = []
-    for _, row in df.iterrows():
-        tasks.append(
-            {
-                "task": row["任務名稱"],
-                "owner": row["Action By"],
-                "days": int(row["工作天數"]),
-                "is_launch": bool(row["上線日"]),
-            }
-        )
+    for row in visible_rows:
+        days = int(row.get("工作天數", 0) or 0)
+        if days <= 0:
+            raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需大於 0。")
+        tasks.append({
+            "task": str(row.get("任務名稱", "")).strip(),
+            "owner": str(row.get("Action By", "Ad2")).strip() or "Ad2",
+            "days": days,
+            "is_launch": bool(row.get("上線日", False)),
+        })
     return tasks
 
 def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_obj, launch_date_obj):
@@ -344,9 +266,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     def subtract_workdays(start_date, days):
         current = start_date
-        if days == 0:
-            return current
-        check_days = days - 1
+        check_days = max(days - 1, 0)
         while check_days > 0:
             current -= timedelta(days=1)
             if is_workday(current):
@@ -355,9 +275,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     def add_workdays(start_date, days):
         current = start_date
-        if days == 0:
-            return current
-        check_days = days - 1
+        check_days = max(days - 1, 0)
         while check_days > 0:
             current += timedelta(days=1)
             if is_workday(current):
@@ -383,8 +301,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     schedule = []
     warning_msg = ""
-    launch_tasks = [t for t in tasks_config if t["is_launch"]]
-    launch_task_config = launch_tasks[0] if launch_tasks else tasks_config[-1]
+    launch_task_config = next((t for t in tasks_config if t["is_launch"]), tasks_config[-1])
 
     if calculation_mode == "backward":
         if not launch_date_obj:
@@ -392,7 +309,6 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
         current_end = launch_date_obj
         reversed_tasks = tasks_config[::-1]
         temp_schedule = []
-
         for i, t in enumerate(reversed_tasks):
             duration = t["days"]
             if t["is_launch"]:
@@ -407,11 +323,9 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
                 start_date = subtract_workdays(end_date, duration)
 
             temp_schedule.append({
-                "Task": t["task"],
-                "Owner": t["owner"],
-                "Start Date": start_date,
-                "End Date": end_date,
-                "Type": "Launch" if t["is_launch"] else "Normal",
+                "Task": t["task"], "Owner": t["owner"],
+                "Start Date": start_date, "End Date": end_date,
+                "Type": "Launch" if t["is_launch"] else "Normal"
             })
         schedule = temp_schedule[::-1]
 
@@ -419,35 +333,27 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
         curr_start = ensure_workday_forward(start_date_obj or date.today())
         prev_end = None
         for idx, t in enumerate(tasks_config):
-            if t["is_launch"] and launch_date_obj:
-                start_d = launch_date_obj
-            else:
-                start_d = curr_start if idx == 0 else get_next_workday(prev_end)
+            start_d = launch_date_obj if (t["is_launch"] and launch_date_obj) else (curr_start if idx == 0 else get_next_workday(prev_end))
             end_d = add_workdays(start_d, t["days"])
             schedule.append({
-                "Task": t["task"],
-                "Owner": t["owner"],
-                "Start Date": start_d,
-                "End Date": end_d,
-                "Type": "Launch" if t["is_launch"] else "Normal",
+                "Task": t["task"], "Owner": t["owner"],
+                "Start Date": start_d, "End Date": end_d,
+                "Type": "Launch" if t["is_launch"] else "Normal"
             })
             prev_end = end_d
+
     else:
         if not start_date_obj or not launch_date_obj:
             raise ValueError("「同時指定開始與上線日期」需要同時填寫開始日期與上線日期。")
         curr_start = ensure_workday_forward(start_date_obj)
         prev_end = None
         normal_tasks = [t for t in tasks_config if not t["is_launch"]]
-
         for idx, t in enumerate(normal_tasks):
             start_d = curr_start if idx == 0 else get_next_workday(prev_end)
             end_d = add_workdays(start_d, t["days"])
             schedule.append({
-                "Task": t["task"],
-                "Owner": t["owner"],
-                "Start Date": start_d,
-                "End Date": end_d,
-                "Type": "Normal",
+                "Task": t["task"], "Owner": t["owner"],
+                "Start Date": start_d, "End Date": end_d, "Type": "Normal"
             })
             prev_end = end_d
 
@@ -461,20 +367,14 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
         if real_prep_end >= real_prep_start:
             schedule.append({
-                "Task": "預備上線",
-                "Owner": "Ad2",
-                "Start Date": real_prep_start,
-                "End Date": real_prep_end,
-                "Type": "Prep",
+                "Task": "預備上線", "Owner": "Ad2",
+                "Start Date": real_prep_start, "End Date": real_prep_end, "Type": "Prep"
             })
 
         launch_end = add_workdays(launch_date_obj, launch_task_config["days"])
         schedule.append({
-            "Task": launch_task_config["task"],
-            "Owner": launch_task_config["owner"],
-            "Start Date": launch_date_obj,
-            "End Date": launch_end,
-            "Type": "Launch",
+            "Task": launch_task_config["task"], "Owner": launch_task_config["owner"],
+            "Start Date": launch_date_obj, "End Date": launch_end, "Type": "Launch"
         })
 
     return pd.DataFrame(schedule), warning_msg, holidays_dt
@@ -484,8 +384,8 @@ def prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_
     max_date = df_schedule["End Date"].max()
     if launch_date_obj and launch_date_obj > max_date:
         max_date = launch_date_obj
-
     full_dates = list(pd.date_range(min_date, max_date, freq="D"))
+
     display_columns = []
     prep_task_row = df_schedule[df_schedule["Type"] == "Prep"]
     prep_task = None
@@ -507,6 +407,7 @@ def prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_
                     break_added = True
     else:
         display_columns = full_dates
+
     return display_columns
 
 def compute_month_segments(display_columns, col_start):
@@ -571,21 +472,14 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             current_block_dates.append(col_item.date())
         else:
             if current_block_start != -1:
-                found_name = next(
-                    (holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config),
-                    None,
-                )
+                found_name = next((holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config), None)
                 if found_name:
                     holiday_blocks_info.append({"start_col": current_block_start, "end_col": i - 1, "name": "\n".join(list(found_name))})
                 elif len(current_block_dates) > 4:
                     holiday_blocks_info.append({"start_col": current_block_start, "end_col": i - 1, "name": "長\n假"})
             current_block_start, current_block_dates = -1, []
-
     if current_block_start != -1:
-        found_name = next(
-            (holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config),
-            None,
-        )
+        found_name = next((holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config), None)
         if found_name:
             holiday_blocks_info.append({"start_col": current_block_start, "end_col": len(display_columns) - 1, "name": "\n".join(list(found_name))})
 
@@ -623,17 +517,10 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     col_start, row_start = 2, 4
     break_cols_excel = []
 
-    # 先畫月份標示
     month_segments = compute_month_segments(display_columns, col_start)
     month_color_idx = 0
     for start_col, end_col, year, month in month_segments:
-        month_fmt = F(
-            bold=True,
-            align="center",
-            valign="vcenter",
-            bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)],
-            **border_fmt
-        )
+        month_fmt = F(bold=True, align="center", valign="vcenter", bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)], **border_fmt)
         month_label = date(year, month, 1).strftime("%b").upper()
         if start_col == end_col:
             worksheet.write(1, start_col, month_label, month_fmt)
@@ -641,14 +528,12 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             worksheet.merge_range(1, start_col, 1, end_col, month_label, month_fmt)
         month_color_idx += 1
 
-    # 再畫日期與星期
     for i, item in enumerate(display_columns):
         col = col_start + i
         if item == "BREAK":
             worksheet.set_column(col, col, 4)
             break_cols_excel.append(col)
             continue
-
         d = item
         is_h = not is_workday(d.date())
         weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
@@ -657,7 +542,6 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
         worksheet.set_column(col, col, 4.5)
 
     last_task_row = row_start + len(df_schedule) - 1
-
     for c in break_cols_excel:
         worksheet.merge_range(1, c, last_task_row, c, "～", fmt_break_merge)
 
@@ -665,7 +549,6 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
         row = row_start + idx
         worksheet.write(row, 0, item["Task"], fmt_left)
         worksheet.write(row, 1, item["Owner"], fmt_left)
-
         if item["Type"] == "Launch":
             bar_fmt = fmt_bar_launch
         elif item["Type"] == "Prep":
@@ -699,32 +582,19 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     output.seek(0)
     return output.getvalue(), display_columns
 
-def get_effective_dates(mode_display):
-    if mode_display == "製作日推進":
-        return st.session_state.start_date_value, None
-    if mode_display == "上線日回推":
-        return None, st.session_state.launch_date_value
-    return st.session_state.start_date_value, st.session_state.launch_date_value
-
-
-
-def render_gantt_html(df_schedule, display_columns, holidays_dt):
+def render_stable_preview(df_schedule, display_columns, holidays_dt):
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
-
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
-    total_body_rows = len(df_schedule)
 
-    # 以單一 table 結構處理，避免 thead/tbody 跨區段 rowspan 失效
     month_cells = []
     i = 0
     while i < len(display_columns):
         item = display_columns[i]
         if item == "BREAK":
-            month_cells.append(f'<th class="break-head" rowspan="{total_body_rows + 3}">～</th>')
+            month_cells.append('<th class="break-cell" rowspan="3">～</th>')
             i += 1
             continue
-
         month = item.strftime("%m月")
         span = 1
         j = i + 1
@@ -748,30 +618,26 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
         weekday_cells.append(f'<th class="{cls}">{weekday_map[item.weekday()]}</th>')
 
     rows = []
-
     rows.append(
         "<tr class='month-row'>"
-        "<th class='task-col sticky-left' rowspan='3'>任務名稱</th>"
-        "<th class='owner-col sticky-left-2' rowspan='3'>Action By</th>"
-        + "".join(month_cells) +
-        "</tr>"
+        "<th class='task-col'>任務名稱</th>"
+        "<th class='owner-col'>Action By</th>"
+        + "".join(month_cells) + "</tr>"
     )
-
-    rows.append("<tr>" + "".join(date_cells) + "</tr>")
-    rows.append("<tr>" + "".join(weekday_cells) + "</tr>")
+    rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(date_cells) + "</tr>")
+    rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(weekday_cells) + "</tr>")
 
     for _, row in df_schedule.iterrows():
         cells = [
-            f'<td class="task-col sticky-left">{row["Task"]}</td>',
-            f'<td class="owner-col sticky-left-2">{row["Owner"]}</td>',
+            f'<td class="task-col">{row["Task"]}</td>',
+            f'<td class="owner-col">{row["Owner"]}</td>',
         ]
         for item in display_columns:
             if item == "BREAK":
+                cells.append('<td class="break-cell">～</td>')
                 continue
-
             d = item.date()
             base_cls = "weekend-cell" if not is_workday(d) else "empty-cell"
-
             if row["Start Date"] <= d <= row["End Date"]:
                 if row["Type"] == "Launch":
                     cls = "bar-launch"
@@ -784,30 +650,61 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
                 cells.append(f'<td class="{cls}"></td>')
             else:
                 cells.append(f'<td class="{base_cls}"></td>')
-
         rows.append("<tr>" + "".join(cells) + "</tr>")
 
-    html = f"""
+    return f"""
     <div class="legend">
-        <span class="legend-item"><span class="legend-dot" style="background:{UI_COLOR_AD2};"></span>Ad2</span>
-        <span class="legend-item"><span class="legend-dot" style="background:{UI_COLOR_CLIENT};"></span>客戶</span>
-        <span class="legend-item"><span class="legend-dot" style="background:{UI_COLOR_LAUNCH};"></span>上線</span>
-        <span class="legend-item"><span class="legend-dot" style="background:{UI_COLOR_PREP};"></span>預備上線</span>
-        <span class="legend-item"><span class="legend-dot" style="background:{UI_COLOR_WEEKEND};"></span>假日／週末</span>
+      <span class="legend-item"><span class="legend-dot" style="background:{UI_AD2};"></span>Ad2</span>
+      <span class="legend-item"><span class="legend-dot" style="background:{UI_CLIENT};"></span>客戶</span>
+      <span class="legend-item"><span class="legend-dot" style="background:{UI_LAUNCH};"></span>上線</span>
+      <span class="legend-item"><span class="legend-dot" style="background:{UI_PREP};"></span>預備上線</span>
     </div>
-    <div class="gantt-wrap">
-        <table class="gantt-table">
-            {''.join(rows)}
-        </table>
+    <div class="timeline-wrap">
+      <table class="timeline-table">
+        {''.join(rows)}
+      </table>
     </div>
     """
-    return html
+
+def apply_batch_paste():
+    lines = [line.strip() for line in st.session_state.batch_text.splitlines() if line.strip()]
+    if not lines:
+        return
+    new_rows = []
+    for line in lines:
+        parts = [p.strip() for p in line.split("\t")]
+        if len(parts) < 3:
+            parts = [p.strip() for p in line.split(",")]
+        if len(parts) < 3:
+            raise ValueError(f"無法解析：{line}")
+        task = parts[0]
+        owner = parts[1] if parts[1] in ["Ad2", "客戶"] else "Ad2"
+        days = int(parts[2])
+        is_launch = False
+        if len(parts) >= 4:
+            is_launch = parts[3] in ["1", "true", "True", "是", "上線", "Y", "y"]
+        new_rows.append({
+            "顯示": True,
+            "任務名稱": task,
+            "Action By": owner,
+            "工作天數": days,
+            "上線日": is_launch,
+        })
+    st.session_state.tasks = new_rows
+
+def add_task():
+    st.session_state.tasks.append({"顯示": True, "任務名稱": "", "Action By": "Ad2", "工作天數": 1, "上線日": False})
+
+def remove_task(idx: int):
+    if 0 <= idx < len(st.session_state.tasks):
+        st.session_state.tasks.pop(idx)
 
 def generate_schedule():
     holidays = parse_holidays(st.session_state.holidays_text)
-    tasks = normalize_tasks(st.session_state.tasks_df)
+    tasks = get_active_tasks()
     calculation_mode = MODE_MAP[st.session_state.mode_display]
-    start_date_obj, launch_date_obj = get_effective_dates(st.session_state.mode_display)
+    start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
+    launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
 
     df_schedule, warning_msg, holidays_dt = build_scheduler(
         tasks_config=tasks,
@@ -827,60 +724,61 @@ def generate_schedule():
     st.session_state.schedule_df = df_schedule
     st.session_state.warning_msg = warning_msg
     st.session_state.excel_bytes = excel_bytes
-    st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
+    st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
 
 def reset_defaults():
-    st.session_state.project_name = DEFAULT_PROJECT_NAME
-    st.session_state.mode_display = DEFAULT_MODE
-    st.session_state.start_date_value = DEFAULT_START_DATE
-    st.session_state.launch_date_value = DEFAULT_LAUNCH_DATE
-    st.session_state.collapse_threshold = DEFAULT_COLLAPSE_THRESHOLD
-    st.session_state.tasks_df = pd.DataFrame(DEFAULT_TASKS)
+    st.session_state.project_name = ""
+    st.session_state.mode_display = MODE_OPTIONS[0]
+    st.session_state.start_date_value = date.today()
+    st.session_state.launch_date_value = date.today()
+    st.session_state.collapse_threshold = 2
+    st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
     st.session_state.schedule_df = None
     st.session_state.excel_bytes = None
-    st.session_state.warning_msg = ""
-    st.session_state.last_generated_name = DEFAULT_PROJECT_NAME
     st.session_state.display_columns = None
     st.session_state.holidays_dt = None
+    st.session_state.warning_msg = ""
+    st.session_state.last_generated_name = "未命名專案"
+    st.session_state.batch_text = ""
 
+# =========================
+# UI
+# =========================
 st.title("製作時程排程工具")
-st.caption("快速設定專案日期與流程後，即可產出 Excel 時程表；下方預覽會用色塊顯示整體節奏。")
+st.caption("預覽改成穩定版樣式；正式結果仍以 Excel 為準。流程設定改成表單式編輯，避免貼上整塊時資料跳掉。")
 
 with st.sidebar:
     st.subheader("假日設定")
-    st.caption("可從左上角展開側邊欄，平常可收起不顯示。")
     st.text_area("假日清單（每行一筆，格式：YYYY-MM-DD,名稱）", key="holidays_text", height=420)
-    st.caption("建議保留預設國定假日，再視需要補上公司內部休假日。")
 
 with st.container(border=True):
-    header_col1, header_col2 = st.columns([5.2, 1.1])
-    with header_col1:
+    c1, c2 = st.columns([5,1.1])
+    with c1:
         st.markdown('<div class="section-title">專案設定</div>', unsafe_allow_html=True)
         st.markdown('<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>', unsafe_allow_html=True)
-    with header_col2:
+    with c2:
         st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
         st.button("重設", use_container_width=True, on_click=reset_defaults)
 
-    row1_col1, row1_col2, row1_col3 = st.columns([2.5, 1.6, 1.0])
-    with row1_col1:
+    r1c1, r1c2, r1c3 = st.columns([2.5,1.6,1.0])
+    with r1c1:
         st.text_input("專案名稱", key="project_name", placeholder="請輸入專案名稱")
-    with row1_col2:
+    with r1c2:
         st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
-    with row1_col3:
+    with r1c3:
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
-    current_mode = st.session_state.mode_display
-    start_disabled = current_mode == "上線日回推"
-    launch_disabled = current_mode == "製作日推進"
+    start_disabled = st.session_state.mode_display == "上線日回推"
+    launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    row2_col1, row2_col2, row2_col3 = st.columns([1.5, 1.5, 1.1])
-    with row2_col1:
-        st.date_input("開始日期", key="start_date_value", disabled=start_disabled, help="在「上線日回推」模式下，此欄位不需填寫。")
-    with row2_col2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="在「製作日推進」模式下，此欄位不需填寫。")
-    with row2_col3:
+    r2c1, r2c2, r2c3 = st.columns([1.5,1.5,1.1])
+    with r2c1:
+        st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
+    with r2c2:
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled)
+    with r2c3:
         st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
@@ -891,51 +789,69 @@ if st.session_state.warning_msg:
 
 if st.session_state.schedule_df is not None:
     with st.container(border=True):
-        preview_header_col, download_col = st.columns([5.2, 1.25])
-        with preview_header_col:
+        p1, p2 = st.columns([5.2,1.25])
+        with p1:
             st.markdown('<div class="section-title">排程預覽</div>', unsafe_allow_html=True)
             st.markdown("""
             <div class="info-chip-wrap">
-                <span class="info-chip">可左右滑動查看完整日期</span>
+              <span class="info-chip">穩定版預覽樣式，不做複雜合併表頭</span>
+              <span class="info-chip">可左右滑動查看完整日期</span>
             </div>
             """, unsafe_allow_html=True)
-        with download_col:
+        with p2:
             filename = f"{datetime.now().strftime('%m%d')}_{st.session_state.last_generated_name}.xlsx"
             st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
-            st.download_button(
-                "下載 Excel",
-                data=st.session_state.excel_bytes,
-                file_name=filename,
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                type="primary",
-            )
-
-        gantt_html = render_gantt_html(
-            st.session_state.schedule_df,
-            st.session_state.display_columns,
-            st.session_state.holidays_dt,
+            st.download_button("下載 Excel", data=st.session_state.excel_bytes, file_name=filename,
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                               use_container_width=True, type="primary")
+        st.markdown(
+            render_stable_preview(
+                st.session_state.schedule_df,
+                st.session_state.display_columns,
+                st.session_state.holidays_dt,
+            ),
+            unsafe_allow_html=True,
         )
-        st.markdown(gantt_html, unsafe_allow_html=True)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 with st.container(border=True):
-    st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-    st.markdown('<div class="section-sub">取消勾選「顯示」即可暫時隱藏該項目，不會進入排程。</div>', unsafe_allow_html=True)
+    h1, h2 = st.columns([5,1.2])
+    with h1:
+        st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">改成表單式編輯，比較不會在整塊複製貼上時噴錯或資料跳掉。</div>', unsafe_allow_html=True)
+    with h2:
+        st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    st.session_state.tasks_df = st.data_editor(
-        st.session_state.tasks_df,
-        use_container_width=True,
-        num_rows="dynamic",
-        hide_index=True,
-        column_order=["顯示", "任務名稱", "Action By", "工作天數", "上線日"],
-        column_config={
-            "顯示": st.column_config.CheckboxColumn("顯示", help="取消勾選即可暫時隱藏該任務。", width="small"),
-            "任務名稱": st.column_config.TextColumn("任務名稱", required=True, width="large"),
-            "Action By": st.column_config.SelectboxColumn("Action By", options=["Ad2", "客戶"], required=True, width="medium"),
-            "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
-            "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
-        },
-        key="tasks_editor_v11",
-    )
+    with st.expander("批次貼上任務"):
+        st.caption("每行一筆，建議格式：任務名稱[TAB]Action By[TAB]工作天數[TAB]上線日(可省略)")
+        st.text_area("批次貼上內容", key="batch_text", height=140)
+        if st.button("套用批次貼上", type="secondary"):
+            try:
+                apply_batch_paste()
+                st.success("已套用貼上內容。")
+            except Exception as e:
+                st.error(f"套用失敗：{e}")
+
+    st.markdown('<div class="task-grid-head"><div>顯示</div><div>任務名稱</div><div>Action By</div><div>工作天數</div><div>上線日</div><div></div></div>', unsafe_allow_html=True)
+
+    remove_idx = None
+    for idx, row in enumerate(st.session_state.tasks):
+        c1, c2, c3, c4, c5, c6 = st.columns([0.6, 2.2, 1.2, 0.8, 0.8, 0.4])
+        with c1:
+            st.session_state.tasks[idx]["顯示"] = st.checkbox("顯示", value=row["顯示"], key=f"show_{idx}", label_visibility="collapsed")
+        with c2:
+            st.session_state.tasks[idx]["任務名稱"] = st.text_input("任務名稱", value=row["任務名稱"], key=f"task_{idx}", label_visibility="collapsed")
+        with c3:
+            st.session_state.tasks[idx]["Action By"] = st.selectbox("Action By", ["Ad2", "客戶"], index=0 if row["Action By"] == "Ad2" else 1, key=f"owner_{idx}", label_visibility="collapsed")
+        with c4:
+            st.session_state.tasks[idx]["工作天數"] = st.number_input("工作天數", min_value=1, step=1, value=int(row["工作天數"]), key=f"days_{idx}", label_visibility="collapsed")
+        with c5:
+            st.session_state.tasks[idx]["上線日"] = st.checkbox("上線日", value=row["上線日"], key=f"launch_{idx}", label_visibility="collapsed")
+        with c6:
+            if st.button("✕", key=f"del_{idx}"):
+                remove_idx = idx
+
+    if remove_idx is not None:
+        remove_task(remove_idx)
+        st.rerun()
