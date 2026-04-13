@@ -73,7 +73,6 @@ EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
-UI_COLOR_BG = "#FAFAF8"
 UI_COLOR_BORDER = "#ECE8E1"
 UI_COLOR_TEXT = "#2F2A24"
 UI_COLOR_MUTED = "#7A736A"
@@ -126,9 +125,6 @@ div.stButton > button[kind="secondary"] {{
 [data-testid="stNumberInput"] input {{
     border-radius: 12px !important;
 }}
-[data-testid="stDataFrame"], [data-testid="stTable"] {{
-    border-radius: 12px;
-}}
 .section-title {{
     font-size: 1.08rem;
     font-weight: 700;
@@ -138,12 +134,6 @@ div.stButton > button[kind="secondary"] {{
     color: {UI_COLOR_MUTED};
     font-size: 0.92rem;
     margin-bottom: 0.9rem;
-}}
-.preview-note {{
-    color: {UI_COLOR_MUTED};
-    font-size: 0.9rem;
-    margin-top: -0.15rem;
-    margin-bottom: 0.75rem;
 }}
 .info-chip-wrap {{
     display: flex;
@@ -221,13 +211,20 @@ div.stButton > button[kind="secondary"] {{
     background: #fff;
 }}
 .gantt-table .weekend-head {{ background: #F4F4F4; }}
-.gantt-table .break-head, .gantt-table .break-cell {{
+.gantt-table .break-head {{
     width: 26px;
     min-width: 26px;
     max-width: 26px;
     background: #F7F7F7;
     color: #777;
     font-weight: 700;
+}}
+.gantt-table .break-merged {{
+    background: #F7F7F7;
+    color: #777;
+    font-weight: 700;
+    min-width: 26px;
+    width: 26px;
 }}
 .gantt-table .empty-cell {{ background: #fff; }}
 .gantt-table .weekend-cell {{ background: #F3F3F3; }}
@@ -256,11 +253,7 @@ div.stButton > button[kind="secondary"] {{
 }}
 .small-gap {{ height: 0.35rem; }}
 .large-gap {{ height: 1.8rem; }}
-
-/* 隱藏 data editor 左側內建選取欄 */
-[data-testid="stDataEditor"] [role="grid"] [aria-colindex="1"] {{
-    display: none !important;
-}}
+[data-testid="stDataEditor"] [role="grid"] [aria-colindex="1"],
 [data-testid="stDataEditor"] [role="columnheader"][aria-colindex="1"] {{
     display: none !important;
 }}
@@ -307,7 +300,6 @@ def parse_holidays(text: str) -> dict:
 def normalize_tasks(df: pd.DataFrame) -> list[dict]:
     if df is None or df.empty:
         raise ValueError("請至少保留一筆任務。")
-
     df = df.copy()
     required_cols = ["顯示", "任務名稱", "Action By", "工作天數", "上線日"]
     for c in required_cols:
@@ -319,7 +311,6 @@ def normalize_tasks(df: pd.DataFrame) -> list[dict]:
     df["Action By"] = df["Action By"].fillna("Ad2").astype(str).str.strip()
     df["工作天數"] = pd.to_numeric(df["工作天數"], errors="coerce")
     df["上線日"] = df["上線日"].fillna(False).astype(bool)
-
     df = df[(df["顯示"] == True) & (df["任務名稱"] != "")].copy()
 
     if df.empty:
@@ -496,7 +487,6 @@ def prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_
 
     full_dates = list(pd.date_range(min_date, max_date, freq="D"))
     display_columns = []
-
     prep_task_row = df_schedule[df_schedule["Type"] == "Prep"]
     prep_task = None
     if not prep_task_row.empty:
@@ -518,6 +508,44 @@ def prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_
     else:
         display_columns = full_dates
     return display_columns
+
+def compute_month_segments(display_columns, col_start):
+    segments = []
+    segment_start_col = None
+    segment_month = None
+    segment_year = None
+
+    for i, item in enumerate(display_columns):
+        if item == "BREAK":
+            if segment_start_col is not None:
+                segments.append((segment_start_col, col_start + i - 1, segment_year, segment_month))
+                segment_start_col = None
+                segment_month = None
+                segment_year = None
+            continue
+
+        d = item
+        excel_col = col_start + i
+        if segment_start_col is None:
+            segment_start_col = excel_col
+            segment_month = d.month
+            segment_year = d.year
+        elif d.month != segment_month or d.year != segment_year:
+            segments.append((segment_start_col, excel_col - 1, segment_year, segment_month))
+            segment_start_col = excel_col
+            segment_month = d.month
+            segment_year = d.year
+
+    if segment_start_col is not None:
+        last_real_col = None
+        for i in range(len(display_columns) - 1, -1, -1):
+            if display_columns[i] != "BREAK":
+                last_real_col = col_start + i
+                break
+        if last_real_col is not None:
+            segments.append((segment_start_col, last_real_col, segment_year, segment_month))
+
+    return segments
 
 def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold):
     output = io.BytesIO()
@@ -593,9 +621,27 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     worksheet.set_column(1, 1, 12)
 
     col_start, row_start = 2, 4
-    current_month, merge_start_col, month_color_idx = None, col_start, 0
     break_cols_excel = []
 
+    # 先畫月份標示
+    month_segments = compute_month_segments(display_columns, col_start)
+    month_color_idx = 0
+    for start_col, end_col, year, month in month_segments:
+        month_fmt = F(
+            bold=True,
+            align="center",
+            valign="vcenter",
+            bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)],
+            **border_fmt
+        )
+        month_label = date(year, month, 1).strftime("%b").upper()
+        if start_col == end_col:
+            worksheet.write(1, start_col, month_label, month_fmt)
+        else:
+            worksheet.merge_range(1, start_col, 1, end_col, month_label, month_fmt)
+        month_color_idx += 1
+
+    # 再畫日期與星期
     for i, item in enumerate(display_columns):
         col = col_start + i
         if item == "BREAK":
@@ -604,18 +650,6 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             continue
 
         d = item
-        if current_month is None:
-            current_month = d.month
-
-        if d.month != current_month:
-            month_fmt = F(bold=True, align="center", valign="vcenter", bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)], **border_fmt)
-            worksheet.merge_range(1, merge_start_col, 1, col - 1, date(d.year, current_month, 1).strftime("%b").upper(), month_fmt)
-            current_month, merge_start_col, month_color_idx = d.month, col, month_color_idx + 1
-
-        if i == len(display_columns) - 1:
-            month_fmt = F(bold=True, align="center", valign="vcenter", bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)], **border_fmt)
-            worksheet.merge_range(1, merge_start_col, 1, col, d.strftime("%b").upper(), month_fmt)
-
         is_h = not is_workday(d.date())
         weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
         worksheet.write(2, col, d.day, fmt_weekend if is_h else fmt_date_num)
@@ -708,14 +742,16 @@ def render_gantt_html(df_schedule, display_columns, holidays_dt):
             header_row.append(f'<th class="{cls}">{item.strftime("%m/%d")}<br>{weekday_map[item.weekday()]}</th>')
 
     body_rows = []
-    for _, row in df_schedule.iterrows():
+    total_rows = len(df_schedule)
+    for row_idx, (_, row) in enumerate(df_schedule.iterrows()):
         cells = [
             f'<td class="task-col sticky-left">{row["Task"]}</td>',
             f'<td class="owner-col sticky-left-2">{row["Owner"]}</td>',
         ]
         for item in display_columns:
             if item == "BREAK":
-                cells.append('<td class="break-cell">～</td>')
+                if row_idx == 0:
+                    cells.append(f'<td class="break-merged" rowspan="{total_rows}">～</td>')
                 continue
 
             d = item.date()
@@ -898,5 +934,5 @@ with st.container(border=True):
             "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
             "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
         },
-        key="tasks_editor_v10",
+        key="tasks_editor_v11",
     )
