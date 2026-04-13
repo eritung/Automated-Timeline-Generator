@@ -15,21 +15,21 @@ st.set_page_config(
 # =========================
 # 基本設定
 # =========================
-DEFAULT_PROJECT_NAME = "Dove多芬_十效修護精華髮油Q2宣傳"
-MODE_OPTIONS = ["從開始日期往後排", "從上線日期往前推", "同時指定開始與上線日期"]
+DEFAULT_PROJECT_NAME = ""
+MODE_OPTIONS = ["製作日推進", "上線日回推", "同時指定開始與上線日期"]
 DEFAULT_MODE = MODE_OPTIONS[0]
 DEFAULT_START_DATE = date.today()
-DEFAULT_LAUNCH_DATE = date(2026, 5, 6)
+DEFAULT_LAUNCH_DATE = date.today()
 DEFAULT_COLLAPSE_THRESHOLD = 2
 
 DEFAULT_TASKS = [
-    {"任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3, "上線日": False},
-    {"任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2, "上線日": False},
-    {"任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1, "上線日": False},
-    {"任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
+    {"顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3, "上線日": False},
+    {"顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2, "上線日": False},
+    {"顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
+    {"顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1, "上線日": False},
+    {"顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
 ]
 
 DEFAULT_HOLIDAYS = {
@@ -60,12 +60,11 @@ DEFAULT_HOLIDAYS = {
 }
 
 MODE_MAP = {
-    "從開始日期往後排": "forward",
-    "從上線日期往前推": "backward",
+    "製作日推進": "forward",
+    "上線日回推": "backward",
     "同時指定開始與上線日期": "double",
 }
 
-# Excel 輸出色彩
 EXCEL_COLOR_CLIENT_BAR = '#EA9B56'
 EXCEL_COLOR_AD2_BAR = '#4BACC6'
 EXCEL_COLOR_LAUNCH_BAR = '#FF0000'
@@ -74,7 +73,7 @@ EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
-# UI / 預覽色彩
+UI_COLOR_BG = "#FAFAF8"
 UI_COLOR_BORDER = "#ECE8E1"
 UI_COLOR_TEXT = "#2F2A24"
 UI_COLOR_MUTED = "#7A736A"
@@ -102,19 +101,6 @@ html, body, [data-testid="stAppViewContainer"] {{
   background: #FBFAF8;
   border-right: 1px solid {UI_COLOR_BORDER};
 }}
-
-/* 淡白色墊底卡片 */
-[data-testid="stVerticalBlockBorderWrapper"] {{
-  background: rgba(255,255,255,0.72);
-  border: 1px solid {UI_COLOR_BORDER} !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 24px rgba(68,54,37,0.04);
-}}
-[data-testid="stVerticalBlockBorderWrapper"] > div {{
-  border-radius: 20px !important;
-}}
-
-/* 按鈕 */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
     background-color: {UI_COLOR_PRIMARY} !important;
@@ -134,14 +120,15 @@ div.stButton > button[kind="secondary"] {{
     border: 1px solid {UI_COLOR_BORDER} !important;
     background: white !important;
 }}
-
 [data-testid="stTextInputRootElement"],
 [data-testid="stDateInputField"],
 [data-baseweb="select"] > div,
 [data-testid="stNumberInput"] input {{
     border-radius: 12px !important;
 }}
-
+[data-testid="stDataFrame"], [data-testid="stTable"] {{
+    border-radius: 12px;
+}}
 .section-title {{
     font-size: 1.08rem;
     font-weight: 700;
@@ -169,13 +156,12 @@ div.stButton > button[kind="secondary"] {{
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
-    background: rgba(255,255,255,0.82);
+    background: #F8F6F3;
     border: 1px solid {UI_COLOR_BORDER};
     border-radius: 999px;
     font-size: 12px;
     color: {UI_COLOR_MUTED};
 }}
-
 .gantt-wrap {{
     overflow-x: auto;
     border: 1px solid {UI_COLOR_BORDER};
@@ -249,7 +235,6 @@ div.stButton > button[kind="secondary"] {{
 .gantt-table .bar-client {{ background: {UI_COLOR_CLIENT}; }}
 .gantt-table .bar-launch {{ background: {UI_COLOR_LAUNCH}; }}
 .gantt-table .bar-prep {{ background: {UI_COLOR_PREP}; }}
-
 .legend {{
     display: flex;
     gap: 12px;
@@ -272,14 +257,12 @@ div.stButton > button[kind="secondary"] {{
 .small-gap {{ height: 0.35rem; }}
 .large-gap {{ height: 1.8rem; }}
 
-/* 隱藏 data editor 最左側多餘選取欄 */
-[data-testid="stDataEditor"] [role="gridcell"][data-column="0"],
-[data-testid="stDataEditor"] [role="columnheader"][data-column="0"] {{
-  display: none !important;
+/* 隱藏 data editor 左側內建選取欄 */
+[data-testid="stDataEditor"] [role="grid"] [aria-colindex="1"] {{
+    display: none !important;
 }}
-/* 保底：縮掉左側 row header */
-[data-testid="stDataEditor"] [data-testid="stDataFrameRowHeader"] {{
-  display: none !important;
+[data-testid="stDataEditor"] [role="columnheader"][aria-colindex="1"] {{
+    display: none !important;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -326,19 +309,21 @@ def normalize_tasks(df: pd.DataFrame) -> list[dict]:
         raise ValueError("請至少保留一筆任務。")
 
     df = df.copy()
-    required_cols = ["任務名稱", "Action By", "工作天數", "上線日"]
+    required_cols = ["顯示", "任務名稱", "Action By", "工作天數", "上線日"]
     for c in required_cols:
         if c not in df.columns:
             raise ValueError(f"缺少欄位：{c}")
 
+    df["顯示"] = df["顯示"].fillna(True).astype(bool)
     df["任務名稱"] = df["任務名稱"].fillna("").astype(str).str.strip()
     df["Action By"] = df["Action By"].fillna("Ad2").astype(str).str.strip()
     df["工作天數"] = pd.to_numeric(df["工作天數"], errors="coerce")
     df["上線日"] = df["上線日"].fillna(False).astype(bool)
-    df = df[df["任務名稱"] != ""].copy()
+
+    df = df[(df["顯示"] == True) & (df["任務名稱"] != "")].copy()
 
     if df.empty:
-        raise ValueError("請至少保留一筆有任務名稱的資料。")
+        raise ValueError("目前沒有可排程的任務，請至少保留一筆顯示中的任務。")
     if (df["工作天數"].isna()).any() or (df["工作天數"] <= 0).any():
         raise ValueError("工作天數必須為大於 0 的整數。")
 
@@ -412,7 +397,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     if calculation_mode == "backward":
         if not launch_date_obj:
-            raise ValueError("「從上線日期往前推」需要填寫上線日期。")
+            raise ValueError("「上線日回推」需要填寫上線日期。")
         current_end = launch_date_obj
         reversed_tasks = tasks_config[::-1]
         temp_schedule = []
@@ -638,6 +623,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
         worksheet.set_column(col, col, 4.5)
 
     last_task_row = row_start + len(df_schedule) - 1
+
     for c in break_cols_excel:
         worksheet.merge_range(2, c, last_task_row, c, "～", fmt_break_merge)
 
@@ -680,9 +666,9 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     return output.getvalue(), display_columns
 
 def get_effective_dates(mode_display):
-    if mode_display == "從開始日期往後排":
+    if mode_display == "製作日推進":
         return st.session_state.start_date_value, None
-    if mode_display == "從上線日期往前推":
+    if mode_display == "上線日回推":
         return None, st.session_state.launch_date_value
     return st.session_state.start_date_value, st.session_state.launch_date_value
 
@@ -802,7 +788,7 @@ def generate_schedule():
     st.session_state.schedule_df = df_schedule
     st.session_state.warning_msg = warning_msg
     st.session_state.excel_bytes = excel_bytes
-    st.session_state.last_generated_name = st.session_state.project_name
+    st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
 
@@ -813,7 +799,6 @@ def reset_defaults():
     st.session_state.launch_date_value = DEFAULT_LAUNCH_DATE
     st.session_state.collapse_threshold = DEFAULT_COLLAPSE_THRESHOLD
     st.session_state.tasks_df = pd.DataFrame(DEFAULT_TASKS)
-    st.session_state.holidays_text = "\n".join([f"{k},{v}" for k, v in DEFAULT_HOLIDAYS.items()])
     st.session_state.schedule_df = None
     st.session_state.excel_bytes = None
     st.session_state.warning_msg = ""
@@ -821,13 +806,6 @@ def reset_defaults():
     st.session_state.display_columns = None
     st.session_state.holidays_dt = None
 
-def hide_material_task():
-    df = st.session_state.tasks_df.copy()
-    if "任務名稱" in df.columns:
-        df = df[df["任務名稱"].astype(str).str.strip() != "提供素材"].reset_index(drop=True)
-    st.session_state.tasks_df = df
-
-# 介面
 st.title("製作時程排程工具")
 st.caption("快速設定專案日期與流程後，即可產出 Excel 時程表；下方預覽會用色塊顯示整體節奏。")
 
@@ -848,21 +826,21 @@ with st.container(border=True):
 
     row1_col1, row1_col2, row1_col3 = st.columns([2.5, 1.6, 1.0])
     with row1_col1:
-        st.text_input("專案名稱", key="project_name")
+        st.text_input("專案名稱", key="project_name", placeholder="請輸入專案名稱")
     with row1_col2:
         st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
     with row1_col3:
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
     current_mode = st.session_state.mode_display
-    start_disabled = current_mode == "從上線日期往前推"
-    launch_disabled = current_mode == "從開始日期往後排"
+    start_disabled = current_mode == "上線日回推"
+    launch_disabled = current_mode == "製作日推進"
 
     row2_col1, row2_col2, row2_col3 = st.columns([1.5, 1.5, 1.1])
     with row2_col1:
-        st.date_input("開始日期", key="start_date_value", disabled=start_disabled, help="在「從上線日期往前推」模式下，此欄位不需填寫。")
+        st.date_input("開始日期", key="start_date_value", disabled=start_disabled, help="在「上線日回推」模式下，此欄位不需填寫。")
     with row2_col2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="在「從開始日期往後排」模式下，此欄位不需填寫。")
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="在「製作日推進」模式下，此欄位不需填寫。")
     with row2_col3:
         st.markdown('<div class="large-gap"></div>', unsafe_allow_html=True)
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
@@ -877,12 +855,9 @@ if st.session_state.schedule_df is not None:
         preview_header_col, download_col = st.columns([5.2, 1.25])
         with preview_header_col:
             st.markdown('<div class="section-title">排程預覽</div>', unsafe_allow_html=True)
-            st.markdown('<div class="preview-note">預覽使用柔和色塊輔助閱讀；實際 Excel 會維持原本的上線純紅色塊。</div>', unsafe_allow_html=True)
             st.markdown("""
             <div class="info-chip-wrap">
                 <span class="info-chip">可左右滑動查看完整日期</span>
-                <span class="info-chip">表頭已加入星期幾</span>
-                <span class="info-chip">假日與週末會以灰底標示</span>
             </div>
             """, unsafe_allow_html=True)
         with download_col:
@@ -907,25 +882,21 @@ if st.session_state.schedule_df is not None:
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 with st.container(border=True):
-    top_left, top_right = st.columns([4.8, 1.4])
-    with top_left:
-        st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。</div>', unsafe_allow_html=True)
-    with top_right:
-        st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-        st.button("快速隱藏提供素材", use_container_width=True, on_click=hide_material_task)
+    st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-sub">取消勾選「顯示」即可暫時隱藏該項目，不會進入排程。</div>', unsafe_allow_html=True)
 
     st.session_state.tasks_df = st.data_editor(
         st.session_state.tasks_df,
         use_container_width=True,
         num_rows="dynamic",
         hide_index=True,
-        column_order=["任務名稱", "Action By", "工作天數", "上線日"],
+        column_order=["顯示", "任務名稱", "Action By", "工作天數", "上線日"],
         column_config={
+            "顯示": st.column_config.CheckboxColumn("顯示", help="取消勾選即可暫時隱藏該任務。", width="small"),
             "任務名稱": st.column_config.TextColumn("任務名稱", required=True, width="large"),
             "Action By": st.column_config.SelectboxColumn("Action By", options=["Ad2", "客戶"], required=True, width="medium"),
             "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
             "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
         },
-        key="tasks_editor_v9",
+        key="tasks_editor_v10",
     )
