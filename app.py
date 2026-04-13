@@ -914,7 +914,7 @@ with st.container(border=True):
 
         with c7:
             st.markdown('<div class="op-btn">', unsafe_allow_html=True)
-            if st.button("複", key=f"copy_{rid}", use_container_width=True):
+            if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                 copy_task(idx)
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
