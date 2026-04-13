@@ -67,13 +67,11 @@ MODE_MAP = {
 
 COLOR_CLIENT_BAR = '#EA9B56'
 COLOR_AD2_BAR = '#4BACC6'
-COLOR_LAUNCH_BAR = '#E06B6B'   # 收斂後的紅色
+COLOR_LAUNCH_BAR = '#D47B7B'
 COLOR_PREP_BAR = '#92D050'
-COLOR_WEEKEND = '#D9D9D9'
-COLOR_LEGEND_CLIENT = '#EA9B56'
-COLOR_LEGEND_AD2 = '#4BACC6'
-COLOR_HOLIDAY_TEXT = '#595959'
-COLOR_HOLIDAY_BG = COLOR_WEEKEND
+COLOR_WEEKEND = '#ECECEC'
+COLOR_BREAK = '#F5F5F5'
+COLOR_MONTH_BG = '#F7F7F7'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
 st.markdown("""
@@ -96,6 +94,112 @@ div.stButton > button[kind="secondary"] {
     margin-top: -0.25rem;
     margin-bottom: 0.75rem;
 }
+.gantt-wrap {
+    overflow-x: auto;
+    border: 1px solid #e6e6e6;
+    border-radius: 12px;
+    background: #fff;
+}
+.gantt-table {
+    border-collapse: collapse;
+    width: max-content;
+    min-width: 100%;
+    font-size: 13px;
+}
+.gantt-table th, .gantt-table td {
+    border: 1px solid #ececec;
+    text-align: center;
+    padding: 0;
+    height: 34px;
+}
+.gantt-table .sticky-left {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #fff;
+}
+.gantt-table .sticky-left-2 {
+    position: sticky;
+    left: 180px;
+    z-index: 3;
+    background: #fff;
+}
+.gantt-table .task-col {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    padding: 0 10px;
+    text-align: left;
+    font-weight: 600;
+}
+.gantt-table .owner-col {
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
+    padding: 0 8px;
+    text-align: center;
+}
+.gantt-table .month-row th {
+    background: #fafafa;
+    font-weight: 700;
+    height: 30px;
+}
+.gantt-table .date-head {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
+    line-height: 1.1;
+    font-size: 11px;
+    background: #fff;
+}
+.gantt-table .weekend-head {
+    background: #f3f3f3;
+}
+.gantt-table .break-head, .gantt-table .break-cell {
+    width: 26px;
+    min-width: 26px;
+    max-width: 26px;
+    background: #f7f7f7;
+    color: #666;
+    font-weight: 700;
+}
+.gantt-table .empty-cell {
+    background: #fff;
+}
+.gantt-table .weekend-cell {
+    background: #f3f3f3;
+}
+.gantt-table .bar-ad2 {
+    background: #4BACC6;
+}
+.gantt-table .bar-client {
+    background: #EA9B56;
+}
+.gantt-table .bar-launch {
+    background: #D47B7B;
+}
+.gantt-table .bar-prep {
+    background: #92D050;
+}
+.legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #555;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -116,7 +220,7 @@ def init_state():
         "warning_msg": "",
         "last_generated_name": DEFAULT_PROJECT_NAME,
         "display_columns": None,
-        "holiday_labels": None,
+        "holidays_dt": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -228,7 +332,6 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     schedule = []
     warning_msg = ""
-
     launch_tasks = [t for t in tasks_config if t["is_launch"]]
     launch_task_config = launch_tasks[0] if launch_tasks else tasks_config[-1]
 
@@ -325,7 +428,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
 
     return pd.DataFrame(schedule), warning_msg, holidays_dt
 
-def prepare_display_columns(df_schedule, holidays_dt, holidays_config, launch_date_obj, collapse_threshold):
+def prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_threshold):
     min_date = df_schedule["Start Date"].min()
     max_date = df_schedule["End Date"].max()
     if launch_date_obj and launch_date_obj > max_date:
@@ -354,19 +457,11 @@ def prepare_display_columns(df_schedule, holidays_dt, holidays_config, launch_da
                     break_added = True
     else:
         display_columns = full_dates
-
-    holiday_labels = {}
-    for item in display_columns:
-        if item == "BREAK":
-            continue
-        d = item.date()
-        key = d.strftime("%Y-%m-%d")
-        holiday_labels[key] = holidays_config.get(key, "")
-    return display_columns, holiday_labels
+    return display_columns
 
 def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold):
     output = io.BytesIO()
-    display_columns, _ = prepare_display_columns(df_schedule, holidays_dt, holidays_config, launch_date_obj, collapse_threshold)
+    display_columns = prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_threshold)
 
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
@@ -420,14 +515,14 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     fmt_left = F(align="left", valign="vcenter", **border_fmt)
     fmt_weekend = F(bg_color=COLOR_WEEKEND, align="center", valign="vcenter", **border_fmt)
     fmt_date_num = F(align="center", valign="vcenter", **border_fmt)
-    fmt_holiday_merged = F(align="center", valign="vcenter", text_wrap=True, bg_color=COLOR_HOLIDAY_BG, border=1, font_color=COLOR_HOLIDAY_TEXT, bold=True)
+    fmt_holiday_merged = F(align="center", valign="vcenter", text_wrap=True, bg_color=COLOR_WEEKEND, border=1, font_color="#595959", bold=True)
     fmt_header_main = F(bold=True, align="center", valign="vcenter", bg_color="#FFFFFF", **border_fmt)
     fmt_bar_client = F(bg_color=COLOR_CLIENT_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_bar_ad2 = F(bg_color=COLOR_AD2_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_bar_launch = F(bg_color=COLOR_LAUNCH_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_bar_prep = F(bg_color=COLOR_PREP_BAR, align="center", valign="vcenter", **border_fmt)
-    fmt_legend_client = F(bg_color=COLOR_LEGEND_CLIENT, align="center", valign="vcenter", **border_fmt)
-    fmt_legend_ad2 = F(bg_color=COLOR_LEGEND_AD2, align="center", valign="vcenter", **border_fmt)
+    fmt_legend_client = F(bg_color=COLOR_CLIENT_BAR, align="center", valign="vcenter", **border_fmt)
+    fmt_legend_ad2 = F(bg_color=COLOR_AD2_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_break_merge = F(align="center", valign="vcenter", **border_fmt)
 
     worksheet.write(0, 2, "客戶", fmt_legend_client)
@@ -517,48 +612,107 @@ def get_effective_dates(mode_display):
         return None, st.session_state.launch_date_value
     return st.session_state.start_date_value, st.session_state.launch_date_value
 
-def render_preview_grid(df_schedule, display_columns, holidays_dt):
+def render_gantt_html(df_schedule, display_columns, holidays_dt):
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
 
-    cols = ["任務名稱", "Action By"]
+    weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
+
+    # month row
+    month_cells = []
+    i = 0
+    while i < len(display_columns):
+        item = display_columns[i]
+        if item == "BREAK":
+            month_cells.append('<th class="break-head" rowspan="2">～</th>')
+            i += 1
+            continue
+        month = item.strftime("%m月")
+        span = 1
+        j = i + 1
+        while j < len(display_columns):
+            nxt = display_columns[j]
+            if nxt == "BREAK" or nxt.strftime("%m") != item.strftime("%m"):
+                break
+            span += 1
+            j += 1
+        month_cells.append(f'<th colspan="{span}">{month}</th>')
+        i = j
+
+    header_row = []
     for item in display_columns:
         if item == "BREAK":
-            cols.append("～")
+            header_row.append('<th class="break-head">～</th>')
         else:
-            cols.append(item.strftime("%m/%d"))
+            d = item.date()
+            is_weekend = not is_workday(d)
+            cls = "date-head weekend-head" if is_weekend else "date-head"
+            header_row.append(f'<th class="{cls}">{item.strftime("%m/%d")}<br>{weekday_map[item.weekday()]}</th>')
 
-    rows = []
-    for _, item in df_schedule.iterrows():
-        row = {"任務名稱": item["Task"], "Action By": item["Owner"]}
-        for col_item in display_columns:
-            if col_item == "BREAK":
-                row["～"] = "～"
+    body_rows = []
+    for _, row in df_schedule.iterrows():
+        cells = [
+            f'<td class="task-col sticky-left">{row["Task"]}</td>',
+            f'<td class="owner-col sticky-left-2">{row["Owner"]}</td>',
+        ]
+        for item in display_columns:
+            if item == "BREAK":
+                cells.append('<td class="break-cell">～</td>')
                 continue
 
-            d_date = col_item.date()
-            key = col_item.strftime("%m/%d")
-            if item["Start Date"] <= d_date <= item["End Date"]:
-                if item["Type"] == "Launch":
-                    row[key] = "上"
-                elif item["Type"] == "Prep":
-                    row[key] = "預"
-                elif "客戶" in item["Owner"]:
-                    row[key] = "客"
-                else:
-                    row[key] = "A"
-            else:
-                row[key] = "休" if not is_workday(d_date) else ""
-        rows.append(row)
+            d = item.date()
+            is_weekend = not is_workday(d)
+            base_cls = "weekend-cell" if is_weekend else "empty-cell"
 
-    preview_df = pd.DataFrame(rows)
-    return preview_df
+            if row["Start Date"] <= d <= row["End Date"]:
+                if row["Type"] == "Launch":
+                    cls = "bar-launch"
+                elif row["Type"] == "Prep":
+                    cls = "bar-prep"
+                elif "客戶" in row["Owner"]:
+                    cls = "bar-client"
+                else:
+                    cls = "bar-ad2"
+                cells.append(f'<td class="{cls}"></td>')
+            else:
+                cells.append(f'<td class="{base_cls}"></td>')
+
+        body_rows.append(f"<tr>{''.join(cells)}</tr>")
+
+    html = f"""
+    <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:{COLOR_AD2_BAR};"></span>Ad2</span>
+        <span class="legend-item"><span class="legend-dot" style="background:{COLOR_CLIENT_BAR};"></span>客戶</span>
+        <span class="legend-item"><span class="legend-dot" style="background:{COLOR_LAUNCH_BAR};"></span>上線</span>
+        <span class="legend-item"><span class="legend-dot" style="background:{COLOR_PREP_BAR};"></span>預備上線</span>
+        <span class="legend-item"><span class="legend-dot" style="background:{COLOR_WEEKEND};"></span>假日／週末</span>
+    </div>
+    <div class="gantt-wrap">
+        <table class="gantt-table">
+            <thead>
+                <tr class="month-row">
+                    <th class="task-col sticky-left" rowspan="2">任務名稱</th>
+                    <th class="owner-col sticky-left-2" rowspan="2">Action By</th>
+                    {''.join(month_cells)}
+                </tr>
+                <tr>
+                    {''.join(header_row)}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join(body_rows)}
+            </tbody>
+        </table>
+    </div>
+    """
+    return html
 
 def generate_schedule():
     holidays = parse_holidays(st.session_state.holidays_text)
     tasks = normalize_tasks(st.session_state.tasks_df)
     calculation_mode = MODE_MAP[st.session_state.mode_display]
     start_date_obj, launch_date_obj = get_effective_dates(st.session_state.mode_display)
+
     df_schedule, warning_msg, holidays_dt = build_scheduler(
         tasks_config=tasks,
         holidays_config=holidays,
@@ -573,13 +727,13 @@ def generate_schedule():
         launch_date_obj=launch_date_obj,
         collapse_threshold=int(st.session_state.collapse_threshold),
     )
-    _, holiday_labels = prepare_display_columns(df_schedule, holidays_dt, holidays, launch_date_obj, int(st.session_state.collapse_threshold))
+
     st.session_state.schedule_df = df_schedule
     st.session_state.warning_msg = warning_msg
     st.session_state.excel_bytes = excel_bytes
     st.session_state.last_generated_name = st.session_state.project_name
     st.session_state.display_columns = display_columns
-    st.session_state.holiday_labels = holiday_labels
+    st.session_state.holidays_dt = holidays_dt
 
 def reset_defaults():
     st.session_state.project_name = DEFAULT_PROJECT_NAME
@@ -594,7 +748,7 @@ def reset_defaults():
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = DEFAULT_PROJECT_NAME
     st.session_state.display_columns = None
-    st.session_state.holiday_labels = None
+    st.session_state.holidays_dt = None
 
 # =========================
 # 介面
@@ -644,7 +798,7 @@ if st.session_state.schedule_df is not None:
     preview_header_col, download_col = st.columns([5.3, 1.7])
     with preview_header_col:
         st.subheader("排程預覽")
-        st.markdown("<div class='preview-note'>預覽以簡化時程圖顯示：A＝Ad2、客＝客戶、上＝上線、預＝預備上線、休＝假日</div>", unsafe_allow_html=True)
+        st.markdown('<div class="preview-note">預覽已改為色塊時程圖，日期欄位上方同步顯示星期。</div>', unsafe_allow_html=True)
     with download_col:
         filename = f"{datetime.now().strftime('%m%d')}_{st.session_state.last_generated_name}.xlsx"
         st.markdown("<div style='height:1.6rem;'></div>", unsafe_allow_html=True)
@@ -656,11 +810,12 @@ if st.session_state.schedule_df is not None:
             use_container_width=True,
             type="primary",
         )
-
-    holidays = parse_holidays(st.session_state.holidays_text)
-    holidays_dt = [pd.to_datetime(h).date() for h in holidays.keys()]
-    preview_df = render_preview_grid(st.session_state.schedule_df, st.session_state.display_columns, holidays_dt)
-    st.dataframe(preview_df, use_container_width=True, hide_index=True, height=min(450, 120 + len(preview_df) * 35))
+    gantt_html = render_gantt_html(
+        st.session_state.schedule_df,
+        st.session_state.display_columns,
+        st.session_state.holidays_dt,
+    )
+    st.markdown(gantt_html, unsafe_allow_html=True)
 
 st.markdown("### 流程設定")
 st.session_state.tasks_df = st.data_editor(
@@ -675,14 +830,6 @@ st.session_state.tasks_df = st.data_editor(
         "工作天數": st.column_config.NumberColumn("工作天數", min_value=1, max_value=365, step=1, required=True, width="small"),
         "上線日": st.column_config.CheckboxColumn("上線日", help="若此步驟需固定在上線當天，請勾選。", width="small"),
     },
-    key="tasks_editor_v5",
+    key="tasks_editor_v6",
 )
 st.caption("可直接新增、刪除或修改任務。若未勾選任何一筆「上線日」，系統會自動將最後一筆視為上線日。")
-
-with st.expander("這版調整說明"):
-    st.markdown("""
-- 預覽改成更接近時程圖的簡化樣式，不再只顯示日期表。
-- Excel 下載按鈕保留在預覽區右上，產出後可直接點。
-- 紅色按鈕已調成較柔和的色調。
-- 專案設定欄位已重新整理成兩列，順序更整齊。
-    """)
