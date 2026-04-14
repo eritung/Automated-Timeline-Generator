@@ -181,6 +181,15 @@ div.stDownloadButton > button[kind="primary"]:hover {{
   font-size: 12px;
   font-weight: 600;
 }}
+
+.compact-list { border: 1px solid #E7E1D8; border-radius: 12px; overflow: hidden; background: white; }
+.compact-head, .compact-row { display: grid; grid-template-columns: 48px 1.9fr 90px 80px 72px 196px; gap: 8px; align-items: center; }
+.compact-head { padding: 10px 12px; background: #F6F2EC; color: #7A736A; font-size: 12px; font-weight: 600; }
+.compact-row { padding: 8px 12px; border-top: 1px solid #EEE8DF; }
+.compact-row.alt { background: rgba(248,244,238,0.72); }
+.compact-cell-center { text-align: center; }
+.compact-task-btn button { text-align: left !important; justify-content: flex-start !important; min-height: 2rem !important; }
+.edit-panel { border: 1px solid #E7E1D8; border-radius: 12px; background: rgba(255,255,255,0.86); padding: 14px 14px 6px 14px; margin-top: 12px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -216,6 +225,9 @@ def init_state():
         st.session_state.last_generated_name = "未命名專案"
     if "status_msg" not in st.session_state:
         st.session_state.status_msg = ""
+    st.session_state.editing_task_id = None
+    if "editing_task_id" not in st.session_state:
+        st.session_state.editing_task_id = None
 
 init_state()
 
@@ -715,6 +727,19 @@ def copy_task(idx: int):
         row["id"] = f"task_copy_{uuid.uuid4().hex[:6]}"
         st.session_state.tasks.insert(idx + 1, row)
 
+def set_editing_task(task_id: str):
+    st.session_state.editing_task_id = task_id
+
+def get_task_index_by_id(task_id: str):
+    for i, row in enumerate(st.session_state.tasks):
+        if row.get("id") == task_id:
+            return i
+    return None
+
+def toggle_task_field(idx: int, field: str):
+    if 0 <= idx < len(st.session_state.tasks):
+        st.session_state.tasks[idx][field] = not bool(st.session_state.tasks[idx].get(field, False))
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
@@ -836,94 +861,91 @@ with st.container(border=True):
     h1, h2 = st.columns([5,1.05], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">先選一列，再於下方編輯內容；右側可快速排序、複製或刪除。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
-    headers = [
-        (hc1, "顯示"),
-        (hc2, "任務名稱"),
-        (hc3, "Action By"),
-        (hc4, "工作天數"),
-        (hc5, "上線日"),
-        (hc6, "排序"),
-        (hc7, "複製"),
-        (hc8, "刪除"),
-    ]
-    for col, label in headers:
-        with col:
-            st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
+    st.markdown("<div class="compact-list"><div class="compact-head"><div class="compact-cell-center">顯示</div><div class="compact-cell-center">任務名稱</div><div class="compact-cell-center">Action By</div><div class="compact-cell-center">工作天數</div><div class="compact-cell-center">上線日</div><div class="compact-cell-center">操作</div></div>", unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
-        zebra_class = "task-row-plain-alt" if idx % 2 else "task-row-plain"
-        st.markdown(f'<div class="{zebra_class}">', unsafe_allow_html=True)
-
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
-
+        row_class = "compact-row alt" if idx % 2 else "compact-row"
+        st.markdown(f'<div class="{row_class}">', unsafe_allow_html=True)
+        c1, c2, c3, c4, c5, c6 = st.columns([0.55, 2.35, 1.0, 0.8, 0.75, 2.0], vertical_alignment="center")
         with c1:
-            key = f"show_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["顯示"]
-            st.checkbox("顯示", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "顯示", key))
-
+            if st.button("👁" if row.get("顯示", True) else "🚫", key=f"toggle_show_{rid}", use_container_width=True):
+                toggle_task_field(idx, "顯示")
+                st.rerun()
         with c2:
-            key = f"task_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["任務名稱"]
-            st.text_input("任務名稱", key=key, label_visibility="collapsed",
-                          on_change=sync_task_field, args=(rid, "任務名稱", key))
-
+            st.markdown('<div class="compact-task-btn">', unsafe_allow_html=True)
+            if st.button(row.get("任務名稱", "未命名任務") or "未命名任務", key=f"edit_pick_{rid}", use_container_width=True):
+                set_editing_task(rid)
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
         with c3:
-            key = f"owner_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["Action By"]
-            st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
-                         on_change=sync_task_field, args=(rid, "Action By", key))
-
+            st.markdown(f'<div class="compact-cell-center">{row.get("Action By", "Ad2")}</div>', unsafe_allow_html=True)
         with c4:
-            key = f"days_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = int(row["工作天數"])
-            st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
-                            on_change=sync_task_field, args=(rid, "工作天數", key))
-
+            st.markdown(f'<div class="compact-cell-center">{int(row.get("工作天數", 1))}</div>', unsafe_allow_html=True)
         with c5:
-            key = f"launch_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["上線日"]
-            st.checkbox("上線日", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "上線日", key))
-
+            if st.button("🚩" if row.get("上線日", False) else "·", key=f"toggle_launch_{rid}", use_container_width=True):
+                toggle_task_field(idx, "上線日")
+                st.rerun()
         with c6:
-            s1, s2 = st.columns([1, 1], vertical_alignment="center")
-            with s1:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
+            a1, a2, a3, a4 = st.columns([1,1,1,1], vertical_alignment="center")
+            with a1:
                 if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-            with s2:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
+            with a2:
                 if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            with a3:
+                if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
+                    copy_task(idx)
+                    st.rerun()
+            with a4:
+                if st.button("✕", key=f"del_{rid}", use_container_width=True):
+                    remove_task(idx)
+                    if st.session_state.editing_task_id == rid:
+                        st.session_state.editing_task_id = None
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        with c7:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
-            if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
-                copy_task(idx)
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-        with c8:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
-            if st.button("✕", key=f"del_{rid}", use_container_width=True):
-                remove_task(idx)
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+    if st.session_state.editing_task_id is None and st.session_state.tasks:
+        st.session_state.editing_task_id = st.session_state.tasks[0]["id"]
 
-        st.markdown('</div>', unsafe_allow_html=True)
+    edit_idx = get_task_index_by_id(st.session_state.editing_task_id) if st.session_state.editing_task_id else None
+    if edit_idx is not None:
+        row = st.session_state.tasks[edit_idx]
+        st.markdown('<div class="edit-panel">', unsafe_allow_html=True)
+        st.markdown(f'<div class="section-title">編輯任務：{row.get("任務名稱", "未命名任務") or "未命名任務"}</div>', unsafe_allow_html=True)
+        e1, e2, e3, e4, e5 = st.columns([2.2, 1.0, 0.9, 0.8, 0.8], vertical_alignment="center")
+        with e1:
+            key = f"task_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["任務名稱"]
+            st.session_state.tasks[edit_idx]["任務名稱"] = st.text_input("任務名稱", key=key)
+        with e2:
+            key = f"owner_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["Action By"]
+            st.session_state.tasks[edit_idx]["Action By"] = st.selectbox("Action By", ["Ad2", "客戶"], key=key)
+        with e3:
+            key = f"days_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = int(row["工作天數"] )
+            st.session_state.tasks[edit_idx]["工作天數"] = st.number_input("工作天數", min_value=1, step=1, key=key)
+        with e4:
+            key = f"show_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["顯示"]
+            st.session_state.tasks[edit_idx]["顯示"] = st.checkbox("顯示", key=key)
+        with e5:
+            key = f"launch_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["上線日"]
+            st.session_state.tasks[edit_idx]["上線日"] = st.checkbox("上線日", key=key)
+        st.markdown("</div>", unsafe_allow_html=True)
