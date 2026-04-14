@@ -285,6 +285,9 @@ tr:nth-child(3) .owner-col {{
   text-transform: uppercase;
   padding: 2px 0;
 }}
+.task-head-center {{
+  text-align: center;
+}}
 
 /* ── Zebra rows ── */
 .task-row-plain     {{ background: transparent; }}
@@ -1027,9 +1030,11 @@ with st.container(border=True):
         (hc7, "複製"),
         (hc8, "刪除"),
     ]
+    centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
     for col, label in headers:
         with col:
-            st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
+            cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
+            st.markdown(f'<div class="{cls}">{label}</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
@@ -1039,8 +1044,10 @@ with st.container(border=True):
             key = f"show_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = row["顯示"]
-            st.checkbox("顯示", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "顯示", key))
+            cc1, cc2, cc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
+            with cc2:
+                st.checkbox("顯示", key=key, label_visibility="collapsed",
+                            on_change=sync_task_field, args=(rid, "顯示", key))
 
         with c2:
             key = f"task_{rid}"
@@ -1067,8 +1074,10 @@ with st.container(border=True):
             key = f"launch_{rid}"
             if key not in st.session_state:
                 st.session_state[key] = row["上線日"]
-            st.checkbox("上線日", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "上線日", key))
+            lc1, lc2, lc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
+            with lc2:
+                st.checkbox("上線日", key=key, label_visibility="collapsed",
+                            on_change=sync_task_field, args=(rid, "上線日", key))
 
         with c6:
             s1, s2 = st.columns([1, 1], vertical_alignment="center")
