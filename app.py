@@ -76,247 +76,148 @@ UI_PREP = "#92D050"
 
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap');
-
 html, body, [data-testid="stAppViewContainer"] {{
-  background: #F5F3EF;
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  background: linear-gradient(180deg, #FCFBF9 0%, #F8F6F2 100%);
 }}
 .block-container {{
-  max-width: 1480px;
-  padding-top: 2rem !important;
-  padding-bottom: 4rem !important;
+  max-width: 1450px;
+  padding-top: 1.8rem !important;
+  padding-bottom: 3rem !important;
 }}
 [data-testid="stSidebar"] {{
-  background: #FDFCFA;
-  border-right: 1px solid #E5E1DA;
+  background: #FBFAF8;
+  border-right: 1px solid {UI_BORDER};
 }}
-
-/* ── Page title ── */
-h1 {{
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif !important;
-  font-size: 1.75rem !important;
-  font-weight: 800 !important;
-  color: #1E1B18 !important;
-  letter-spacing: -0.3px !important;
-  margin-bottom: 0 !important;
-}}
-
-/* ── Primary buttons ── */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
   background: {UI_PRIMARY} !important;
-  border: none !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  font-weight: 700 !important;
-  font-size: 0.88rem !important;
-  letter-spacing: 0.3px !important;
-  padding: 0.45rem 1rem !important;
-  box-shadow: 0 2px 10px rgba(201,123,123,0.35) !important;
-  transition: transform 0.12s, box-shadow 0.12s !important;
+  border: 1px solid {UI_PRIMARY} !important;
+  color: white !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
   background: {UI_PRIMARY_HOVER} !important;
-  box-shadow: 0 4px 16px rgba(201,123,123,0.45) !important;
-  transform: translateY(-1px) !important;
+  border-color: {UI_PRIMARY_HOVER} !important;
 }}
-
-/* ── Secondary / plain buttons ── */
-div.stButton > button:not([kind="primary"]) {{
-  border-radius: 7px !important;
-  font-size: 0.83rem !important;
-  border: 1px solid #DDD9D2 !important;
-  color: #5A5550 !important;
-  background: #FDFCFA !important;
-  transition: background 0.1s, border-color 0.1s !important;
-}}
-div.stButton > button:not([kind="primary"]):hover {{
-  background: #F5F2ED !important;
-  border-color: #C5C0B8 !important;
-}}
-
-/* ── Section headers ── */
 .section-title {{
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 700;
-  color: #1E1B18;
-  margin-bottom: 0.15rem;
-  letter-spacing: 0.1px;
+  margin-bottom: 0.2rem;
 }}
 .section-sub {{
-  color: #8C8680;
-  font-size: 0.845rem;
-  margin-bottom: 0.85rem;
-  line-height: 1.5;
+  color: {UI_MUTED};
+  font-size: 0.92rem;
+  margin-bottom: 0.9rem;
 }}
-
-/* ── Containers ── */
-[data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
-  border-radius: 14px !important;
-  border-color: #E5E1DA !important;
-}}
-
-/* ── Timeline wrapper ── */
 .timeline-wrap {{
   overflow-x: auto;
-  border: 1px solid #E5E1DA;
-  border-radius: 14px;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  margin-top: 6px;
+  border: 1px solid {UI_BORDER};
+  border-radius: 16px;
+  background: white;
 }}
-
-/* ── Timeline table base ── */
 .timeline-table {{
   border-collapse: collapse;
   width: max-content;
   min-width: 100%;
-  font-size: 12.5px;
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  font-size: 13px;
 }}
-.timeline-table th,
-.timeline-table td {{
-  border: 1px solid #EDE9E2;
+.timeline-table th, .timeline-table td {{
+  border: 1px solid #F0ECE6;
   text-align: center;
   padding: 0;
-  height: 34px;
+  height: 36px;
 }}
-
-/* ── Month header row ── */
-.timeline-table .month-row th {{
-  height: 26px;
-  background: #F0EDE7;
-  font-weight: 700;
-  font-size: 11.5px;
-  color: #4A4540;
-  letter-spacing: 0.6px;
-}}
-
-/* ── Date & weekday header ── */
-.timeline-table .date-head {{
-  width: 34px; min-width: 34px; max-width: 34px;
-  font-size: 11px;
-  line-height: 1.2;
-  color: #4E4A46;
-  background: #F8F6F2;
-}}
-.timeline-table .weekend-head {{
-  background: #EEECE8 !important;
-  color: #9A9590 !important;
-}}
-.timeline-table .weekend-cell {{
-  background: #F4F2EE;
-}}
-.timeline-table .empty-cell {{
-  background: #fff;
-}}
-
-/* ── Sticky left columns ── */
 .timeline-table .task-col {{
-  min-width: 186px; max-width: 186px; width: 186px;
-  text-align: left; padding: 0 13px;
-  font-weight: 600; font-size: 12.5px;
-  background: #fff;
-  position: sticky; left: 0; z-index: 3;
-  border-right: 2px solid #DDD9D2;
-  color: #1E1B18;
+  min-width: 190px; max-width: 190px; width: 190px;
+  text-align: left; padding: 0 12px; font-weight: 600; background: white;
+  position: sticky; left: 0; z-index: 2;
 }}
 .timeline-table .owner-col {{
-  min-width: 90px; max-width: 90px; width: 90px;
-  background: #fff;
-  position: sticky; left: 186px; z-index: 3;
-  font-size: 12px;
-  color: #5A5550;
-  border-right: 2px solid #DDD9D2;
+  min-width: 96px; max-width: 96px; width: 96px;
+  background: white; position: sticky; left: 190px; z-index: 2;
 }}
-
-/* Sticky header cells */
-.timeline-table .month-row .task-col,
-.timeline-table .month-row .owner-col,
-tr:nth-child(2) .task-col,
-tr:nth-child(2) .owner-col,
-tr:nth-child(3) .task-col,
-tr:nth-child(3) .owner-col {{
-  background: #F0EDE7;
+.timeline-table .month-row th {{
+  height: 30px; background: #FBFAF8; font-weight: 700;
 }}
-
-/* ── BREAK column ── */
+.timeline-table .date-head {{
+  width: 38px; min-width: 38px; max-width: 38px;
+  font-size: 11px; line-height: 1.15;
+}}
+.timeline-table .weekend-head, .timeline-table .weekend-cell {{
+  background: #F3F3F3;
+}}
+.timeline-table .empty-cell {{ background: white; }}
 .timeline-table .break-cell {{
-  width: 22px; min-width: 22px; max-width: 22px;
-  background: linear-gradient(180deg, #E8E4DC 0%, #D8D4CC 100%);
-  color: #888078;
-  font-weight: 800;
-  font-size: 12px;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  letter-spacing: 3px;
-  vertical-align: middle;
-  border-left: 2px solid #C8C4BC;
-  border-right: 2px solid #C8C4BC;
+  width: 28px; min-width: 28px; max-width: 28px;
+  background: #F7F7F7; color: #777; font-weight: 700;
 }}
-
-/* ── Bar cells ── */
-.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: #3A9CB6; }}
-.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: #D88A46; }}
-.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: #C46A6A; }}
-.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: #7DC040; }}
-
-/* ── Legend ── */
+.timeline-table .bar-ad2 {{ background: {UI_AD2}; }}
+.timeline-table .bar-client {{ background: {UI_CLIENT}; }}
+.timeline-table .bar-launch {{ background: {UI_LAUNCH}; }}
+.timeline-table .bar-prep {{ background: {UI_PREP}; }}
 .legend {{
-  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px;
+  display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
   font-size: 12px; color: {UI_MUTED};
+}}
+.legend-item {{ display: inline-flex; align-items: center; gap: 6px; }}
+.legend-dot {{ width: 12px; height: 12px; border-radius: 4px; display: inline-block; }}
+.small-gap {{ height: 0.35rem; }}
+.large-gap {{ height: 1.8rem; }}
+.task-grid-row {{
+  display: grid;
+  grid-template-columns: 72px 1.8fr 1fr 0.8fr 0.8fr 52px;
+  gap: 8px;
   align-items: center;
-  padding: 6px 2px;
+  margin-bottom: 8px;
 }}
-.legend-item {{ display: inline-flex; align-items: center; gap: 5px; }}
-.legend-dot {{
-  width: 11px; height: 11px; border-radius: 3px; display: inline-block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
-}}
-
-/* ── Task list header labels ── */
-.task-head-label {{
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #8C8680;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  padding: 2px 0;
+.task-grid-head {{
+  display: grid;
+  grid-template-columns: 72px 1.8fr 1fr 0.8fr 0.8fr 52px;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: {UI_MUTED};
+  font-size: 12px;
+  font-weight: 600;
 }}
 
-/* ── Zebra rows ── */
-.task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: #FAFAF8; border-radius: 6px; }}
-
-/* ── Op buttons ── */
-.op-btn button {{
-  font-size: 13px !important;
-  padding: 0 !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  border-radius: 6px !important;
-}}
-
-/* ── Gaps ── */
-.small-gap {{ height: 0.3rem; }}
-.large-gap {{ height: 1.6rem; }}
-
-/* ── Streamlit form input tweaks ── */
-[data-testid="stTextInput"] input,
-[data-testid="stNumberInput"] input {{
-  border-radius: 7px !important;
-  border-color: #DDD9D2 !important;
-  font-size: 0.875rem !important;
-}}
-[data-testid="stSelectbox"] > div {{
-  border-radius: 7px !important;
-}}
-[data-testid="stDateInput"] input {{
-  border-radius: 7px !important;
-  border-color: #DDD9D2 !important;
-}}
+.compact-list {
+  border: 1px solid #E7E1D8;
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+.compact-head, .compact-row {
+  display: grid;
+  grid-template-columns: 48px 1.8fr 90px 80px 72px 190px;
+  gap: 8px;
+  align-items: center;
+}
+.compact-head {
+  padding: 10px 12px;
+  background: #F6F2EC;
+  color: #7A736A;
+  font-size: 12px;
+  font-weight: 600;
+}
+.compact-row {
+  padding: 8px 12px;
+  border-top: 1px solid #EEE8DF;
+}
+.compact-row.alt {
+  background: rgba(248,244,238,0.7);
+}
+.compact-cell-center {
+  text-align: center;
+}
+.edit-panel {
+  border: 1px solid #E7E1D8;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.82);
+  padding: 14px 14px 6px 14px;
+  margin-top: 12px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -352,6 +253,8 @@ def init_state():
         st.session_state.last_generated_name = "未命名專案"
     if "status_msg" not in st.session_state:
         st.session_state.status_msg = ""
+    if "editing_task_id" not in st.session_state:
+        st.session_state.editing_task_id = None
 
 init_state()
 
@@ -735,16 +638,12 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
         return (d.weekday() < 5) and (d not in holidays_dt)
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
 
-    # 3 header rows (month / date / weekday) + all task rows
-    total_rowspan = 3 + len(df_schedule)
-
     month_cells = []
     i = 0
     while i < len(display_columns):
         item = display_columns[i]
         if item == "BREAK":
-            # Merge entire column (including month/date/weekday headers + all task rows)
-            month_cells.append(f'<th class="break-cell" rowspan="{total_rowspan}">～</th>')
+            month_cells.append('<th class="break-cell" rowspan="3">～</th>')
             i += 1
             continue
         month = item.strftime("%m月")
@@ -763,10 +662,10 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
     weekday_cells = []
     for item in display_columns:
         if item == "BREAK":
-            continue  # already covered by rowspan above
+            continue
         d = item.date()
         cls = "date-head weekend-head" if not is_workday(d) else "date-head"
-        date_cells.append(f'<th class="{cls}">{d.day}</th>')
+        date_cells.append(f'<th class="{cls}">{item.strftime("%m/%d")}</th>')
         weekday_cells.append(f'<th class="{cls}">{weekday_map[item.weekday()]}</th>')
 
     rows = []
@@ -786,7 +685,8 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
         ]
         for item in display_columns:
             if item == "BREAK":
-                continue  # already merged by rowspan — skip this cell
+                cells.append('<td class="break-cell">～</td>')
+                continue
             d = item.date()
             base_cls = "weekend-cell" if not is_workday(d) else "empty-cell"
             if row["Start Date"] <= d <= row["End Date"]:
@@ -854,6 +754,19 @@ def copy_task(idx: int):
         row["id"] = f"task_copy_{uuid.uuid4().hex[:6]}"
         st.session_state.tasks.insert(idx + 1, row)
 
+def set_editing_task(task_id: str):
+    st.session_state.editing_task_id = task_id
+
+def get_task_index_by_id(task_id: str):
+    for i, row in enumerate(st.session_state.tasks):
+        if row.get("id") == task_id:
+            return i
+    return None
+
+def toggle_task_field(idx: int, field: str):
+    if 0 <= idx < len(st.session_state.tasks):
+        st.session_state.tasks[idx][field] = not bool(st.session_state.tasks[idx].get(field, False))
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
@@ -899,6 +812,7 @@ def reset_defaults():
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
     st.session_state.status_msg = ""
+    st.session_state.editing_task_id = None
 
 # =========================
 # UI
@@ -971,98 +885,126 @@ st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 
 
+
 with st.container(border=True):
-    h1, h2 = st.columns([5,1.05], vertical_alignment="center")
+    h1, h2 = st.columns([5, 1.05], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">先選一列，再於下方編輯內容；右側可快速排序、複製或刪除。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
-    headers = [
-        (hc1, "顯示"),
-        (hc2, "任務名稱"),
-        (hc3, "Action By"),
-        (hc4, "工作天數"),
-        (hc5, "上線日"),
-        (hc6, "排序"),
-        (hc7, "複製"),
-        (hc8, "刪除"),
-    ]
-    for col, label in headers:
-        with col:
-            st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
+    st.markdown(
+        '''
+        <div class="compact-list">
+          <div class="compact-head">
+            <div class="compact-cell-center">顯示</div>
+            <div class="compact-cell-center">任務名稱</div>
+            <div class="compact-cell-center">Action By</div>
+            <div class="compact-cell-center">工作天數</div>
+            <div class="compact-cell-center">上線日</div>
+            <div class="compact-cell-center">操作</div>
+          </div>
+        ''',
+        unsafe_allow_html=True
+    )
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
-        zebra_class = "task-row-plain-alt" if idx % 2 else "task-row-plain"
-        st.markdown(f'<div class="{zebra_class}">', unsafe_allow_html=True)
+        row_class = "compact-row alt" if idx % 2 else "compact-row"
+        st.markdown(f'<div class="{row_class}">', unsafe_allow_html=True)
 
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
+        c1, c2, c3, c4, c5, c6 = st.columns([0.55, 2.25, 1.0, 0.8, 0.75, 1.9], vertical_alignment="center")
 
         with c1:
-            key = f"show_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["顯示"]
-            st.checkbox("顯示", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "顯示", key))
+            if st.button("👁" if row.get("顯示", True) else "🚫", key=f"toggle_show_{rid}", use_container_width=True):
+                toggle_task_field(idx, "顯示")
+                st.rerun()
 
         with c2:
-            key = f"task_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["任務名稱"]
-            st.text_input("任務名稱", key=key, label_visibility="collapsed",
-                          on_change=sync_task_field, args=(rid, "任務名稱", key))
+            if st.button(row.get("任務名稱", "未命名任務") or "未命名任務", key=f"edit_pick_{rid}", use_container_width=True):
+                set_editing_task(rid)
+                st.rerun()
 
         with c3:
-            key = f"owner_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["Action By"]
-            st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
-                         on_change=sync_task_field, args=(rid, "Action By", key))
+            st.markdown(f'<div class="compact-cell-center">{row.get("Action By", "Ad2")}</div>', unsafe_allow_html=True)
 
         with c4:
-            key = f"days_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = int(row["工作天數"])
-            st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
-                            on_change=sync_task_field, args=(rid, "工作天數", key))
+            st.markdown(f'<div class="compact-cell-center">{int(row.get("工作天數", 1))}</div>', unsafe_allow_html=True)
 
         with c5:
-            key = f"launch_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["上線日"]
-            st.checkbox("上線日", key=key, label_visibility="collapsed",
-                        on_change=sync_task_field, args=(rid, "上線日", key))
+            if st.button("🚩" if row.get("上線日", False) else "·", key=f"toggle_launch_{rid}", use_container_width=True):
+                toggle_task_field(idx, "上線日")
+                st.rerun()
 
         with c6:
-            s1, s2 = st.columns([1, 1], vertical_alignment="center")
-            with s1:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
+            a1, a2, a3, a4 = st.columns([1, 1, 1, 1], vertical_alignment="center")
+            with a1:
                 if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-            with s2:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
+            with a2:
                 if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+            with a3:
+                if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
+                    copy_task(idx)
+                    st.rerun()
+            with a4:
+                if st.button("✕", key=f"del_{rid}", use_container_width=True):
+                    remove_task(idx)
+                    if st.session_state.editing_task_id == rid:
+                        st.session_state.editing_task_id = None
+                    st.rerun()
 
-        with c7:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
-            if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
-                copy_task(idx)
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-        with c8:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
-            if st.button("✕", key=f"del_{rid}", use_container_width=True):
-                remove_task(idx)
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.session_state.editing_task_id is None and st.session_state.tasks:
+        st.session_state.editing_task_id = st.session_state.tasks[0]["id"]
+
+    edit_idx = get_task_index_by_id(st.session_state.editing_task_id) if st.session_state.editing_task_id else None
+
+    if edit_idx is not None:
+        row = st.session_state.tasks[edit_idx]
+        st.markdown('<div class="edit-panel">', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="section-title">編輯任務：{row.get("任務名稱", "未命名任務") or "未命名任務"}</div>',
+            unsafe_allow_html=True
+        )
+
+        e1, e2, e3, e4, e5 = st.columns([2.2, 1.0, 0.9, 0.8, 0.8], vertical_alignment="center")
+
+        with e1:
+            key = f"task_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["任務名稱"]
+            st.session_state.tasks[edit_idx]["任務名稱"] = st.text_input("任務名稱", key=key)
+
+        with e2:
+            key = f"owner_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["Action By"]
+            st.session_state.tasks[edit_idx]["Action By"] = st.selectbox("Action By", ["Ad2", "客戶"], key=key)
+
+        with e3:
+            key = f"days_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = int(row["工作天數"])
+            st.session_state.tasks[edit_idx]["工作天數"] = st.number_input("工作天數", min_value=1, step=1, key=key)
+
+        with e4:
+            key = f"show_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["顯示"]
+            st.session_state.tasks[edit_idx]["顯示"] = st.checkbox("顯示", key=key)
+
+        with e5:
+            key = f"launch_edit_{row['id']}"
+            if key not in st.session_state:
+                st.session_state[key] = row["上線日"]
+            st.session_state.tasks[edit_idx]["上線日"] = st.checkbox("上線日", key=key)
 
         st.markdown('</div>', unsafe_allow_html=True)
