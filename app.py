@@ -836,7 +836,7 @@ with st.container(border=True):
     h1, h2 = st.columns([5,1.05], vertical_alignment="center")
     with h1:
         st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可直接新增、複製、刪除、調整順序與修改任務內容。</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>', unsafe_allow_html=True)
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 

@@ -9,6 +9,6 @@ python -m streamlit run app.py
 ```
 
 ## 這版更新
-- 流程設定列高度再次壓縮
-- input、select、checkbox、按鈕高度同步縮小
-- 表頭與列之間的留白減少
+- 更激進壓縮流程設定 widget 容器高度
+- 行距、欄距、按鈕高度再次縮小
+- 斑馬紋底色加深一點
