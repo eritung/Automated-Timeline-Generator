@@ -1075,35 +1075,23 @@ with st.container(border=True):
         with c6:
             s1, s2 = st.columns([1, 1], vertical_alignment="center")
             with s1:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
                 if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
-                if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
             with s2:
-                st.markdown('<div class="op-btn">', unsafe_allow_html=True)
                 if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
-                if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
         with c7:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                 copy_task(idx)
                 st.rerun()
-            if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
         with c8:
-            st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("✕", key=f"del_{rid}", use_container_width=True):
                 remove_task(idx)
                 st.rerun()
-            if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
         if idx < len(st.session_state.tasks) - 1:
             st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
