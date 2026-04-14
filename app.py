@@ -276,7 +276,17 @@ tr:nth-child(3) .owner-col {{
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }}
 
-/* ── Task list header labels ── */
+/* ── Task config table ── */
+.task-config-area {{
+  margin-top: 0.25rem;
+}}
+.task-config-head {{
+  background: #F6F2EC;
+  border: 1px solid #E8E2D9;
+  border-radius: 12px;
+  padding: 0.35rem 0.7rem 0.2rem;
+  margin-bottom: 0.45rem;
+}}
 .task-head-label {{
   font-size: 11.5px;
   font-weight: 700;
@@ -284,19 +294,61 @@ tr:nth-child(3) .owner-col {{
   letter-spacing: 0.4px;
   text-transform: uppercase;
   padding: 2px 0;
+  text-align: center;
 }}
-
-/* ── Zebra rows ── */
-.task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: #FAFAF8; border-radius: 6px; }}
+.task-row {{
+  border: 1px solid #ECE7DE;
+  border-radius: 12px;
+  padding: 0.4rem 0.7rem 0.12rem;
+  margin-bottom: 0.42rem;
+  box-shadow: 0 1px 2px rgba(24, 22, 19, 0.03);
+}}
+.task-row-plain {{
+  background: rgba(255,255,255,0.75);
+}}
+.task-row-plain-alt {{
+  background: #FAF8F4;
+}}
+.task-row [data-testid="column"] {{
+  display: flex;
+  align-items: center;
+}}
+.task-row [data-testid="stVerticalBlock"] {{
+  gap: 0.08rem !important;
+}}
+.task-row [data-testid="element-container"] {{
+  margin-bottom: 0.1rem !important;
+}}
+.task-row label[data-testid="stWidgetLabel"] {{
+  display: none !important;
+}}
+.task-row [data-testid="stCheckbox"] {{
+  display: flex;
+  justify-content: center;
+}}
+.task-row [data-testid="stCheckbox"] > label {{
+  margin-top: 0.15rem !important;
+}}
+.task-row [data-testid="stTextInput"] input,
+.task-row [data-testid="stNumberInput"] input,
+.task-row [data-testid="stSelectbox"] > div,
+.task-row [data-testid="stSelectbox"] [data-baseweb="select"],
+.task-row [data-testid="stSelectbox"] input {{
+  min-height: 2.2rem !important;
+}}
+.task-row [data-testid="stTextInput"] input,
+.task-row [data-testid="stNumberInput"] input,
+.task-row [data-testid="stDateInput"] input {{
+  background: #FFFEFC !important;
+}}
 
 /* ── Op buttons ── */
 .op-btn button {{
   font-size: 13px !important;
   padding: 0 !important;
-  height: 30px !important;
-  min-height: 30px !important;
-  border-radius: 6px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  border-radius: 8px !important;
 }}
 
 /* ── Gaps ── */
@@ -979,6 +1031,8 @@ with st.container(border=True):
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
+    st.markdown('<div class="task-config-area">', unsafe_allow_html=True)
+    st.markdown('<div class="task-config-head">', unsafe_allow_html=True)
     hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
     headers = [
         (hc1, "顯示"),
@@ -993,11 +1047,12 @@ with st.container(border=True):
     for col, label in headers:
         with col:
             st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
         zebra_class = "task-row-plain-alt" if idx % 2 else "task-row-plain"
-        st.markdown(f'<div class="{zebra_class}">', unsafe_allow_html=True)
+        st.markdown(f'<div class="task-row {zebra_class}">', unsafe_allow_html=True)
 
         c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
 
@@ -1066,3 +1121,6 @@ with st.container(border=True):
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
+
+
+st.markdown('</div>', unsafe_allow_html=True)
