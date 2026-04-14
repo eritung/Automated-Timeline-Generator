@@ -276,90 +276,85 @@ tr:nth-child(3) .owner-col {{
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
 }}
 
-/* ── Task config table ── */
-.task-config-area {{
-  margin-top: 0.3rem;
-}}
-.task-config-head {{
-  background: #F7F4EF;
-  border: 1px solid #E6E0D7;
-  border-radius: 10px;
-  padding: 0.36rem 0.7rem;
-  margin-bottom: 0.2rem;
-}}
+/* ── Task list header labels ── */
 .task-head-label {{
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #8C8680;
-  letter-spacing: 0.2px;
-  padding: 0;
-  text-align: center;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 2px 0;
 }}
-.task-table-row {{
-  padding: 0.2rem 0.15rem 0.12rem 0.15rem;
-  border-bottom: 1px solid #ECE6DD;
-}}
-.task-table-row:last-child {{
-  border-bottom: none;
-}}
+
+/* ── Zebra rows ── */
+.task-row-plain     {{ background: transparent; }}
+.task-row-plain-alt {{ background: #FAFAF8; border-radius: 6px; }}
 
 /* ── Op buttons ── */
 .op-btn button {{
   font-size: 13px !important;
   padding: 0 !important;
-  height: 2rem !important;
-  min-height: 2rem !important;
-  border-radius: 7px !important;
+  height: 2.25rem !important;
+  min-height: 2.25rem !important;
+  border-radius: 8px !important;
+}}
+
+/* ── Flow settings compact table ── */
+.flow-row-sep {{
+  height: 1px;
+  background: #EAE5DD;
+  margin: 0.2rem 0 0.35rem 0;
+}}
+[data-testid="stCheckbox"] {{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}}
+[data-testid="stCheckbox"] label {{
+  min-height: auto !important;
+}}
+[data-testid="stTextInput"],
+[data-testid="stNumberInput"],
+[data-testid="stSelectbox"],
+[data-testid="stCheckbox"],
+div.stButton {{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}}
+[data-testid="stTextInput"] > div,
+[data-testid="stNumberInput"] > div,
+[data-testid="stSelectbox"] > div {{
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}}
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input {{
+  border-radius: 8px !important;
+  border-color: #DDD9D2 !important;
+  font-size: 0.93rem !important;
+  height: 2.7rem !important;
+}}
+[data-testid="stSelectbox"] > div > div,
+[data-baseweb="select"] > div {{
+  min-height: 2.7rem !important;
+  border-radius: 8px !important;
+}}
+[data-testid="stSelectbox"] [data-baseweb="select"] {{
+  margin: 0 !important;
+}}
+[data-testid="stDateInput"] input {{
+  border-radius: 8px !important;
+  border-color: #DDD9D2 !important;
+}}
+[data-testid="column"] > div[data-testid="stVerticalBlock"] {{
+  gap: 0.2rem !important;
+}}
+[data-testid="element-container"] {{
+  margin-bottom: 0.2rem !important;
 }}
 
 /* ── Gaps ── */
 .small-gap {{ height: 0.3rem; }}
 .large-gap {{ height: 1.6rem; }}
-
-/* ── Streamlit form input tweaks ── */
-[data-testid="stTextInput"] input,
-[data-testid="stNumberInput"] input {{
-  border-radius: 7px !important;
-  border-color: #DDD9D2 !important;
-  font-size: 0.875rem !important;
-}}
-[data-testid="stSelectbox"] > div {{
-  border-radius: 7px !important;
-}}
-[data-testid="stDateInput"] input {{
-  border-radius: 7px !important;
-  border-color: #DDD9D2 !important;
-}}
-
-/* ── Compact flow section ── */
-.flow-config-scope [data-testid="element-container"] {{
-  margin-bottom: 0.04rem !important;
-}}
-.flow-config-scope [data-testid="stVerticalBlock"] {{
-  gap: 0.02rem !important;
-}}
-.flow-config-scope label[data-testid="stWidgetLabel"] {{
-  display: none !important;
-}}
-.flow-config-scope [data-testid="stTextInput"] input,
-.flow-config-scope [data-testid="stNumberInput"] input,
-.flow-config-scope [data-testid="stSelectbox"] > div,
-.flow-config-scope [data-testid="stSelectbox"] [data-baseweb="select"],
-.flow-config-scope [data-testid="stSelectbox"] input {{
-  min-height: 2rem !important;
-}}
-.flow-config-scope [data-testid="stTextInput"] input,
-.flow-config-scope [data-testid="stNumberInput"] input {{
-  padding-top: 0.35rem !important;
-  padding-bottom: 0.35rem !important;
-}}
-.flow-config-scope [data-testid="stCheckbox"] {{
-  display: flex;
-  justify-content: center;
-}}
-.flow-config-scope [data-testid="column"] {{
-  align-items: center;
-}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -961,7 +956,8 @@ with st.container(border=True):
     with c2:
         st.markdown('<div class="mini-reset">', unsafe_allow_html=True)
         st.button("重設", on_click=reset_defaults, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
     r1c1, r1c2, r1c3 = st.columns([2.6,1.5,0.9], vertical_alignment="bottom")
     with r1c1:
@@ -1022,8 +1018,6 @@ with st.container(border=True):
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    st.markdown('<div class="task-config-area flow-config-scope">', unsafe_allow_html=True)
-    st.markdown('<div class="task-config-head">', unsafe_allow_html=True)
     hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
     headers = [
         (hc1, "顯示"),
@@ -1038,13 +1032,10 @@ with st.container(border=True):
     for col, label in headers:
         with col:
             st.markdown(f'<div class="task-head-label">{label}</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
-        st.markdown('<div class="task-table-row">', unsafe_allow_html=True)
-
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.15, 1.2, 0.78, 0.7, 1.0, 0.55, 0.45], vertical_alignment="center")
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
 
         with c1:
             key = f"show_{rid}"
@@ -1088,29 +1079,31 @@ with st.container(border=True):
                 if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
                     move_task_up(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
             with s2:
                 st.markdown('<div class="op-btn">', unsafe_allow_html=True)
                 if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
                     move_task_down(idx)
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
         with c7:
             st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                 copy_task(idx)
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
         with c8:
             st.markdown('<div class="op-btn">', unsafe_allow_html=True)
             if st.button("✕", key=f"del_{rid}", use_container_width=True):
                 remove_task(idx)
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
-
-st.markdown('</div>', unsafe_allow_html=True)
+        if idx < len(st.session_state.tasks) - 1:
+            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
