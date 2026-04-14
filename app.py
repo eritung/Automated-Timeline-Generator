@@ -284,8 +284,8 @@ tr:nth-child(3) .owner-col {{
   background: #F6F2EC;
   border: 1px solid #E8E2D9;
   border-radius: 12px;
-  padding: 0.35rem 0.7rem 0.2rem;
-  margin-bottom: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.4rem;
 }}
 .task-head-label {{
   font-size: 11.5px;
@@ -296,50 +296,11 @@ tr:nth-child(3) .owner-col {{
   padding: 2px 0;
   text-align: center;
 }}
-.task-row {{
-  border: 1px solid #ECE7DE;
-  border-radius: 12px;
-  padding: 0.4rem 0.7rem 0.12rem;
-  margin-bottom: 0.42rem;
-  box-shadow: 0 1px 2px rgba(24, 22, 19, 0.03);
+.task-row-meta {{
+  font-size: 0;
 }}
-.task-row-plain {{
-  background: rgba(255,255,255,0.75);
-}}
-.task-row-plain-alt {{
-  background: #FAF8F4;
-}}
-.task-row [data-testid="column"] {{
-  display: flex;
-  align-items: center;
-}}
-.task-row [data-testid="stVerticalBlock"] {{
-  gap: 0.08rem !important;
-}}
-.task-row [data-testid="element-container"] {{
-  margin-bottom: 0.1rem !important;
-}}
-.task-row label[data-testid="stWidgetLabel"] {{
-  display: none !important;
-}}
-.task-row [data-testid="stCheckbox"] {{
-  display: flex;
-  justify-content: center;
-}}
-.task-row [data-testid="stCheckbox"] > label {{
-  margin-top: 0.15rem !important;
-}}
-.task-row [data-testid="stTextInput"] input,
-.task-row [data-testid="stNumberInput"] input,
-.task-row [data-testid="stSelectbox"] > div,
-.task-row [data-testid="stSelectbox"] [data-baseweb="select"],
-.task-row [data-testid="stSelectbox"] input {{
-  min-height: 2.2rem !important;
-}}
-.task-row [data-testid="stTextInput"] input,
-.task-row [data-testid="stNumberInput"] input,
-.task-row [data-testid="stDateInput"] input {{
-  background: #FFFEFC !important;
+.task-divider {{
+  height: 0.18rem;
 }}
 
 /* ── Op buttons ── */
@@ -368,6 +329,31 @@ tr:nth-child(3) .owner-col {{
 [data-testid="stDateInput"] input {{
   border-radius: 7px !important;
   border-color: #DDD9D2 !important;
+}}
+
+/* ── Compact flow section ── */
+.flow-config-scope [data-testid="element-container"] {{
+  margin-bottom: 0.12rem !important;
+}}
+.flow-config-scope [data-testid="stVerticalBlock"] {{
+  gap: 0.08rem !important;
+}}
+.flow-config-scope label[data-testid="stWidgetLabel"] {{
+  display: none !important;
+}}
+.flow-config-scope [data-testid="stTextInput"] input,
+.flow-config-scope [data-testid="stNumberInput"] input,
+.flow-config-scope [data-testid="stSelectbox"] > div,
+.flow-config-scope [data-testid="stSelectbox"] [data-baseweb="select"],
+.flow-config-scope [data-testid="stSelectbox"] input {{
+  min-height: 2.2rem !important;
+}}
+.flow-config-scope [data-testid="stCheckbox"] {{
+  display: flex;
+  justify-content: center;
+}}
+.flow-config-scope [data-testid="column"] {{
+  align-items: center;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -1031,7 +1017,7 @@ with st.container(border=True):
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    st.markdown('<div class="task-config-area">', unsafe_allow_html=True)
+    st.markdown('<div class="task-config-area flow-config-scope">', unsafe_allow_html=True)
     st.markdown('<div class="task-config-head">', unsafe_allow_html=True)
     hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
     headers = [
@@ -1051,8 +1037,8 @@ with st.container(border=True):
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
-        zebra_class = "task-row-plain-alt" if idx % 2 else "task-row-plain"
-        st.markdown(f'<div class="task-row {zebra_class}">', unsafe_allow_html=True)
+        zebra_class = " alt" if idx % 2 else ""
+        st.markdown(f'<div class="task-row-shell{zebra_class}">', unsafe_allow_html=True)
 
         c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
 
@@ -1121,6 +1107,7 @@ with st.container(border=True):
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="task-divider"></div>', unsafe_allow_html=True)
 
 
 st.markdown('</div>', unsafe_allow_html=True)
