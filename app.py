@@ -956,8 +956,6 @@ with st.container(border=True):
     with c2:
         st.markdown('<div class="mini-reset">', unsafe_allow_html=True)
         st.button("重設", on_click=reset_defaults, use_container_width=True)
-        if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
     r1c1, r1c2, r1c3 = st.columns([2.6,1.5,0.9], vertical_alignment="bottom")
     with r1c1:
