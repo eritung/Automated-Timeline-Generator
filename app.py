@@ -278,38 +278,38 @@ tr:nth-child(3) .owner-col {{
 
 /* ── Task config table ── */
 .task-config-area {{
-  margin-top: 0.25rem;
+  margin-top: 0.3rem;
 }}
 .task-config-head {{
-  background: #F6F2EC;
-  border: 1px solid #E8E2D9;
-  border-radius: 12px;
-  padding: 0.45rem 0.7rem;
-  margin-bottom: 0.4rem;
+  background: #F7F4EF;
+  border: 1px solid #E6E0D7;
+  border-radius: 10px;
+  padding: 0.36rem 0.7rem;
+  margin-bottom: 0.2rem;
 }}
 .task-head-label {{
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #8C8680;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  padding: 2px 0;
+  letter-spacing: 0.2px;
+  padding: 0;
   text-align: center;
 }}
-.task-row-meta {{
-  font-size: 0;
+.task-table-row {{
+  padding: 0.2rem 0.15rem 0.12rem 0.15rem;
+  border-bottom: 1px solid #ECE6DD;
 }}
-.task-divider {{
-  height: 0.18rem;
+.task-table-row:last-child {{
+  border-bottom: none;
 }}
 
 /* ── Op buttons ── */
 .op-btn button {{
   font-size: 13px !important;
   padding: 0 !important;
-  height: 32px !important;
-  min-height: 32px !important;
-  border-radius: 8px !important;
+  height: 2rem !important;
+  min-height: 2rem !important;
+  border-radius: 7px !important;
 }}
 
 /* ── Gaps ── */
@@ -333,10 +333,10 @@ tr:nth-child(3) .owner-col {{
 
 /* ── Compact flow section ── */
 .flow-config-scope [data-testid="element-container"] {{
-  margin-bottom: 0.12rem !important;
+  margin-bottom: 0.04rem !important;
 }}
 .flow-config-scope [data-testid="stVerticalBlock"] {{
-  gap: 0.08rem !important;
+  gap: 0.02rem !important;
 }}
 .flow-config-scope label[data-testid="stWidgetLabel"] {{
   display: none !important;
@@ -346,7 +346,12 @@ tr:nth-child(3) .owner-col {{
 .flow-config-scope [data-testid="stSelectbox"] > div,
 .flow-config-scope [data-testid="stSelectbox"] [data-baseweb="select"],
 .flow-config-scope [data-testid="stSelectbox"] input {{
-  min-height: 2.2rem !important;
+  min-height: 2rem !important;
+}}
+.flow-config-scope [data-testid="stTextInput"] input,
+.flow-config-scope [data-testid="stNumberInput"] input {{
+  padding-top: 0.35rem !important;
+  padding-bottom: 0.35rem !important;
 }}
 .flow-config-scope [data-testid="stCheckbox"] {{
   display: flex;
@@ -1037,10 +1042,9 @@ with st.container(border=True):
 
     for idx, row in enumerate(st.session_state.tasks):
         rid = row["id"]
-        zebra_class = " alt" if idx % 2 else ""
-        st.markdown(f'<div class="task-row-shell{zebra_class}">', unsafe_allow_html=True)
+        st.markdown('<div class="task-table-row">', unsafe_allow_html=True)
 
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
+        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.15, 1.2, 0.78, 0.7, 1.0, 0.55, 0.45], vertical_alignment="center")
 
         with c1:
             key = f"show_{rid}"
@@ -1107,7 +1111,6 @@ with st.container(border=True):
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('<div class="task-divider"></div>', unsafe_allow_html=True)
 
 
 st.markdown('</div>', unsafe_allow_html=True)
