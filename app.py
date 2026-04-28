@@ -91,8 +91,24 @@ html, body, [data-testid="stAppViewContainer"],
   -webkit-font-smoothing: antialiased;
 }}
 html, body, [data-testid="stAppViewContainer"] {{
-  background: #F2EDE4;   /* 和紙米色底 */
+  background: #F2EDE4;
   color: #1C1917;
+}}
+
+/*
+ * 排除 Streamlit 的 sidebar toggle / icon 按鈕
+ * 避免 serif 字體覆蓋後箭頭符號變成亂碼文字
+ */
+[data-testid="collapsedControl"],
+[data-testid="collapsedControl"] *,
+[data-testid="baseButton-headerNoPadding"],
+[data-testid="baseButton-headerNoPadding"] *,
+button[kind="icon"], button[kind="icon"] *,
+[data-testid="stSidebarNavItems"] *,
+.stDeployButton, .stDeployButton *,
+[aria-label="Close"], [aria-label="Close"] *,
+svg, svg * {{
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important;
 }}
 .block-container {{
   max-width: 1480px;
@@ -106,14 +122,14 @@ html, body, [data-testid="stAppViewContainer"] {{
 
 /* ── 頁面標題 ── */
 h1 {{
-  font-size: 1.4rem !important;
+  font-size: 1.8rem !important;
   font-weight: 500 !important;
   color: #1C1917 !important;
   letter-spacing: 3px !important;
   margin-bottom: 0 !important;
 }}
 [data-testid="stCaptionContainer"] p {{
-  font-size: 0.78rem !important;
+  font-size: 0.95rem !important;
   color: #A09890 !important;
   letter-spacing: 1px !important;
   font-weight: 300 !important;
@@ -156,10 +172,10 @@ div.stButton > button:not([kind="primary"]):hover {{
 
 /* ── 區塊標題：加左側青墨邊線 ── */
 .section-title {{
-  font-size: 0.88rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: #1C1917;
-  margin-bottom: 0.1rem;
+  margin-bottom: 0.15rem;
   letter-spacing: 2.5px;
   border-left: 3px solid {UI_PRIMARY};
   padding-left: 10px;
@@ -167,21 +183,21 @@ div.stButton > button:not([kind="primary"]):hover {{
 }}
 .section-sub {{
   color: #A09890;
-  font-size: 0.79rem;
+  font-size: 0.88rem;
   font-weight: 300;
   margin-bottom: 0.85rem;
   line-height: 1.75;
   letter-spacing: 0.5px;
-  padding-left: 13px;   /* 與 section-title 對齊 */
+  padding-left: 13px;
 }}
 
-/* ── Card 容器：米白底 + 頂部青墨裝飾線 ── */
+/* ── Card 容器：亮米白底 + 頂部青墨裝飾線 ── */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
   border-radius: 4px !important;
   border: 1px solid #CEC9BE !important;
   border-top: 2.5px solid {UI_PRIMARY} !important;
-  background: #FAF7F2 !important;    /* 溫暖米白 */
-  box-shadow: 0 1px 6px rgba(61,60,57,0.06) !important;
+  background: #FEFCF8 !important;    /* 亮米白，明顯區隔背景 */
+  box-shadow: 0 2px 10px rgba(61,60,57,0.08) !important;
 }}
 
 /* ── Timeline wrapper ── */
@@ -310,14 +326,19 @@ tr:nth-child(3) .owner-col {{
 
 /* ── 任務清單標題列 ── */
 .task-head-label {{
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 400;
   color: #ADA89E;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   padding: 2px 0;
+  display: block;
 }}
-.task-head-center {{ text-align: center; }}
+.task-head-center {{
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}}
 
 /* ── 斑馬條紋 ── */
 .task-row-plain     {{ background: transparent; }}
@@ -1074,7 +1095,7 @@ with st.container(border=True):
     with h2:
         st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.72, 2.9, 1.2, 0.9, 0.9, 1.0, 0.55, 0.45], vertical_alignment="center")
+    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
     headers = [
         (hc1, "顯示"),
         (hc2, "任務名稱"),
