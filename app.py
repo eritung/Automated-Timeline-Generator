@@ -77,18 +77,20 @@ UI_PREP = "#89AA77"           # 若草色
 st.markdown(f"""
 <style>
 /*
- * 字體策略：Noto Serif TC 為主（Google Fonts 跨平台載入）
- * Mac 備援：Songti SC / STSong
- * Windows 備援：SimSun / NSimSun
- * 通用備援：Georgia, serif
+ * 字體策略：Noto Sans TC（思源黑體，Google Fonts 跨平台）
+ * Mac 備援：PingFang TC / Helvetica Neue
+ * Windows 備援：Microsoft JhengHei
+ * 通用備援：sans-serif
  */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
 
 /* ── 全域基底 ── */
 html, body, [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"] * {{
-  font-family: 'Noto Serif TC', 'Songti SC', 'STSong', 'SimSun', 'NSimSun', Georgia, serif !important;
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif !important;
   -webkit-font-smoothing: antialiased;
+  line-height: 1.85 !important;
+  letter-spacing: 0.04em !important;
 }}
 html, body, [data-testid="stAppViewContainer"] {{
   background: #F2EDE4;
@@ -96,19 +98,29 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 
 /*
- * 排除 Streamlit 的 sidebar toggle / icon 按鈕
- * 避免 serif 字體覆蓋後箭頭符號變成亂碼文字
+ * ★ 關鍵修復：還原 Material Icons 字型
+ * Streamlit 用 ligature 方式將文字（如 keyboard_double_arrow_left）
+ * 轉成圖示，必須保留原始 Material Icons font-family。
  */
-[data-testid="collapsedControl"],
-[data-testid="collapsedControl"] *,
-[data-testid="baseButton-headerNoPadding"],
-[data-testid="baseButton-headerNoPadding"] *,
-button[kind="icon"], button[kind="icon"] *,
-[data-testid="stSidebarNavItems"] *,
-.stDeployButton, .stDeployButton *,
-[aria-label="Close"], [aria-label="Close"] *,
+.material-icons,
+.material-icons-sharp,
+.material-icons-outlined,
+.material-icons-round,
+.material-symbols-rounded,
+.material-symbols-sharp,
+.material-symbols-outlined,
+[class*="material-icon"],
+[class*="material-symbol"] {{
+  font-family: 'Material Icons', 'Material Icons Sharp', 'Material Icons Outlined',
+               'Material Symbols Rounded', 'Material Symbols Sharp', 'Material Symbols Outlined' !important;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+}}
+/* SVG 內部不需要文字字型 */
 svg, svg * {{
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+  font-family: inherit;
+  line-height: 1 !important;
+  letter-spacing: normal !important;
 }}
 .block-container {{
   max-width: 1480px;
@@ -125,13 +137,15 @@ h1 {{
   font-size: 1.8rem !important;
   font-weight: 500 !important;
   color: #1C1917 !important;
-  letter-spacing: 3px !important;
+  letter-spacing: 0.15em !important;
+  line-height: 1.4 !important;
   margin-bottom: 0 !important;
 }}
 [data-testid="stCaptionContainer"] p {{
   font-size: 0.95rem !important;
   color: #A09890 !important;
-  letter-spacing: 1px !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.9 !important;
   font-weight: 300 !important;
 }}
 
@@ -143,9 +157,10 @@ div.stDownloadButton > button[kind="primary"] {{
   color: #FAF6F0 !important;
   border-radius: 2px !important;
   font-weight: 500 !important;
-  font-size: 0.84rem !important;
-  letter-spacing: 1.8px !important;
-  padding: 0.45rem 1.15rem !important;
+  font-size: 0.88rem !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1.5 !important;
+  padding: 0.5rem 1.2rem !important;
   box-shadow: none !important;
   transition: background 0.16s !important;
 }}
@@ -157,11 +172,12 @@ div.stDownloadButton > button[kind="primary"]:hover {{
 /* ── 次要按鈕 ── */
 div.stButton > button:not([kind="primary"]) {{
   border-radius: 2px !important;
-  font-size: 0.82rem !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.05em !important;
+  line-height: 1.5 !important;
   border: 1px solid #CCC7BD !important;
   color: #5C5650 !important;
   background: #FAF6F0 !important;
-  letter-spacing: 0.3px !important;
   box-shadow: none !important;
   transition: background 0.14s, border-color 0.14s !important;
 }}
@@ -176,18 +192,18 @@ div.stButton > button:not([kind="primary"]):hover {{
   font-weight: 500;
   color: #1C1917;
   margin-bottom: 0.15rem;
-  letter-spacing: 2.5px;
+  letter-spacing: 0.18em;
+  line-height: 1.6;
   border-left: 3px solid {UI_PRIMARY};
   padding-left: 10px;
-  line-height: 1.5;
 }}
 .section-sub {{
   color: #A09890;
   font-size: 0.88rem;
   font-weight: 300;
   margin-bottom: 0.85rem;
-  line-height: 1.75;
-  letter-spacing: 0.5px;
+  line-height: 1.9;
+  letter-spacing: 0.06em;
   padding-left: 13px;
 }}
 
@@ -329,8 +345,8 @@ tr:nth-child(3) .owner-col {{
   font-size: 11px;
   font-weight: 400;
   color: #ADA89E;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.8;
   padding: 2px 0;
   display: block;
 }}
@@ -387,11 +403,12 @@ div.stButton {{
   border-radius: 2px !important;
   border-color: #CCC7BD !important;
   background: #FAF7F2 !important;
-  font-size: 0.9rem !important;
+  font-size: 0.92rem !important;
   font-weight: 300 !important;
   height: 2.6rem !important;
   color: #1C1917 !important;
-  letter-spacing: 0.4px !important;
+  letter-spacing: 0.05em !important;
+  line-height: 1.6 !important;
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {{
