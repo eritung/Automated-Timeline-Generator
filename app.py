@@ -76,15 +76,23 @@ UI_PREP = "#89AA77"           # 若草色
 
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&display=swap');
+/*
+ * 字體策略：Noto Serif TC 為主（Google Fonts 跨平台載入）
+ * Mac 備援：Songti SC / STSong
+ * Windows 備援：SimSun / NSimSun
+ * 通用備援：Georgia, serif
+ */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;600&display=swap');
 
 /* ── 全域基底 ── */
-html, body, [data-testid="stAppViewContainer"] {{
-  background: #F4F2EE;
-  font-family: 'Noto Sans TC', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
-  color: #1B1917;
+html, body, [data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] * {{
+  font-family: 'Noto Serif TC', 'Songti SC', 'STSong', 'SimSun', 'NSimSun', Georgia, serif !important;
   -webkit-font-smoothing: antialiased;
+}}
+html, body, [data-testid="stAppViewContainer"] {{
+  background: #F2EDE4;   /* 和紙米色底 */
+  color: #1C1917;
 }}
 .block-container {{
   max-width: 1480px;
@@ -92,24 +100,22 @@ html, body, [data-testid="stAppViewContainer"] {{
   padding-bottom: 4rem !important;
 }}
 [data-testid="stSidebar"] {{
-  background: #FAFAF8;
-  border-right: 1px solid #D8D4CC;
+  background: #FAF6F0;
+  border-right: 1px solid #D5CFC4;
 }}
 
 /* ── 頁面標題 ── */
 h1 {{
-  font-family: 'Noto Sans TC', sans-serif !important;
-  font-size: 1.45rem !important;
+  font-size: 1.4rem !important;
   font-weight: 500 !important;
-  color: #1B1917 !important;
-  letter-spacing: 2px !important;
+  color: #1C1917 !important;
+  letter-spacing: 3px !important;
   margin-bottom: 0 !important;
 }}
-/* 副標題 caption */
 [data-testid="stCaptionContainer"] p {{
-  font-size: 0.8rem !important;
-  color: #9B9490 !important;
-  letter-spacing: 0.8px !important;
+  font-size: 0.78rem !important;
+  color: #A09890 !important;
+  letter-spacing: 1px !important;
   font-weight: 300 !important;
 }}
 
@@ -118,71 +124,75 @@ div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
   background: {UI_PRIMARY} !important;
   border: none !important;
-  color: #FAFAF8 !important;
-  border-radius: 3px !important;
+  color: #FAF6F0 !important;
+  border-radius: 2px !important;
   font-weight: 500 !important;
-  font-size: 0.85rem !important;
-  letter-spacing: 1.5px !important;
-  padding: 0.45rem 1.1rem !important;
+  font-size: 0.84rem !important;
+  letter-spacing: 1.8px !important;
+  padding: 0.45rem 1.15rem !important;
   box-shadow: none !important;
-  transition: background 0.18s, opacity 0.18s !important;
+  transition: background 0.16s !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
   background: {UI_PRIMARY_HOVER} !important;
-  opacity: 0.92 !important;
 }}
 
 /* ── 次要按鈕 ── */
 div.stButton > button:not([kind="primary"]) {{
-  border-radius: 3px !important;
+  border-radius: 2px !important;
   font-size: 0.82rem !important;
-  border: 1px solid #D0CCC4 !important;
-  color: #5A5550 !important;
-  background: #FAFAF8 !important;
-  letter-spacing: 0.4px !important;
+  border: 1px solid #CCC7BD !important;
+  color: #5C5650 !important;
+  background: #FAF6F0 !important;
+  letter-spacing: 0.3px !important;
   box-shadow: none !important;
-  transition: background 0.15s, border-color 0.15s !important;
+  transition: background 0.14s, border-color 0.14s !important;
 }}
 div.stButton > button:not([kind="primary"]):hover {{
-  background: #EDEBE6 !important;
-  border-color: #B8B4AC !important;
+  background: #EDE8E0 !important;
+  border-color: #B5B0A6 !important;
 }}
 
-/* ── 區塊標題 ── */
+/* ── 區塊標題：加左側青墨邊線 ── */
 .section-title {{
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 500;
-  color: #1B1917;
+  color: #1C1917;
   margin-bottom: 0.1rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  border-left: 3px solid {UI_PRIMARY};
+  padding-left: 10px;
+  line-height: 1.5;
 }}
 .section-sub {{
-  color: #9B9490;
-  font-size: 0.8rem;
+  color: #A09890;
+  font-size: 0.79rem;
   font-weight: 300;
   margin-bottom: 0.85rem;
-  line-height: 1.7;
-  letter-spacing: 0.4px;
+  line-height: 1.75;
+  letter-spacing: 0.5px;
+  padding-left: 13px;   /* 與 section-title 對齊 */
 }}
 
-/* ── Card 容器 ── */
+/* ── Card 容器：米白底 + 頂部青墨裝飾線 ── */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
   border-radius: 4px !important;
-  border-color: #D8D4CC !important;
-  background: #FFFFFF !important;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+  border: 1px solid #CEC9BE !important;
+  border-top: 2.5px solid {UI_PRIMARY} !important;
+  background: #FAF7F2 !important;    /* 溫暖米白 */
+  box-shadow: 0 1px 6px rgba(61,60,57,0.06) !important;
 }}
 
 /* ── Timeline wrapper ── */
 .timeline-wrap {{
   overflow-x: auto;
-  border: 1px solid #D8D4CC;
+  border: 1px solid #CEC9BE;
+  border-top: 2px solid {UI_PRIMARY};
   border-radius: 4px;
-  background: #fff;
+  background: #FAF7F2;
   box-shadow: none;
-  margin-top: 6px;
+  margin-top: 8px;
 }}
 
 /* ── Timeline table base ── */
@@ -191,25 +201,24 @@ div.stButton > button:not([kind="primary"]):hover {{
   width: max-content;
   min-width: 100%;
   font-size: 12px;
-  font-family: 'Noto Sans TC', sans-serif;
   font-weight: 300;
 }}
 .timeline-table th,
 .timeline-table td {{
-  border: 1px solid #E4E0D8;
+  border: 1px solid #DDD8CE;
   text-align: center;
   padding: 0;
-  height: 32px;
+  height: 33px;
 }}
 
-/* ── 月份 header ── */
+/* ── 月份 header：暖金底色 ── */
 .timeline-table .month-row th {{
-  height: 24px;
-  background: #EDEAE4;
+  height: 25px;
+  background: #E8DFD0;   /* 暖琥珀米色 */
   font-weight: 500;
   font-size: 10.5px;
-  color: #6A6560;
-  letter-spacing: 1.5px;
+  color: #6A6050;
+  letter-spacing: 2px;
   text-transform: uppercase;
 }}
 
@@ -218,19 +227,19 @@ div.stButton > button:not([kind="primary"]):hover {{
   width: 32px; min-width: 32px; max-width: 32px;
   font-size: 10.5px;
   line-height: 1.2;
-  color: #6A6560;
-  background: #F6F4F0;
+  color: #6A6050;
+  background: #F2EDE4;   /* 和紙色 */
   font-weight: 300;
 }}
 .timeline-table .weekend-head {{
-  background: #EDEAE4 !important;
-  color: #A8A49E !important;
+  background: #E8DFD0 !important;
+  color: #ADA89E !important;
 }}
 .timeline-table .weekend-cell {{
-  background: #F6F4F0;
+  background: #F2EDE4;
 }}
 .timeline-table .empty-cell {{
-  background: #fff;
+  background: #FAF7F2;
 }}
 
 /* ── 固定左欄 ── */
@@ -238,19 +247,19 @@ div.stButton > button:not([kind="primary"]):hover {{
   min-width: 186px; max-width: 186px; width: 186px;
   text-align: left; padding: 0 14px;
   font-weight: 400; font-size: 12px;
-  background: #fff;
+  background: #FAF7F2;
   position: sticky; left: 0; z-index: 3;
-  border-right: 1px solid #D0CCC4;
-  color: #1B1917;
-  letter-spacing: 0.3px;
+  border-right: 1px solid #CEC9BE;
+  color: #1C1917;
+  letter-spacing: 0.4px;
 }}
 .timeline-table .owner-col {{
   min-width: 90px; max-width: 90px; width: 90px;
-  background: #fff;
+  background: #FAF7F2;
   position: sticky; left: 186px; z-index: 3;
   font-size: 11.5px;
-  color: #7A7570;
-  border-right: 1px solid #D0CCC4;
+  color: #7A7568;
+  border-right: 1px solid #CEC9BE;
   font-weight: 300;
 }}
 
@@ -261,29 +270,29 @@ tr:nth-child(2) .task-col,
 tr:nth-child(2) .owner-col,
 tr:nth-child(3) .task-col,
 tr:nth-child(3) .owner-col {{
-  background: #EDEAE4;
+  background: #E8DFD0;
 }}
 
 /* ── BREAK column ── */
 .timeline-table .break-cell {{
   width: 18px; min-width: 18px; max-width: 18px;
-  background: #EDEAE4;
-  color: #A8A49E;
+  background: #E8DFD0;
+  color: #ADA89E;
   font-weight: 400;
   font-size: 11px;
   writing-mode: vertical-rl;
   text-orientation: mixed;
   letter-spacing: 4px;
   vertical-align: middle;
-  border-left: 1px solid #D0CCC4;
-  border-right: 1px solid #D0CCC4;
+  border-left: 1px solid #CEC9BE;
+  border-right: 1px solid #CEC9BE;
 }}
 
 /* ── Bar cells ── */
-.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: rgba(0,0,0,0.08); }}
-.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: rgba(0,0,0,0.08); }}
-.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.08); }}
-.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.08); }}
+.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: rgba(0,0,0,0.07); }}
+.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: rgba(0,0,0,0.07); }}
+.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.07); }}
+.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.07); }}
 
 /* ── Legend ── */
 .legend {{
@@ -296,25 +305,23 @@ tr:nth-child(3) .owner-col {{
 .legend-item {{ display: inline-flex; align-items: center; gap: 6px; }}
 .legend-dot {{
   width: 10px; height: 10px; border-radius: 2px; display: inline-block;
-  opacity: 0.85;
+  opacity: 0.9;
 }}
 
 /* ── 任務清單標題列 ── */
 .task-head-label {{
   font-size: 10.5px;
   font-weight: 400;
-  color: #A8A49E;
-  letter-spacing: 1.2px;
+  color: #ADA89E;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   padding: 2px 0;
 }}
-.task-head-center {{
-  text-align: center;
-}}
+.task-head-center {{ text-align: center; }}
 
 /* ── 斑馬條紋 ── */
 .task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: #FAFAF8; border-radius: 3px; }}
+.task-row-plain-alt {{ background: #F5F0E8; border-radius: 2px; }}
 
 /* ── 操作按鈕 ── */
 .op-btn button {{
@@ -322,13 +329,13 @@ tr:nth-child(3) .owner-col {{
   padding: 0 !important;
   height: 2.1rem !important;
   min-height: 2.1rem !important;
-  border-radius: 3px !important;
+  border-radius: 2px !important;
 }}
 
-/* ── 分隔線 ── */
+/* ── 任務行分隔線 ── */
 .flow-row-sep {{
   height: 1px;
-  background: #E4E0D8;
+  background: linear-gradient(to right, #D5CFC4 0%, #E8E3DA 60%, transparent 100%);
   margin: 0.2rem 0 0.35rem 0;
 }}
 
@@ -356,34 +363,35 @@ div.stButton {{
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {{
-  border-radius: 3px !important;
-  border-color: #D0CCC4 !important;
-  background: #FAFAF8 !important;
+  border-radius: 2px !important;
+  border-color: #CCC7BD !important;
+  background: #FAF7F2 !important;
   font-size: 0.9rem !important;
   font-weight: 300 !important;
   height: 2.6rem !important;
-  color: #1B1917 !important;
-  letter-spacing: 0.3px !important;
+  color: #1C1917 !important;
+  letter-spacing: 0.4px !important;
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {{
   border-color: {UI_PRIMARY} !important;
-  box-shadow: 0 0 0 2px rgba(61,96,115,0.12) !important;
+  box-shadow: 0 0 0 2px rgba(61,96,115,0.13) !important;
+  background: #FFFFFF !important;
 }}
 [data-testid="stSelectbox"] > div > div,
 [data-baseweb="select"] > div {{
   min-height: 2.6rem !important;
-  border-radius: 3px !important;
-  border-color: #D0CCC4 !important;
-  background: #FAFAF8 !important;
+  border-radius: 2px !important;
+  border-color: #CCC7BD !important;
+  background: #FAF7F2 !important;
 }}
 [data-testid="stSelectbox"] [data-baseweb="select"] {{
   margin: 0 !important;
 }}
 [data-testid="stDateInput"] input {{
-  border-radius: 3px !important;
-  border-color: #D0CCC4 !important;
-  background: #FAFAF8 !important;
+  border-radius: 2px !important;
+  border-color: #CCC7BD !important;
+  background: #FAF7F2 !important;
 }}
 [data-testid="column"] > div[data-testid="stVerticalBlock"] {{
   gap: 0.2rem !important;
@@ -396,10 +404,11 @@ div.stButton {{
 .small-gap {{ height: 0.3rem; }}
 .large-gap {{ height: 1.6rem; }}
 
-/* ── success / warning 訊息 ── */
+/* ── 訊息提示 ── */
 [data-testid="stAlert"] {{
-  border-radius: 3px !important;
+  border-radius: 2px !important;
   border-left-width: 3px !important;
+  background: #FAF7F2 !important;
   font-size: 0.85rem !important;
   font-weight: 300 !important;
   letter-spacing: 0.3px !important;
