@@ -64,107 +64,124 @@ EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
 MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
 
-# UI colors
-UI_PRIMARY = "#C97B7B"
-UI_PRIMARY_HOVER = "#B86A6A"
-UI_BORDER = "#ECE8E1"
-UI_MUTED = "#7A736A"
-UI_AD2 = "#4BACC6"
-UI_CLIENT = "#EA9B56"
-UI_LAUNCH = "#D47B7B"
-UI_PREP = "#92D050"
+# UI colors — 日系簡約
+UI_PRIMARY = "#3D6073"        # 青墨（深靜謐藍）
+UI_PRIMARY_HOVER = "#2D4F60"
+UI_BORDER = "#D8D4CC"
+UI_MUTED = "#888078"
+UI_AD2 = "#6A9EB5"            # 淺瑠璃色
+UI_CLIENT = "#C49B6A"         # 和菓子橙
+UI_LAUNCH = "#A86868"         # 深緋
+UI_PREP = "#89AA77"           # 若草色
 
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@1&display=swap');
 
+/* ── 全域基底 ── */
 html, body, [data-testid="stAppViewContainer"] {{
-  background: #F5F3EF;
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  background: #F4F2EE;
+  font-family: 'Noto Sans TC', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  color: #1B1917;
+  -webkit-font-smoothing: antialiased;
 }}
 .block-container {{
   max-width: 1480px;
-  padding-top: 2rem !important;
+  padding-top: 2.2rem !important;
   padding-bottom: 4rem !important;
 }}
 [data-testid="stSidebar"] {{
-  background: #FDFCFA;
-  border-right: 1px solid #E5E1DA;
+  background: #FAFAF8;
+  border-right: 1px solid #D8D4CC;
 }}
 
-/* ── Page title ── */
+/* ── 頁面標題 ── */
 h1 {{
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif !important;
-  font-size: 1.75rem !important;
-  font-weight: 800 !important;
-  color: #1E1B18 !important;
-  letter-spacing: -0.3px !important;
+  font-family: 'Noto Sans TC', sans-serif !important;
+  font-size: 1.45rem !important;
+  font-weight: 500 !important;
+  color: #1B1917 !important;
+  letter-spacing: 2px !important;
   margin-bottom: 0 !important;
 }}
+/* 副標題 caption */
+[data-testid="stCaptionContainer"] p {{
+  font-size: 0.8rem !important;
+  color: #9B9490 !important;
+  letter-spacing: 0.8px !important;
+  font-weight: 300 !important;
+}}
 
-/* ── Primary buttons ── */
+/* ── 主要按鈕 ── */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
   background: {UI_PRIMARY} !important;
   border: none !important;
-  color: #fff !important;
-  border-radius: 8px !important;
-  font-weight: 700 !important;
-  font-size: 0.88rem !important;
-  letter-spacing: 0.3px !important;
-  padding: 0.45rem 1rem !important;
-  box-shadow: 0 2px 10px rgba(201,123,123,0.35) !important;
-  transition: transform 0.12s, box-shadow 0.12s !important;
+  color: #FAFAF8 !important;
+  border-radius: 3px !important;
+  font-weight: 500 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 1.5px !important;
+  padding: 0.45rem 1.1rem !important;
+  box-shadow: none !important;
+  transition: background 0.18s, opacity 0.18s !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
   background: {UI_PRIMARY_HOVER} !important;
-  box-shadow: 0 4px 16px rgba(201,123,123,0.45) !important;
-  transform: translateY(-1px) !important;
+  opacity: 0.92 !important;
 }}
 
-/* ── Secondary / plain buttons ── */
+/* ── 次要按鈕 ── */
 div.stButton > button:not([kind="primary"]) {{
-  border-radius: 7px !important;
-  font-size: 0.83rem !important;
-  border: 1px solid #DDD9D2 !important;
+  border-radius: 3px !important;
+  font-size: 0.82rem !important;
+  border: 1px solid #D0CCC4 !important;
   color: #5A5550 !important;
-  background: #FDFCFA !important;
-  transition: background 0.1s, border-color 0.1s !important;
+  background: #FAFAF8 !important;
+  letter-spacing: 0.4px !important;
+  box-shadow: none !important;
+  transition: background 0.15s, border-color 0.15s !important;
 }}
 div.stButton > button:not([kind="primary"]):hover {{
-  background: #F5F2ED !important;
-  border-color: #C5C0B8 !important;
+  background: #EDEBE6 !important;
+  border-color: #B8B4AC !important;
 }}
 
-/* ── Section headers ── */
+/* ── 區塊標題 ── */
 .section-title {{
-  font-size: 1rem;
-  font-weight: 700;
-  color: #1E1B18;
-  margin-bottom: 0.15rem;
-  letter-spacing: 0.1px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #1B1917;
+  margin-bottom: 0.1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }}
 .section-sub {{
-  color: #8C8680;
-  font-size: 0.845rem;
+  color: #9B9490;
+  font-size: 0.8rem;
+  font-weight: 300;
   margin-bottom: 0.85rem;
-  line-height: 1.5;
+  line-height: 1.7;
+  letter-spacing: 0.4px;
 }}
 
-/* ── Containers ── */
+/* ── Card 容器 ── */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
-  border-radius: 14px !important;
-  border-color: #E5E1DA !important;
+  border-radius: 4px !important;
+  border-color: #D8D4CC !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
 }}
 
 /* ── Timeline wrapper ── */
 .timeline-wrap {{
   overflow-x: auto;
-  border: 1px solid #E5E1DA;
-  border-radius: 14px;
+  border: 1px solid #D8D4CC;
+  border-radius: 4px;
   background: #fff;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  box-shadow: none;
   margin-top: 6px;
 }}
 
@@ -173,63 +190,68 @@ div.stButton > button:not([kind="primary"]):hover {{
   border-collapse: collapse;
   width: max-content;
   min-width: 100%;
-  font-size: 12.5px;
-  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  font-size: 12px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-weight: 300;
 }}
 .timeline-table th,
 .timeline-table td {{
-  border: 1px solid #EDE9E2;
+  border: 1px solid #E4E0D8;
   text-align: center;
   padding: 0;
-  height: 34px;
+  height: 32px;
 }}
 
-/* ── Month header row ── */
+/* ── 月份 header ── */
 .timeline-table .month-row th {{
-  height: 26px;
-  background: #F0EDE7;
-  font-weight: 700;
-  font-size: 11.5px;
-  color: #4A4540;
-  letter-spacing: 0.6px;
+  height: 24px;
+  background: #EDEAE4;
+  font-weight: 500;
+  font-size: 10.5px;
+  color: #6A6560;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
 }}
 
-/* ── Date & weekday header ── */
+/* ── 日期 & 星期 header ── */
 .timeline-table .date-head {{
-  width: 34px; min-width: 34px; max-width: 34px;
-  font-size: 11px;
+  width: 32px; min-width: 32px; max-width: 32px;
+  font-size: 10.5px;
   line-height: 1.2;
-  color: #4E4A46;
-  background: #F8F6F2;
+  color: #6A6560;
+  background: #F6F4F0;
+  font-weight: 300;
 }}
 .timeline-table .weekend-head {{
-  background: #EEECE8 !important;
-  color: #9A9590 !important;
+  background: #EDEAE4 !important;
+  color: #A8A49E !important;
 }}
 .timeline-table .weekend-cell {{
-  background: #F4F2EE;
+  background: #F6F4F0;
 }}
 .timeline-table .empty-cell {{
   background: #fff;
 }}
 
-/* ── Sticky left columns ── */
+/* ── 固定左欄 ── */
 .timeline-table .task-col {{
   min-width: 186px; max-width: 186px; width: 186px;
-  text-align: left; padding: 0 13px;
-  font-weight: 600; font-size: 12.5px;
+  text-align: left; padding: 0 14px;
+  font-weight: 400; font-size: 12px;
   background: #fff;
   position: sticky; left: 0; z-index: 3;
-  border-right: 2px solid #DDD9D2;
-  color: #1E1B18;
+  border-right: 1px solid #D0CCC4;
+  color: #1B1917;
+  letter-spacing: 0.3px;
 }}
 .timeline-table .owner-col {{
   min-width: 90px; max-width: 90px; width: 90px;
   background: #fff;
   position: sticky; left: 186px; z-index: 3;
-  font-size: 12px;
-  color: #5A5550;
-  border-right: 2px solid #DDD9D2;
+  font-size: 11.5px;
+  color: #7A7570;
+  border-right: 1px solid #D0CCC4;
+  font-weight: 300;
 }}
 
 /* Sticky header cells */
@@ -239,49 +261,50 @@ tr:nth-child(2) .task-col,
 tr:nth-child(2) .owner-col,
 tr:nth-child(3) .task-col,
 tr:nth-child(3) .owner-col {{
-  background: #F0EDE7;
+  background: #EDEAE4;
 }}
 
 /* ── BREAK column ── */
 .timeline-table .break-cell {{
-  width: 22px; min-width: 22px; max-width: 22px;
-  background: linear-gradient(180deg, #E8E4DC 0%, #D8D4CC 100%);
-  color: #888078;
-  font-weight: 800;
-  font-size: 12px;
+  width: 18px; min-width: 18px; max-width: 18px;
+  background: #EDEAE4;
+  color: #A8A49E;
+  font-weight: 400;
+  font-size: 11px;
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   vertical-align: middle;
-  border-left: 2px solid #C8C4BC;
-  border-right: 2px solid #C8C4BC;
+  border-left: 1px solid #D0CCC4;
+  border-right: 1px solid #D0CCC4;
 }}
 
 /* ── Bar cells ── */
-.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: #3A9CB6; }}
-.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: #D88A46; }}
-.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: #C46A6A; }}
-.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: #7DC040; }}
+.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: rgba(0,0,0,0.08); }}
+.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: rgba(0,0,0,0.08); }}
+.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.08); }}
+.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.08); }}
 
 /* ── Legend ── */
 .legend {{
-  display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px;
-  font-size: 12px; color: {UI_MUTED};
+  display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;
+  font-size: 11px; color: {UI_MUTED};
   align-items: center;
-  padding: 6px 2px;
+  padding: 4px 0;
+  letter-spacing: 0.8px;
 }}
-.legend-item {{ display: inline-flex; align-items: center; gap: 5px; }}
+.legend-item {{ display: inline-flex; align-items: center; gap: 6px; }}
 .legend-dot {{
-  width: 11px; height: 11px; border-radius: 3px; display: inline-block;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  width: 10px; height: 10px; border-radius: 2px; display: inline-block;
+  opacity: 0.85;
 }}
 
-/* ── Task list header labels ── */
+/* ── 任務清單標題列 ── */
 .task-head-label {{
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #8C8680;
-  letter-spacing: 0.4px;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: #A8A49E;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   padding: 2px 0;
 }}
@@ -289,25 +312,27 @@ tr:nth-child(3) .owner-col {{
   text-align: center;
 }}
 
-/* ── Zebra rows ── */
+/* ── 斑馬條紋 ── */
 .task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: #FAFAF8; border-radius: 6px; }}
+.task-row-plain-alt {{ background: #FAFAF8; border-radius: 3px; }}
 
-/* ── Op buttons ── */
+/* ── 操作按鈕 ── */
 .op-btn button {{
-  font-size: 13px !important;
+  font-size: 12px !important;
   padding: 0 !important;
-  height: 2.25rem !important;
-  min-height: 2.25rem !important;
-  border-radius: 8px !important;
+  height: 2.1rem !important;
+  min-height: 2.1rem !important;
+  border-radius: 3px !important;
 }}
 
-/* ── Flow settings compact table ── */
+/* ── 分隔線 ── */
 .flow-row-sep {{
   height: 1px;
-  background: #EAE5DD;
+  background: #E4E0D8;
   margin: 0.2rem 0 0.35rem 0;
 }}
+
+/* ── Input 共用 ── */
 [data-testid="stCheckbox"] {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -331,22 +356,34 @@ div.stButton {{
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {{
-  border-radius: 8px !important;
-  border-color: #DDD9D2 !important;
-  font-size: 0.93rem !important;
-  height: 2.7rem !important;
+  border-radius: 3px !important;
+  border-color: #D0CCC4 !important;
+  background: #FAFAF8 !important;
+  font-size: 0.9rem !important;
+  font-weight: 300 !important;
+  height: 2.6rem !important;
+  color: #1B1917 !important;
+  letter-spacing: 0.3px !important;
+}}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stNumberInput"] input:focus {{
+  border-color: {UI_PRIMARY} !important;
+  box-shadow: 0 0 0 2px rgba(61,96,115,0.12) !important;
 }}
 [data-testid="stSelectbox"] > div > div,
 [data-baseweb="select"] > div {{
-  min-height: 2.7rem !important;
-  border-radius: 8px !important;
+  min-height: 2.6rem !important;
+  border-radius: 3px !important;
+  border-color: #D0CCC4 !important;
+  background: #FAFAF8 !important;
 }}
 [data-testid="stSelectbox"] [data-baseweb="select"] {{
   margin: 0 !important;
 }}
 [data-testid="stDateInput"] input {{
-  border-radius: 8px !important;
-  border-color: #DDD9D2 !important;
+  border-radius: 3px !important;
+  border-color: #D0CCC4 !important;
+  background: #FAFAF8 !important;
 }}
 [data-testid="column"] > div[data-testid="stVerticalBlock"] {{
   gap: 0.2rem !important;
@@ -355,9 +392,18 @@ div.stButton {{
   margin-bottom: 0.2rem !important;
 }}
 
-/* ── Gaps ── */
+/* ── 間距 ── */
 .small-gap {{ height: 0.3rem; }}
 .large-gap {{ height: 1.6rem; }}
+
+/* ── success / warning 訊息 ── */
+[data-testid="stAlert"] {{
+  border-radius: 3px !important;
+  border-left-width: 3px !important;
+  font-size: 0.85rem !important;
+  font-weight: 300 !important;
+  letter-spacing: 0.3px !important;
+}}
 </style>
 """, unsafe_allow_html=True)
 
