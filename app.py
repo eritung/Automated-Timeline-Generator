@@ -98,29 +98,43 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 
 /*
- * ★ 關鍵修復：還原 Material Icons 字型
- * Streamlit 用 ligature 方式將文字（如 keyboard_double_arrow_left）
- * 轉成圖示，必須保留原始 Material Icons font-family。
+ * ★ 關鍵修復：還原 Material Symbols 字型
+ * Streamlit sidebar toggle 用 data-testid="collapsedControl" 包裝，
+ * 裡面的 span 必須用 Material Symbols Rounded 才能把文字 ligature 轉成圖示。
+ * 用 data-testid 直接指定，避免依賴會改變的 hash class 名稱。
  */
-.material-icons,
-.material-icons-sharp,
-.material-icons-outlined,
-.material-icons-round,
-.material-symbols-rounded,
-.material-symbols-sharp,
-.material-symbols-outlined,
-[class*="material-icon"],
-[class*="material-symbol"] {{
-  font-family: 'Material Icons', 'Material Icons Sharp', 'Material Icons Outlined',
-               'Material Symbols Rounded', 'Material Symbols Sharp', 'Material Symbols Outlined' !important;
+[data-testid="collapsedControl"],
+[data-testid="collapsedControl"] *,
+[data-testid="collapsedControl"] span {{
+  font-family: 'Material Symbols Rounded', 'Material Icons', 'Material Icons Sharp' !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
   line-height: 1 !important;
   letter-spacing: normal !important;
+  font-size: 1.4rem !important;
 }}
 /* SVG 內部不需要文字字型 */
 svg, svg * {{
   font-family: inherit;
   line-height: 1 !important;
   letter-spacing: normal !important;
+}}
+
+/* ── 下拉選單文字對齊修正 ── */
+/* 全域 line-height 會破壞 BaseWeb select 的垂直置中，需要局部還原 */
+[data-baseweb="select"] > div,
+[data-baseweb="select"] > div > div,
+[data-baseweb="select"] [role="listbox"],
+[data-baseweb="select"] [role="option"],
+[data-baseweb="select"] span,
+[data-baseweb="select"] div {{
+  line-height: 1.4 !important;
+  display: flex !important;
+  align-items: center !important;
+}}
+[data-baseweb="select"] > div {{
+  min-height: 2.6rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
 }}
 .block-container {{
   max-width: 1480px;
@@ -130,6 +144,20 @@ svg, svg * {{
 [data-testid="stSidebar"] {{
   background: #FAF6F0;
   border-right: 1px solid #D5CFC4;
+}}
+/* 假日設定側欄文字縮小 */
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] textarea,
+[data-testid="stSidebar"] .stTextArea label,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+  font-size: 0.8rem !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.7 !important;
+}}
+[data-testid="stSidebar"] textarea {{
+  font-size: 0.8rem !important;
+  line-height: 1.65 !important;
 }}
 
 /* ── 頁面標題 ── */
