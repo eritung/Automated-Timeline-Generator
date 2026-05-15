@@ -94,17 +94,17 @@ EXCEL_COLOR_LAUNCH_BAR = '#FF0000'
 EXCEL_COLOR_PREP_BAR = '#92D050'
 EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
-MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
+MONTH_COLORS = ['#F3E4C8', '#DDE7D3', '#D7E4E8', '#F0D7CA', '#E8E0D2']
 
 # UI colors — 日系簡約
-UI_PRIMARY = "#3D6073"        # 青墨（深靜謐藍）
-UI_PRIMARY_HOVER = "#2D4F60"
-UI_BORDER = "#D8D4CC"
-UI_MUTED = "#888078"
-UI_AD2 = "#6A9EB5"            # 淺瑠璃色
-UI_CLIENT = "#C49B6A"         # 和菓子橙
-UI_LAUNCH = "#A86868"         # 深緋
-UI_PREP = "#89AA77"           # 若草色
+UI_PRIMARY = "#2F4F4F"        # 青墨綠
+UI_PRIMARY_HOVER = "#243E3E"
+UI_BORDER = "#D8CDBD"
+UI_MUTED = "#9C8F7D"
+UI_AD2 = "#7FA8B8"            # 淺瑠璃色
+UI_CLIENT = "#D6A36E"         # 和菓子橙
+UI_LAUNCH = "#B35C57"         # 深緋
+UI_PREP = "#94A36B"           # 若草色
 
 st.markdown(f"""
 <style>
@@ -116,6 +116,7 @@ st.markdown(f"""
  */
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600&display=swap');
 
 /* ── 全域基底 ── */
 html, body, [data-testid="stAppViewContainer"],
@@ -561,6 +562,215 @@ div.stButton {{
   font-weight: 300 !important;
   letter-spacing: 0.3px !important;
 }}
+
+
+/* =========================
+ * 日式和紙風視覺調整
+ * ========================= */
+html, body, [data-testid="stAppViewContainer"] {{
+  background:
+    radial-gradient(circle at 18% 12%, rgba(214,163,110,0.14) 0, rgba(214,163,110,0.14) 1px, transparent 1.6px),
+    radial-gradient(circle at 82% 8%, rgba(47,79,79,0.08) 0, rgba(47,79,79,0.08) 1px, transparent 1.8px),
+    linear-gradient(135deg, rgba(255,255,255,0.42) 0 25%, transparent 25% 50%, rgba(255,255,255,0.22) 50% 75%, transparent 75% 100%),
+    #F5EFE6 !important;
+  background-size: 96px 96px, 132px 132px, 28px 28px, auto !important;
+}}
+[data-testid="stAppViewContainer"]::before {{
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(47,79,79,0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(47,79,79,0.025) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.48), transparent 55%);
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.48), transparent 55%);
+  z-index: 0;
+}}
+[data-testid="stAppViewContainer"] > .main {{
+  position: relative;
+  z-index: 1;
+}}
+.block-container {{
+  padding-top: 2.6rem !important;
+}}
+
+h1 {{
+  font-family: 'Noto Serif TC', 'Noto Sans TC', 'PingFang TC', serif !important;
+  font-size: 2.05rem !important;
+  letter-spacing: 0.22em !important;
+  color: #2B2A27 !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.75) !important;
+}}
+[data-testid="stCaptionContainer"] p {{
+  color: #9C8F7D !important;
+}}
+
+/* 內容卡片：像和紙便箋，不要太硬邦邦 */
+[data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
+  border-radius: 18px !important;
+  border: 1px solid rgba(151,134,111,0.36) !important;
+  border-top: 5px solid {UI_PRIMARY} !important;
+  background:
+    linear-gradient(180deg, rgba(255,253,248,0.96), rgba(250,246,239,0.94)) !important;
+  box-shadow: 0 18px 38px rgba(61,54,44,0.08), 0 2px 0 rgba(255,255,255,0.72) inset !important;
+  backdrop-filter: blur(10px) !important;
+}}
+
+.section-title {{
+  font-family: 'Noto Serif TC', 'Noto Sans TC', 'PingFang TC', serif !important;
+  font-size: 1.12rem !important;
+  letter-spacing: 0.2em !important;
+  color: #2F3430 !important;
+  border-left: 0 !important;
+  padding-left: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.55rem !important;
+}}
+.section-title::before {{
+  content: "";
+  width: 0.72rem;
+  height: 0.72rem;
+  border-radius: 999px;
+  background: {UI_PRIMARY};
+  box-shadow: 0.95rem 0 0 rgba(214,163,110,0.8);
+  display: inline-block;
+}}
+.section-sub {{
+  padding-left: 2.1rem !important;
+  color: #A39583 !important;
+}}
+
+/* Sidebar：假日清單像抽屜紙卷 */
+[data-testid="stSidebar"] {{
+  background:
+    linear-gradient(180deg, rgba(255,253,248,0.98), rgba(241,232,219,0.98)),
+    #FAF6F0 !important;
+  border-right: 1px solid rgba(151,134,111,0.38) !important;
+  box-shadow: 10px 0 28px rgba(64,53,42,0.06) !important;
+}}
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {{
+  font-family: 'Noto Serif TC', 'Noto Sans TC', 'PingFang TC', serif !important;
+  letter-spacing: 0.16em !important;
+  color: #2F4F4F !important;
+}}
+
+/* 表單欄位 */
+[data-testid="stTextInput"] input,
+[data-testid="stNumberInput"] input,
+[data-testid="stDateInput"] input,
+[data-testid="stTextArea"] textarea,
+[data-testid="stSelectbox"] > div > div,
+[data-baseweb="select"] > div {{
+  border-radius: 12px !important;
+  border: 1px solid rgba(151,134,111,0.42) !important;
+  background: rgba(255,253,248,0.86) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.74) inset !important;
+}}
+[data-testid="stTextInput"] input:focus,
+[data-testid="stNumberInput"] input:focus,
+[data-testid="stTextArea"] textarea:focus {{
+  border-color: {UI_PRIMARY} !important;
+  box-shadow: 0 0 0 3px rgba(47,79,79,0.12) !important;
+}}
+
+/* 按鈕：和風籤紙感 */
+div.stButton > button[kind="primary"],
+div.stDownloadButton > button[kind="primary"] {{
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, {UI_PRIMARY}, #426262) !important;
+  color: #FFFDF8 !important;
+  box-shadow: 0 10px 20px rgba(47,79,79,0.18) !important;
+}}
+div.stButton > button:not([kind="primary"]) {{
+  border-radius: 999px !important;
+  border: 1px solid rgba(151,134,111,0.44) !important;
+  background: rgba(255,253,248,0.72) !important;
+  color: #5A5046 !important;
+}}
+div.stButton > button:not([kind="primary"]):hover {{
+  background: #F1E6D6 !important;
+  border-color: rgba(47,79,79,0.42) !important;
+  color: #2F4F4F !important;
+}}
+
+/* 分頁：像木盒標籤 */
+[data-baseweb="tab-list"] {{
+  gap: 0.55rem !important;
+  background: rgba(255,253,248,0.42) !important;
+  border-radius: 999px !important;
+  padding: 0.35rem !important;
+  border: 1px solid rgba(151,134,111,0.22) !important;
+}}
+[data-baseweb="tab"] {{
+  border-radius: 999px !important;
+  padding: 0.45rem 1rem !important;
+  color: #7A6E61 !important;
+}}
+[data-baseweb="tab"][aria-selected="true"] {{
+  background: #EEE2D0 !important;
+  color: #2F4F4F !important;
+}}
+
+/* Timeline：保留功能，換成淡雅色盤 */
+.timeline-wrap {{
+  border-radius: 16px !important;
+  border: 1px solid rgba(151,134,111,0.36) !important;
+  border-top: 4px solid {UI_PRIMARY} !important;
+  background: rgba(255,253,248,0.82) !important;
+  box-shadow: 0 14px 30px rgba(61,54,44,0.08) !important;
+}}
+.timeline-table th,
+.timeline-table td {{
+  border-color: #DED3C3 !important;
+}}
+.timeline-table .month-row th {{
+  background: #E9DDCA !important;
+  color: #5F554A !important;
+}}
+.timeline-table .date-head {{
+  background: #F7F0E6 !important;
+  color: #6A6050 !important;
+}}
+.timeline-table .weekend-head,
+.timeline-table .weekend-cell {{
+  background: #EDE3D5 !important;
+  color: #A89C8D !important;
+}}
+.timeline-table .task-col,
+.timeline-table .owner-col {{
+  background: #FFF9EF !important;
+}}
+.timeline-table .month-row .task-col,
+.timeline-table .month-row .owner-col,
+tr:nth-child(2) .task-col,
+tr:nth-child(2) .owner-col,
+tr:nth-child(3) .task-col,
+tr:nth-child(3) .owner-col {{
+  background: #E9DDCA !important;
+}}
+.legend {{
+  background: rgba(255,253,248,0.62);
+  border: 1px solid rgba(151,134,111,0.22);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  width: fit-content;
+}}
+.legend-dot {{
+  border-radius: 999px !important;
+}}
+
+/* 訊息提醒 */
+[data-testid="stAlert"] {{
+  border-radius: 14px !important;
+  background: rgba(255,253,248,0.88) !important;
+  border: 1px solid rgba(151,134,111,0.26) !important;
+  box-shadow: 0 8px 20px rgba(61,54,44,0.06) !important;
+}}
+
 </style>
 """, unsafe_allow_html=True)
 
