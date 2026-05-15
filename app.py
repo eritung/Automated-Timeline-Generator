@@ -130,19 +130,48 @@ html, body, [data-testid="stAppViewContainer"] {{
 }}
 
 /*
- * ★ 關鍵修復：還原 Material Symbols 字型
- * Streamlit sidebar toggle 用 data-testid="collapsedControl" 包裝，
- * 裡面的 span 必須用 Material Symbols Rounded 才能把文字 ligature 轉成圖示。
- * 用 data-testid 直接指定，避免依賴會改變的 hash class 名稱。
+ * Sidebar 展開按鈕修正：
+ * 部分部署環境讀不到 Material Symbols ligature，會把 keyboard_double_arrow_right
+ * 直接顯示成文字。這裡直接隱藏原文字，改用穩定的 CSS icon 顯示。
  */
-[data-testid="collapsedControl"],
-[data-testid="collapsedControl"] *,
-[data-testid="collapsedControl"] span {{
-  font-family: 'Material Symbols Rounded', 'Material Icons', 'Material Icons Sharp' !important;
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+[data-testid="collapsedControl"] {{
+  width: 2.35rem !important;
+  height: 2.35rem !important;
+  min-width: 2.35rem !important;
+  min-height: 2.35rem !important;
+  border: 1px solid #D8D4CC !important;
+  border-radius: 999px !important;
+  background: #FAF6F0 !important;
+  box-shadow: 0 2px 8px rgba(61,60,57,0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}}
+[data-testid="collapsedControl"]:hover {{
+  background: #EDE8E0 !important;
+  border-color: #B5B0A6 !important;
+}}
+[data-testid="collapsedControl"] * {{
   line-height: 1 !important;
   letter-spacing: normal !important;
-  font-size: 1.4rem !important;
+}}
+[data-testid="collapsedControl"] span {{
+  font-size: 0 !important;
+  color: transparent !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}}
+[data-testid="collapsedControl"] span::before {{
+  content: "☰";
+  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  color: {UI_PRIMARY} !important;
 }}
 /* SVG 內部不需要文字字型 */
 svg, svg * {{
