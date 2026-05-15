@@ -29,6 +29,37 @@ DEFAULT_TASKS = [
     {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
 ]
 
+DEFAULT_BATCH_TASKS_TEXT = """提供素材 客戶 1天
+視覺製作 Ad2 3天
+客戶確認 客戶 1天
+視覺調整 Ad2 2天
+客戶確認 客戶 1天
+廣告上線 Ad2 1天 上線"""
+
+WEBSITE_BATCH_TASKS_TEXT = """網站架構 2天
+客戶確認 1
+網站架構調整 2
+客戶確認 1
+視覺製作 5
+客戶確認 1
+網頁視覺調整 3
+客戶確認 1
+網頁切版 4
+動態程式 4
+客戶確認 1
+功能測試 2
+客戶確認 1
+網頁打包與測試 2
+客戶確認 1
+廣告進稿 1
+網站上線 1 上線"""
+
+BATCH_TEMPLATE_OPTIONS = ["一般製作時程", "網頁製作時程"]
+BATCH_TEMPLATE_MAP = {
+    "一般製作時程": DEFAULT_BATCH_TASKS_TEXT,
+    "網頁製作時程": WEBSITE_BATCH_TASKS_TEXT,
+}
+
 DEFAULT_HOLIDAYS = {
     '2025-12-25': '行憲紀念日',
     '2026-01-01': '元旦',
@@ -516,7 +547,9 @@ def init_state():
     if "status_msg" not in st.session_state:
         st.session_state.status_msg = ""
     if "batch_tasks_text" not in st.session_state:
-        st.session_state.batch_tasks_text = ""
+        st.session_state.batch_tasks_text = DEFAULT_BATCH_TASKS_TEXT
+    if "batch_template_display" not in st.session_state:
+        st.session_state.batch_template_display = BATCH_TEMPLATE_OPTIONS[0]
     if "batch_msg" not in st.session_state:
         st.session_state.batch_msg = ""
 
@@ -1029,10 +1062,14 @@ def parse_batch_tasks(text: str):
     任務名稱 ActionBy 工作天數 [上線日]
     例如：提供素材 Ad2 2天
          廣告上線 Ad2 1天 上線
+
+    也支援省略 Action By：
+    任務名稱 工作天數 [上線日]
+    省略時會自動判斷：任務名稱含「客戶」則為客戶，其餘預設為 Ad2。
     """
     parsed_rows = []
     errors = []
-    launch_words = {"上線", "上線日", "launch", "true", "yes", "y", "1"}
+    launch_words = {"上線", "上線日", "launch", "true", "yes", "y"}
 
     for line_no, raw_line in enumerate(text.splitlines(), start=1):
         line = raw_line.strip()
@@ -1046,17 +1083,18 @@ def parse_batch_tasks(text: str):
             is_launch = True
             parts = parts[:-1]
 
-        if len(parts) < 3:
+        if len(parts) < 2:
             errors.append(f"第 {line_no} 行格式不足：{raw_line}")
             continue
 
         days_token = parts[-1]
-        owner = parts[-2]
-        task_name = " ".join(parts[:-2]).strip()
 
-        if owner not in ["Ad2", "客戶"]:
-            errors.append(f"第 {line_no} 行 Action By 需為 Ad2 或 客戶：{raw_line}")
-            continue
+        if len(parts) >= 3 and parts[-2] in ["Ad2", "客戶"]:
+            owner = parts[-2]
+            task_name = " ".join(parts[:-2]).strip()
+        else:
+            owner = "客戶" if "客戶" in " ".join(parts[:-1]) else "Ad2"
+            task_name = " ".join(parts[:-1]).strip()
 
         days_match = re.search(r"\d+", days_token)
         if not days_match:
@@ -1110,6 +1148,11 @@ def apply_batch_tasks(mode: str = "replace"):
 
     st.session_state.batch_msg = f"已{action_text} {len(parsed_rows)} 筆任務。"
 
+def load_batch_template():
+    template_name = st.session_state.get("batch_template_display", BATCH_TEMPLATE_OPTIONS[0])
+    st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
+    st.session_state.batch_msg = f"已載入「{template_name}」。"
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
@@ -1155,7 +1198,8 @@ def reset_defaults():
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
     st.session_state.status_msg = ""
-    st.session_state.batch_tasks_text = ""
+    st.session_state.batch_tasks_text = DEFAULT_BATCH_TASKS_TEXT
+    st.session_state.batch_template_display = BATCH_TEMPLATE_OPTIONS[0]
     st.session_state.batch_msg = ""
 
 # =========================
@@ -1327,13 +1371,21 @@ with batch_tab:
     with st.container(border=True):
         st.markdown('<div class="section-title">多時程項目批次輸入</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]</div>',
+            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]；也可省略 Action By，系統會自動判斷。</div>',
             unsafe_allow_html=True,
         )
+        t1, t2 = st.columns([2, 1], vertical_alignment="bottom")
+        with t1:
+            st.selectbox("套用範本", BATCH_TEMPLATE_OPTIONS, key="batch_template_display")
+        with t2:
+            if st.button("載入範本", use_container_width=True):
+                load_batch_template()
+                st.rerun()
+
         st.text_area(
             "批次輸入內容",
             key="batch_tasks_text",
-            height=220,
+            height=280,
             placeholder="提供素材 Ad2 2天\n客戶確認 客戶 1天\n廣告上線 Ad2 1天 上線",
         )
         b1, b2, b3 = st.columns([1, 1, 4], vertical_alignment="center")
