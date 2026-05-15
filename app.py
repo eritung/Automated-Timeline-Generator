@@ -1,5 +1,6 @@
 
 import io
+import re
 import uuid
 from datetime import date, datetime, timedelta
 
@@ -514,6 +515,10 @@ def init_state():
         st.session_state.last_generated_name = "未命名專案"
     if "status_msg" not in st.session_state:
         st.session_state.status_msg = ""
+    if "batch_tasks_text" not in st.session_state:
+        st.session_state.batch_tasks_text = ""
+    if "batch_msg" not in st.session_state:
+        st.session_state.batch_msg = ""
 
 init_state()
 
@@ -825,6 +830,8 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     worksheet.set_column(1, 1, 12)
 
     col_start, row_start = 2, 4
+    # 固定 Excel 畫面：上方月份／日期標題列 + 左側 A/B 欄（製作時程、Action by）
+    worksheet.freeze_panes(row_start, col_start)
     break_cols_excel = []
 
     month_segments = compute_month_segments(display_columns, col_start)
@@ -1016,6 +1023,93 @@ def copy_task(idx: int):
         row["id"] = f"task_copy_{uuid.uuid4().hex[:6]}"
         st.session_state.tasks.insert(idx + 1, row)
 
+def parse_batch_tasks(text: str):
+    """
+    批次輸入格式：
+    任務名稱 ActionBy 工作天數 [上線日]
+    例如：提供素材 Ad2 2天
+         廣告上線 Ad2 1天 上線
+    """
+    parsed_rows = []
+    errors = []
+    launch_words = {"上線", "上線日", "launch", "true", "yes", "y", "1"}
+
+    for line_no, raw_line in enumerate(text.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line:
+            continue
+
+        parts = re.split(r"\s+", line)
+        is_launch = False
+
+        if parts and parts[-1].lower() in launch_words:
+            is_launch = True
+            parts = parts[:-1]
+
+        if len(parts) < 3:
+            errors.append(f"第 {line_no} 行格式不足：{raw_line}")
+            continue
+
+        days_token = parts[-1]
+        owner = parts[-2]
+        task_name = " ".join(parts[:-2]).strip()
+
+        if owner not in ["Ad2", "客戶"]:
+            errors.append(f"第 {line_no} 行 Action By 需為 Ad2 或 客戶：{raw_line}")
+            continue
+
+        days_match = re.search(r"\d+", days_token)
+        if not days_match:
+            errors.append(f"第 {line_no} 行工作天數需包含數字，例如 2天 或 2：{raw_line}")
+            continue
+
+        days = int(days_match.group())
+        if days <= 0:
+            errors.append(f"第 {line_no} 行工作天數需大於 0：{raw_line}")
+            continue
+
+        if not task_name:
+            errors.append(f"第 {line_no} 行缺少任務名稱：{raw_line}")
+            continue
+
+        parsed_rows.append({
+            "id": f"task_batch_{uuid.uuid4().hex[:6]}",
+            "顯示": True,
+            "任務名稱": task_name,
+            "Action By": owner,
+            "工作天數": days,
+            "上線日": is_launch,
+        })
+
+    if not parsed_rows:
+        errors.append("尚未解析到任何可新增的任務。")
+
+    return parsed_rows, errors
+
+def apply_batch_tasks(mode: str = "replace"):
+    parsed_rows, errors = parse_batch_tasks(st.session_state.batch_tasks_text)
+    if errors:
+        st.session_state.batch_msg = "\n".join(errors)
+        return
+
+    if sum(1 for row in parsed_rows if row.get("上線日")) > 1:
+        st.session_state.batch_msg = "批次輸入中只能有一筆標記為上線日。"
+        return
+
+    if mode == "append":
+        st.session_state.tasks.extend(parsed_rows)
+        action_text = "新增"
+    else:
+        st.session_state.tasks = parsed_rows
+        action_text = "取代"
+
+    # 清掉舊任務 widget key，避免 Streamlit session state 殘留讓欄位看起來沒更新
+    for key in list(st.session_state.keys()):
+        if key.startswith(("show_", "task_", "owner_", "days_", "launch_", "up_", "down_", "copy_", "del_")):
+            del st.session_state[key]
+
+    st.session_state.batch_msg = f"已{action_text} {len(parsed_rows)} 筆任務。"
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
     holidays = parse_holidays(st.session_state.holidays_text)
@@ -1061,6 +1155,8 @@ def reset_defaults():
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
     st.session_state.status_msg = ""
+    st.session_state.batch_tasks_text = ""
+    st.session_state.batch_msg = ""
 
 # =========================
 # UI
@@ -1132,94 +1228,128 @@ st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
 
 
-with st.container(border=True):
-    h1, h2 = st.columns([5,1.05], vertical_alignment="center")
-    with h1:
-        st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
-        st.markdown('<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>', unsafe_allow_html=True)
-    with h2:
-        st.button("新增任務", on_click=add_task, use_container_width=True)
+manual_tab, batch_tab = st.tabs(["單筆編輯", "批次輸入"])
 
-    hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
-    headers = [
-        (hc1, "顯示"),
-        (hc2, "任務名稱"),
-        (hc3, "Action By"),
-        (hc4, "工作天數"),
-        (hc5, "上線日"),
-        (hc6, "排序"),
-        (hc7, "複製"),
-        (hc8, "刪除"),
-    ]
-    centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
-    for col, label in headers:
-        with col:
-            cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
-            st.markdown(f'<div class="{cls}">{label}</div>', unsafe_allow_html=True)
+with manual_tab:
+    with st.container(border=True):
+        h1, h2 = st.columns([5,1.05], vertical_alignment="center")
+        with h1:
+            st.markdown('<div class="section-title">流程設定</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>', unsafe_allow_html=True)
+        with h2:
+            st.button("新增任務", on_click=add_task, use_container_width=True)
 
-    for idx, row in enumerate(st.session_state.tasks):
-        rid = row["id"]
-        c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
+        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
+        headers = [
+            (hc1, "顯示"),
+            (hc2, "任務名稱"),
+            (hc3, "Action By"),
+            (hc4, "工作天數"),
+            (hc5, "上線日"),
+            (hc6, "排序"),
+            (hc7, "複製"),
+            (hc8, "刪除"),
+        ]
+        centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
+        for col, label in headers:
+            with col:
+                cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
+                st.markdown(f'<div class="{cls}">{label}</div>', unsafe_allow_html=True)
 
-        with c1:
-            key = f"show_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["顯示"]
-            cc1, cc2, cc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
-            with cc2:
-                st.checkbox("顯示", key=key, label_visibility="collapsed",
-                            on_change=sync_task_field, args=(rid, "顯示", key))
+        for idx, row in enumerate(st.session_state.tasks):
+            rid = row["id"]
+            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
 
-        with c2:
-            key = f"task_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["任務名稱"]
-            st.text_input("任務名稱", key=key, label_visibility="collapsed",
-                          on_change=sync_task_field, args=(rid, "任務名稱", key))
+            with c1:
+                key = f"show_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = row["顯示"]
+                cc1, cc2, cc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
+                with cc2:
+                    st.checkbox("顯示", key=key, label_visibility="collapsed",
+                                on_change=sync_task_field, args=(rid, "顯示", key))
 
-        with c3:
-            key = f"owner_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["Action By"]
-            st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
-                         on_change=sync_task_field, args=(rid, "Action By", key))
+            with c2:
+                key = f"task_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = row["任務名稱"]
+                st.text_input("任務名稱", key=key, label_visibility="collapsed",
+                              on_change=sync_task_field, args=(rid, "任務名稱", key))
 
-        with c4:
-            key = f"days_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = int(row["工作天數"])
-            st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
-                            on_change=sync_task_field, args=(rid, "工作天數", key))
+            with c3:
+                key = f"owner_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = row["Action By"]
+                st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
+                             on_change=sync_task_field, args=(rid, "Action By", key))
 
-        with c5:
-            key = f"launch_{rid}"
-            if key not in st.session_state:
-                st.session_state[key] = row["上線日"]
-            lc1, lc2, lc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
-            with lc2:
-                st.checkbox("上線日", key=key, label_visibility="collapsed",
-                            on_change=sync_task_field, args=(rid, "上線日", key))
+            with c4:
+                key = f"days_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = int(row["工作天數"])
+                st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
+                                on_change=sync_task_field, args=(rid, "工作天數", key))
 
-        with c6:
-            s1, s2 = st.columns([1, 1], vertical_alignment="center")
-            with s1:
-                if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
-                    move_task_up(idx)
+            with c5:
+                key = f"launch_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = row["上線日"]
+                lc1, lc2, lc3 = st.columns([1, 0.9, 1], vertical_alignment="center")
+                with lc2:
+                    st.checkbox("上線日", key=key, label_visibility="collapsed",
+                                on_change=sync_task_field, args=(rid, "上線日", key))
+
+            with c6:
+                s1, s2 = st.columns([1, 1], vertical_alignment="center")
+                with s1:
+                    if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
+                        move_task_up(idx)
+                        st.rerun()
+                with s2:
+                    if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
+                        move_task_down(idx)
+                        st.rerun()
+
+            with c7:
+                if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
+                    copy_task(idx)
                     st.rerun()
-            with s2:
-                if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
-                    move_task_down(idx)
+
+            with c8:
+                if st.button("✕", key=f"del_{rid}", use_container_width=True):
+                    remove_task(idx)
                     st.rerun()
 
-        with c7:
-            if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
-                copy_task(idx)
-                st.rerun()
+            if idx < len(st.session_state.tasks) - 1:
+                st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
 
-        with c8:
-            if st.button("✕", key=f"del_{rid}", use_container_width=True):
-                remove_task(idx)
+with batch_tab:
+    with st.container(border=True):
+        st.markdown('<div class="section-title">多時程項目批次輸入</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]</div>',
+            unsafe_allow_html=True,
+        )
+        st.text_area(
+            "批次輸入內容",
+            key="batch_tasks_text",
+            height=220,
+            placeholder="提供素材 Ad2 2天\n客戶確認 客戶 1天\n廣告上線 Ad2 1天 上線",
+        )
+        b1, b2, b3 = st.columns([1, 1, 4], vertical_alignment="center")
+        with b1:
+            if st.button("取代目前流程", use_container_width=True):
+                apply_batch_tasks("replace")
                 st.rerun()
+        with b2:
+            if st.button("加到流程後方", use_container_width=True):
+                apply_batch_tasks("append")
+                st.rerun()
+        with b3:
+            st.caption("若沒有標記「上線」，系統仍會沿用原本邏輯：產出時自動將最後一筆視為上線日。")
 
-        if idx < len(st.session_state.tasks) - 1:
-            st.markdown('<div class="flow-row-sep"></div>', unsafe_allow_html=True)
+        if st.session_state.batch_msg:
+            if "錯誤" in st.session_state.batch_msg or "第 " in st.session_state.batch_msg or "只能" in st.session_state.batch_msg or "尚未" in st.session_state.batch_msg:
+                st.warning(st.session_state.batch_msg)
+            else:
+                st.success(st.session_state.batch_msg)
