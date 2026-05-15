@@ -1438,17 +1438,13 @@ with batch_tab:
             height=280,
             placeholder="提供素材 Ad2 2天\n客戶確認 客戶 1天\n廣告上線 Ad2 1天 上線",
         )
-        b1, b2, b3 = st.columns([1, 1, 4], vertical_alignment="center")
+        b1, b2 = st.columns([1, 5], vertical_alignment="center")
         with b1:
-            if st.button("取代目前流程", use_container_width=True):
+            if st.button("套用到流程", use_container_width=True):
                 apply_batch_tasks("replace")
                 st.rerun()
         with b2:
-            if st.button("加到流程後方", use_container_width=True):
-                apply_batch_tasks("append")
-                st.rerun()
-        with b3:
-            st.caption("若沒有標記「上線」，系統仍會沿用原本邏輯：產出時自動將最後一筆視為上線日。")
+            st.caption("套用後會取代目前流程；若沒有標記「上線」，系統仍會沿用原本邏輯：產出時自動將最後一筆視為上線日。")
 
         if st.session_state.batch_msg:
             if "錯誤" in st.session_state.batch_msg or "第 " in st.session_state.batch_msg or "只能" in st.session_state.batch_msg or "尚未" in st.session_state.batch_msg:
