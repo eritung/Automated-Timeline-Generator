@@ -596,6 +596,8 @@ def init_state():
         st.session_state.last_generated_name = "未命名專案"
     if "status_msg" not in st.session_state:
         st.session_state.status_msg = ""
+    if "validation_error_msg" not in st.session_state:
+        st.session_state.validation_error_msg = ""
     if "batch_tasks_text" not in st.session_state:
         st.session_state.batch_tasks_text = DEFAULT_BATCH_TASKS_TEXT
     if "batch_template_display" not in st.session_state:
@@ -1078,6 +1080,21 @@ def sync_task_field(task_id: str, field: str, widget_key: str):
             row[field] = st.session_state.get(widget_key)
             break
 
+def sync_launch_field(task_id: str, widget_key: str):
+    """讓上線日像單選題一樣運作，避免誤選兩筆造成產出錯誤。"""
+    selected = bool(st.session_state.get(widget_key))
+
+    for row in st.session_state.tasks:
+        rid = row.get("id")
+        is_target = rid == task_id
+        row["上線日"] = selected if is_target else False
+
+        launch_key = f"launch_{rid}"
+        if launch_key in st.session_state:
+            st.session_state[launch_key] = selected if is_target else False
+
+    st.session_state.validation_error_msg = ""
+
 def add_task():
     st.session_state.tasks.append({
         "id": f"task_new_{uuid.uuid4().hex[:6]}",
@@ -1205,26 +1222,33 @@ def load_batch_template():
 
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
-    holidays = parse_holidays(st.session_state.holidays_text)
-    tasks = get_active_tasks()
-    calculation_mode = MODE_MAP[st.session_state.mode_display]
-    start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
-    launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
 
-    df_schedule, warning_msg, holidays_dt = build_scheduler(
-        tasks_config=tasks,
-        holidays_config=holidays,
-        calculation_mode=calculation_mode,
-        start_date_obj=start_date_obj,
-        launch_date_obj=launch_date_obj,
-    )
-    excel_bytes, display_columns = build_excel_bytes(
-        df_schedule=df_schedule,
-        holidays_config=holidays,
-        holidays_dt=holidays_dt,
-        launch_date_obj=launch_date_obj,
-        collapse_threshold=int(st.session_state.collapse_threshold),
-    )
+    try:
+        holidays = parse_holidays(st.session_state.holidays_text)
+        tasks = get_active_tasks()
+        calculation_mode = MODE_MAP[st.session_state.mode_display]
+        start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
+        launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
+
+        df_schedule, warning_msg, holidays_dt = build_scheduler(
+            tasks_config=tasks,
+            holidays_config=holidays,
+            calculation_mode=calculation_mode,
+            start_date_obj=start_date_obj,
+            launch_date_obj=launch_date_obj,
+        )
+        excel_bytes, display_columns = build_excel_bytes(
+            df_schedule=df_schedule,
+            holidays_config=holidays,
+            holidays_dt=holidays_dt,
+            launch_date_obj=launch_date_obj,
+            collapse_threshold=int(st.session_state.collapse_threshold),
+        )
+    except Exception as e:
+        # 不讓 Streamlit 進入錯誤頁；保留使用者目前輸入與既有預覽。
+        st.session_state.validation_error_msg = f"無法產出時程表：{e}"
+        st.session_state.status_msg = ""
+        return
 
     st.session_state.schedule_df = df_schedule
     st.session_state.warning_msg = warning_msg
@@ -1232,6 +1256,7 @@ def generate_schedule():
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
     st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
+    st.session_state.validation_error_msg = ""
     st.session_state.status_msg = "時程表已更新。" if had_previous_output else "已產出時程表。"
 
 def reset_defaults():
@@ -1291,6 +1316,9 @@ with st.container(border=True):
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
+
+if st.session_state.validation_error_msg:
+    st.error(st.session_state.validation_error_msg)
 
 if st.session_state.warning_msg:
     st.warning(st.session_state.warning_msg)
