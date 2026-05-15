@@ -114,6 +114,7 @@ st.markdown(f"""
  * Windows 備援：Microsoft JhengHei
  * 通用備援：sans-serif
  */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
 
 /* ── 全域基底 ── */
@@ -131,10 +132,15 @@ html, body, [data-testid="stAppViewContainer"] {{
 
 /*
  * Sidebar 展開按鈕修正：
- * 部分部署環境讀不到 Material Symbols ligature，會把 keyboard_double_arrow_right
- * 直接顯示成文字。這裡直接隱藏原文字，改用穩定的 CSS icon 顯示。
+ * 先載入 Material Symbols，並用較廣的 selector 覆蓋 Streamlit 不同版本的 sidebar toggle。
+ * 這次不把文字改成假 icon，而是讓 keyboard_double_arrow_right 正常以 ligature 轉成圖示。
  */
-[data-testid="collapsedControl"] {{
+[data-testid="collapsedControl"],
+[data-testid="stSidebarCollapsedControl"],
+button[title="Open sidebar"],
+button[title="Close sidebar"],
+button[aria-label="Open sidebar"],
+button[aria-label="Close sidebar"] {{
   width: 2.35rem !important;
   height: 2.35rem !important;
   min-width: 2.35rem !important;
@@ -146,32 +152,47 @@ html, body, [data-testid="stAppViewContainer"] {{
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  overflow: hidden !important;
 }}
-[data-testid="collapsedControl"]:hover {{
+[data-testid="collapsedControl"]:hover,
+[data-testid="stSidebarCollapsedControl"]:hover,
+button[title="Open sidebar"]:hover,
+button[title="Close sidebar"]:hover,
+button[aria-label="Open sidebar"]:hover,
+button[aria-label="Close sidebar"]:hover {{
   background: #EDE8E0 !important;
   border-color: #B5B0A6 !important;
 }}
-[data-testid="collapsedControl"] * {{
+[data-testid="collapsedControl"] *,
+[data-testid="stSidebarCollapsedControl"] *,
+button[title="Open sidebar"] *,
+button[title="Close sidebar"] *,
+button[aria-label="Open sidebar"] *,
+button[aria-label="Close sidebar"] * {{
+  font-family: 'Material Symbols Rounded' !important;
+  font-weight: normal !important;
+  font-style: normal !important;
+  font-size: 24px !important;
   line-height: 1 !important;
   letter-spacing: normal !important;
-}}
-[data-testid="collapsedControl"] span {{
-  font-size: 0 !important;
-  color: transparent !important;
-  width: 1.25rem !important;
-  height: 1.25rem !important;
-  display: flex !important;
+  text-transform: none !important;
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  overflow: hidden !important;
-}}
-[data-testid="collapsedControl"] span::before {{
-  content: "☰";
-  font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif !important;
-  font-size: 1.15rem !important;
-  font-weight: 500 !important;
-  line-height: 1 !important;
   color: {UI_PRIMARY} !important;
+  font-feature-settings: 'liga' !important;
+  -webkit-font-feature-settings: 'liga' !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+  white-space: nowrap !important;
+}}
+/* 保險：若 icon span 在部分版本仍繼承寬字距，強制還原 */
+span[class*="material"],
+[data-testid="stIconMaterial"] {{
+  font-family: 'Material Symbols Rounded' !important;
+  letter-spacing: normal !important;
+  line-height: 1 !important;
+  font-feature-settings: 'liga' !important;
+  -webkit-font-feature-settings: 'liga' !important;
 }}
 /* SVG 內部不需要文字字型 */
 svg, svg * {{
