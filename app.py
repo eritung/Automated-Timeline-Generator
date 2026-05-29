@@ -295,10 +295,7 @@ h1 {{
   letter-spacing: 0.12em !important;
   line-height: 1.4 !important;
   margin-bottom: 0 !important;
-  background: linear-gradient(120deg, #6B5DB8 0%, #C4608A 60%, #E8956A 100%);
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
+  color: #6B5DB8 !important;
 }}
 [data-testid="stCaptionContainer"] p {{
   font-size: 0.95rem !important;
@@ -311,7 +308,7 @@ h1 {{
 /* 主要按鈕：紫粉漸層 */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
-  background: linear-gradient(135deg, #7C6FCD 0%, #C4608A 100%) !important;
+  background: #7C6FCD !important;
   border: none !important;
   color: #ffffff !important;
   border-radius: 10px !important;
@@ -326,7 +323,7 @@ div.stDownloadButton > button[kind="primary"] {{
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-  background: linear-gradient(135deg, #6B5EBC 0%, #B35079 100%) !important;
+  background: #6B5EBC !important;
   box-shadow: 0 5px 16px rgba(124,111,205,0.40) !important;
   transform: translateY(-1px) !important;
 }}
@@ -542,7 +539,7 @@ tr:nth-child(3) .owner-col {{
 /* 任務行分隔線 */
 .flow-row-sep {{
   height: 1px;
-  background: linear-gradient(to right, #E0DAF2 0%, #EDE8F5 60%, transparent 100%);
+  background: #E0DAF2;
   margin: 0.2rem 0 0.35rem 0;
 }}
 
