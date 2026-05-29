@@ -978,12 +978,11 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     fmt_bar_prep = F(bg_color=EXCEL_COLOR_PREP_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_legend_client = F(bg_color=EXCEL_COLOR_CLIENT_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_legend_ad2 = F(bg_color=EXCEL_COLOR_AD2_BAR, align="center", valign="vcenter", **border_fmt)
-    fmt_legend_joint = F(bg_color=EXCEL_COLOR_PREP_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_break_merge = F(align="center", valign="vcenter", **border_fmt)
 
     worksheet.write(0, 2, "客戶", fmt_legend_client)
     worksheet.write(0, 3, "Ad2", fmt_legend_ad2)
-    worksheet.write(0, 4, "Ad2＋客戶", fmt_legend_joint)
+    # 上方色票只保留單獨角色，避免匯出時多出 Ad2＋客戶 標籤。
     worksheet.merge_range(1, 0, 3, 0, "製作時程", fmt_header_main)
     worksheet.merge_range(1, 1, 3, 1, "Action by", fmt_header_main)
     worksheet.set_column(0, 0, 20)
@@ -1171,7 +1170,6 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
     <div class="legend">
       <span class="legend-item"><span class="legend-dot" style="background:{UI_AD2};"></span>Ad2</span>
       <span class="legend-item"><span class="legend-dot" style="background:{UI_CLIENT};"></span>客戶</span>
-      <span class="legend-item"><span class="legend-dot" style="background:{UI_PREP};"></span>Ad2＋客戶／預備上線</span>
       <span class="legend-item"><span class="legend-dot" style="background:{UI_LAUNCH};"></span>上線</span>
     </div>
     <div class="timeline-wrap">
