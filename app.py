@@ -128,7 +128,24 @@ EXCEL_COLOR_LAUNCH_BAR = '#FF0000'
 EXCEL_COLOR_PREP_BAR = '#92D050'
 EXCEL_COLOR_WEEKEND = '#D9D9D9'
 EXCEL_COLOR_HOLIDAY_TEXT = '#595959'
-MONTH_COLORS = ['#FFF2CC', '#E2EFDA', '#DDEBF7', '#FCE4D6', '#E7E6E6']
+# 月份色固定對照：春夏秋冬系淡色票，避免跨月份時顏色因起始月份不同而改變。
+MONTH_COLORS = {
+    1: '#DDEBF7',   # 冬｜冰藍
+    2: '#E4DFEC',   # 冬｜淡藤紫
+    3: '#FCE4EC',   # 春｜櫻花粉
+    4: '#E2F0D9',   # 春｜新芽綠
+    5: '#FFF2CC',   # 春末｜暖花黃
+    6: '#DDEBF7',   # 夏｜晴空藍
+    7: '#D9EAD3',   # 夏｜薄荷綠
+    8: '#DDEBF7',   # 夏｜海風藍
+    9: '#FCE4D6',   # 秋｜杏橘
+    10: '#F4CCCC',  # 秋｜楓紅粉
+    11: '#EADBC8',  # 秋｜栗子米
+    12: '#E7E6E6',  # 冬｜霧灰
+}
+
+def get_month_color(month):
+    return MONTH_COLORS.get(int(month), '#E8DFD0')
 
 # UI colors — 日系簡約
 UI_PRIMARY = "#3D6073"        # 青墨（深靜謐藍）
@@ -994,15 +1011,13 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     break_cols_excel = []
 
     month_segments = compute_month_segments(display_columns, col_start)
-    month_color_idx = 0
     for start_col, end_col, year, month in month_segments:
-        month_fmt = F(bold=True, align="center", valign="vcenter", bg_color=MONTH_COLORS[month_color_idx % len(MONTH_COLORS)], **border_fmt)
+        month_fmt = F(bold=True, align="center", valign="vcenter", bg_color=get_month_color(month), **border_fmt)
         month_label = date(year, month, 1).strftime("%b").upper()
         if start_col == end_col:
             worksheet.write(1, start_col, month_label, month_fmt)
         else:
             worksheet.merge_range(1, start_col, 1, end_col, month_label, month_fmt)
-        month_color_idx += 1
 
     for i, item in enumerate(display_columns):
         col = col_start + i
@@ -1113,7 +1128,7 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
                 break
             span += 1
             j += 1
-        month_cells.append(f'<th colspan="{span}">{month}</th>')
+        month_cells.append(f'<th colspan="{span}" style="background:{get_month_color(item.month)};">{month}</th>')
         i = j
 
     date_cells = []
