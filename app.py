@@ -6,6 +6,8 @@ from datetime import date, datetime, timedelta
 
 import pandas as pd
 import streamlit as st
+from openpyxl import load_workbook
+
 
 st.set_page_config(page_title="製作時程排程工具", page_icon="📅", layout="wide", initial_sidebar_state="collapsed")
 
@@ -604,6 +606,8 @@ def init_state():
         st.session_state.batch_template_display = BATCH_TEMPLATE_OPTIONS[0]
     if "batch_msg" not in st.session_state:
         st.session_state.batch_msg = ""
+    if "import_msg" not in st.session_state:
+        st.session_state.import_msg = ""
 
 init_state()
 
@@ -1191,6 +1195,114 @@ def parse_batch_tasks(text: str):
 
     return parsed_rows, errors
 
+def _excel_rgb(cell):
+    """回傳儲存格填色 RGB；若沒有可辨識填色則回傳空字串。"""
+    fill = getattr(cell, "fill", None)
+    if not fill or fill.fill_type != "solid":
+        return ""
+
+    color = fill.fgColor
+    if not color:
+        return ""
+
+    if color.type == "rgb" and color.rgb:
+        return str(color.rgb).upper()[-6:]
+
+    # 部分 Excel 可能會以 indexed 色碼儲存；工具自產檔通常不會走到這裡，保留防呆。
+    if color.type == "indexed" and color.indexed is not None:
+        indexed_map = {
+            64: "",
+            22: "D9D9D9",
+            10: "FF0000",
+            43: "92D050",
+        }
+        return indexed_map.get(color.indexed, "")
+
+    return ""
+
+
+def parse_generated_timeline_excel(uploaded_file):
+    """
+    讀取本工具產出的「時程表」Excel，轉回批次輸入文字。
+    判斷邏輯：
+    - A 欄：任務名稱
+    - B 欄：Action By
+    - 第 5 列起：任務列
+    - 色條格數：回推工作天數
+    - 紅色色條：標記為上線
+    - 綠色「預備上線」列：自動排程產物，不匯入批次流程
+    """
+    try:
+        workbook = load_workbook(uploaded_file, data_only=True)
+    except Exception as e:
+        raise ValueError(f"無法讀取 Excel 檔案，請確認檔案格式是否為 .xlsx：{e}")
+
+    if "時程表" not in workbook.sheetnames:
+        raise ValueError("找不到「時程表」工作表，請上傳由此工具產出的時程表 Excel。")
+
+    ws = workbook["時程表"]
+
+    task_colors = {
+        EXCEL_COLOR_CLIENT_BAR.replace("#", "").upper(),
+        EXCEL_COLOR_AD2_BAR.replace("#", "").upper(),
+        EXCEL_COLOR_LAUNCH_BAR.replace("#", "").upper(),
+    }
+    launch_color = EXCEL_COLOR_LAUNCH_BAR.replace("#", "").upper()
+    prep_color = EXCEL_COLOR_PREP_BAR.replace("#", "").upper()
+
+    imported_lines = []
+    errors = []
+
+    # 工具產出的任務從第 5 列開始；抓到空白任務列即停止。
+    for row_idx in range(5, ws.max_row + 1):
+        task_name = str(ws.cell(row=row_idx, column=1).value or "").strip()
+        owner = str(ws.cell(row=row_idx, column=2).value or "").strip()
+
+        if not task_name:
+            continue
+
+        row_colors = [_excel_rgb(ws.cell(row=row_idx, column=col_idx)) for col_idx in range(3, ws.max_column + 1)]
+
+        # 「預備上線」是雙日期模式自動產生的緩衝列，不應回寫成流程項目。
+        if task_name == "預備上線" or prep_color in row_colors:
+            continue
+
+        bar_days = sum(1 for color in row_colors if color in task_colors)
+        is_launch = launch_color in row_colors or "上線" in task_name
+
+        if bar_days <= 0:
+            errors.append(f"「{task_name}」沒有讀到可辨識的時程色條，已略過。")
+            continue
+
+        if owner not in ["Ad2", "客戶"]:
+            owner = "客戶" if "客戶" in task_name else "Ad2"
+
+        line = f"{task_name} {owner} {bar_days}天"
+        if is_launch:
+            line += " 上線"
+        imported_lines.append(line)
+
+    if not imported_lines:
+        extra = "\n" + "\n".join(errors) if errors else ""
+        raise ValueError("沒有讀到可匯入的流程項目，請確認檔案是否為此工具匯出的時程表。" + extra)
+
+    return "\n".join(imported_lines), errors
+
+
+def import_timeline_to_batch(uploaded_file):
+    if uploaded_file is None:
+        st.session_state.import_msg = "請先選擇要匯入的時程表 Excel。"
+        return
+
+    try:
+        batch_text, warnings = parse_generated_timeline_excel(uploaded_file)
+        st.session_state.batch_tasks_text = batch_text
+        warning_text = "\n" + "\n".join(warnings) if warnings else ""
+        st.session_state.import_msg = f"已匯入 {len(batch_text.splitlines())} 筆流程到批次輸入。{warning_text}"
+        st.session_state.batch_msg = ""
+    except Exception as e:
+        st.session_state.import_msg = str(e)
+
 def apply_batch_tasks(mode: str = "replace"):
     parsed_rows, errors = parse_batch_tasks(st.session_state.batch_tasks_text)
     if errors:
@@ -1276,6 +1388,7 @@ def reset_defaults():
     st.session_state.batch_tasks_text = DEFAULT_BATCH_TASKS_TEXT
     st.session_state.batch_template_display = BATCH_TEMPLATE_OPTIONS[0]
     st.session_state.batch_msg = ""
+    st.session_state.import_msg = ""
 
 # =========================
 # UI
@@ -1452,6 +1565,26 @@ with batch_tab:
             '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]；也可省略 Action By，系統會自動判斷。</div>',
             unsafe_allow_html=True,
         )
+
+        uploaded_timeline_file = st.file_uploader(
+            "匯入已產出的時程表",
+            type=["xlsx"],
+            help="上傳由此工具下載的時程表 Excel，可自動將任務名稱、Action By 與工作天數帶回批次輸入。",
+        )
+        import_col1, import_col2 = st.columns([1, 5], vertical_alignment="center")
+        with import_col1:
+            if st.button("匯入時程表", use_container_width=True):
+                import_timeline_to_batch(uploaded_timeline_file)
+                st.rerun()
+        with import_col2:
+            st.caption("匯入後會先寫入下方批次輸入區，確認內容後再按「套用到流程」。")
+
+        if st.session_state.import_msg:
+            if "無法" in st.session_state.import_msg or "找不到" in st.session_state.import_msg or "沒有讀到" in st.session_state.import_msg or "請先" in st.session_state.import_msg:
+                st.warning(st.session_state.import_msg)
+            else:
+                st.success(st.session_state.import_msg)
+
         t1, t2 = st.columns([2, 1], vertical_alignment="bottom")
         with t1:
             st.selectbox("套用範本", BATCH_TEMPLATE_OPTIONS, key="batch_template_display")
