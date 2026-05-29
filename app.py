@@ -3,10 +3,13 @@ import io
 import re
 import uuid
 from datetime import date, datetime, timedelta
+from copy import copy
 
 import pandas as pd
 import streamlit as st
 from openpyxl import load_workbook
+from openpyxl.styles import Side
+from openpyxl.cell.cell import MergedCell
 
 
 st.set_page_config(page_title="製作時程排程工具", page_icon="📅", layout="wide", initial_sidebar_state="collapsed")
@@ -20,15 +23,44 @@ MODE_MAP = {
     "上線日回推": "backward",
     "同時指定開始與上線日期": "double",
 }
+OWNER_OPTIONS = ["Ad2", "客戶", "Ad2＋客戶"]
+OWNER_ALIASES = {
+    "Ad2+客戶": "Ad2＋客戶",
+    "Ad2＋客戶": "Ad2＋客戶",
+    "AD2+客戶": "Ad2＋客戶",
+    "AD2＋客戶": "Ad2＋客戶",
+    "Ad2&客戶": "Ad2＋客戶",
+    "Ad2＆客戶": "Ad2＋客戶",
+    "Ad2/客戶": "Ad2＋客戶",
+    "AD2": "Ad2",
+    "ad2": "Ad2",
+}
+
+def normalize_owner(owner: str, fallback_text: str = "") -> str:
+    """統一 Action By 顯示；支援 Ad2＋客戶這類共同執行項目。"""
+    owner = str(owner or "").strip()
+    owner = OWNER_ALIASES.get(owner, owner)
+    if owner in OWNER_OPTIONS:
+        return owner
+    return "客戶" if "客戶" in str(fallback_text) else "Ad2"
+
+
+def format_day_value(days):
+    """工作天數顯示用：1.0 -> 1、0.5 -> 0.5。"""
+    try:
+        value = float(days)
+    except (TypeError, ValueError):
+        return days
+    return int(value) if value.is_integer() else value
 
 DEFAULT_TASKS = [
-    {"id": "task_1", "顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"id": "task_2", "顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3, "上線日": False},
-    {"id": "task_3", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"id": "task_4", "顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2, "上線日": False},
-    {"id": "task_5", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1, "上線日": False},
-    {"id": "task_6", "顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1, "上線日": False},
-    {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1, "上線日": True},
+    {"id": "task_1", "顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
+    {"id": "task_2", "顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3.0, "上線日": False, "粗下框線": False},
+    {"id": "task_3", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
+    {"id": "task_4", "顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2.0, "上線日": False, "粗下框線": False},
+    {"id": "task_5", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
+    {"id": "task_6", "顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1.0, "上線日": False, "粗下框線": False},
+    {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1.0, "上線日": True, "粗下框線": False},
 ]
 
 DEFAULT_BATCH_TASKS_TEXT = """提供素材 客戶 1天
@@ -437,6 +469,10 @@ tr:nth-child(3) .owner-col {{
 .timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: rgba(0,0,0,0.07); }}
 .timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.07); }}
 .timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.07); }}
+.timeline-table tr.separator-row td {{
+  border-bottom: 3px solid #2D2926 !important;
+}}
+
 
 /* ── Legend ── */
 .legend {{
@@ -651,14 +687,20 @@ def get_active_tasks():
         visible_rows[-1]["上線日"] = True
 
     for row in visible_rows:
-        days = int(row.get("工作天數", 0) or 0)
-        if days <= 0:
-            raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需大於 0。")
+        try:
+            days = float(row.get("工作天數", 0) or 0)
+        except (TypeError, ValueError):
+            raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數格式錯誤。")
+        if days < 0.5:
+            raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需至少 0.5 天。")
+        if abs(days * 2 - round(days * 2)) > 1e-9:
+            raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需以 0.5 天為單位。")
         tasks.append({
             "task": str(row.get("任務名稱", "")).strip(),
             "owner": str(row.get("Action By", "Ad2")).strip() or "Ad2",
             "days": days,
             "is_launch": bool(row.get("上線日", False)),
+            "thick_bottom": bool(row.get("粗下框線", False)),
         })
     return tasks
 
@@ -668,18 +710,16 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
 
-    def subtract_workdays(start_date, days):
-        current = start_date
-        check_days = max(days - 1, 0)
-        while check_days > 0:
-            current -= timedelta(days=1)
-            if is_workday(current):
-                check_days -= 1
-        return current
+    def ceil_day_units(days):
+        return int(round(float(days) * 2))
+
+    def format_days(days):
+        days = float(days)
+        return int(days) if days.is_integer() else days
 
     def add_workdays(start_date, days):
         current = start_date
-        check_days = max(days - 1, 0)
+        check_days = max(int(days) - 1, 0)
         while check_days > 0:
             current += timedelta(days=1)
             if is_workday(current):
@@ -703,6 +743,46 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
             d += timedelta(days=1)
         return d
 
+    def ensure_workday_backward(d):
+        while not is_workday(d):
+            d -= timedelta(days=1)
+        return d
+
+    def advance_slot(slot, half_units):
+        """slot=(date, 0/1)，0=上午、1=下午；half_units 可正可負。"""
+        current_date, half = slot
+        step = 1 if half_units >= 0 else -1
+        for _ in range(abs(int(half_units))):
+            if step > 0:
+                if half == 0:
+                    half = 1
+                else:
+                    current_date = get_next_workday(current_date)
+                    half = 0
+            else:
+                if half == 1:
+                    half = 0
+                else:
+                    current_date = get_previous_workday(current_date)
+                    half = 1
+        return current_date, half
+
+    def schedule_row(t, start_slot):
+        units = ceil_day_units(t["days"])
+        end_slot = advance_slot(start_slot, units - 1)
+        return {
+            "Task": t["task"],
+            "Owner": t["owner"],
+            "Start Date": start_slot[0],
+            "End Date": end_slot[0],
+            "Start Half": start_slot[1],
+            "End Half": end_slot[1],
+            "Duration Days": float(t["days"]),
+            "Half Units": units,
+            "Type": "Launch" if t["is_launch"] else "Normal",
+            "Thick Bottom": bool(t.get("thick_bottom", False)),
+        }, advance_slot(start_slot, units)
+
     schedule = []
     warning_msg = ""
     launch_task_config = next((t for t in tasks_config if t["is_launch"]), tasks_config[-1])
@@ -710,59 +790,47 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
     if calculation_mode == "backward":
         if not launch_date_obj:
             raise ValueError("「上線日回推」需要填寫上線日期。")
-        current_end = launch_date_obj
-        reversed_tasks = tasks_config[::-1]
+        current_end_slot = (ensure_workday_backward(launch_date_obj), 1)
         temp_schedule = []
-        for i, t in enumerate(reversed_tasks):
-            duration = t["days"]
-            if t["is_launch"]:
-                end_date = current_end
-                start_date = subtract_workdays(end_date, duration)
-            elif i == 0:
-                end_date = current_end
-                start_date = subtract_workdays(end_date, duration)
-            else:
-                prev_start = temp_schedule[-1]["Start Date"]
-                end_date = get_previous_workday(prev_start)
-                start_date = subtract_workdays(end_date, duration)
-
-            temp_schedule.append({
-                "Task": t["task"], "Owner": t["owner"],
-                "Start Date": start_date, "End Date": end_date,
-                "Type": "Launch" if t["is_launch"] else "Normal"
-            })
+        for t in tasks_config[::-1]:
+            units = ceil_day_units(t["days"])
+            start_slot = advance_slot(current_end_slot, -(units - 1))
+            row = {
+                "Task": t["task"],
+                "Owner": t["owner"],
+                "Start Date": start_slot[0],
+                "End Date": current_end_slot[0],
+                "Start Half": start_slot[1],
+                "End Half": current_end_slot[1],
+                "Duration Days": float(t["days"]),
+                "Half Units": units,
+                "Type": "Launch" if t["is_launch"] else "Normal",
+                "Thick Bottom": bool(t.get("thick_bottom", False)),
+            }
+            temp_schedule.append(row)
+            current_end_slot = advance_slot(start_slot, -1)
         schedule = temp_schedule[::-1]
 
     elif calculation_mode == "forward":
-        curr_start = ensure_workday_forward(start_date_obj or date.today())
-        prev_end = None
-        for idx, t in enumerate(tasks_config):
-            start_d = launch_date_obj if (t["is_launch"] and launch_date_obj) else (curr_start if idx == 0 else get_next_workday(prev_end))
-            end_d = add_workdays(start_d, t["days"])
-            schedule.append({
-                "Task": t["task"], "Owner": t["owner"],
-                "Start Date": start_d, "End Date": end_d,
-                "Type": "Launch" if t["is_launch"] else "Normal"
-            })
-            prev_end = end_d
+        curr_start_date = ensure_workday_forward(start_date_obj or date.today())
+        curr_slot = (curr_start_date, 0)
+        for t in tasks_config:
+            if t["is_launch"] and launch_date_obj:
+                curr_slot = (ensure_workday_forward(launch_date_obj), 0)
+            row, curr_slot = schedule_row(t, curr_slot)
+            schedule.append(row)
 
     else:
         if not start_date_obj or not launch_date_obj:
             raise ValueError("「同時指定開始與上線日期」需要同時填寫開始日期與上線日期。")
-        curr_start = ensure_workday_forward(start_date_obj)
-        prev_end = None
+        curr_slot = (ensure_workday_forward(start_date_obj), 0)
         normal_tasks = [t for t in tasks_config if not t["is_launch"]]
-        for idx, t in enumerate(normal_tasks):
-            start_d = curr_start if idx == 0 else get_next_workday(prev_end)
-            end_d = add_workdays(start_d, t["days"])
-            schedule.append({
-                "Task": t["task"], "Owner": t["owner"],
-                "Start Date": start_d, "End Date": end_d, "Type": "Normal"
-            })
-            prev_end = end_d
+        for t in normal_tasks:
+            row, curr_slot = schedule_row(t, curr_slot)
+            schedule.append(row)
 
         last_task_end = schedule[-1]["End Date"] if schedule else start_date_obj
-        real_prep_start = last_task_end + timedelta(days=1)
+        real_prep_start = get_next_workday(last_task_end)
         real_prep_end = launch_date_obj - timedelta(days=1)
 
         if last_task_end >= launch_date_obj:
@@ -772,14 +840,15 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
         if real_prep_end >= real_prep_start:
             schedule.append({
                 "Task": "預備上線", "Owner": "Ad2",
-                "Start Date": real_prep_start, "End Date": real_prep_end, "Type": "Prep"
+                "Start Date": real_prep_start, "End Date": real_prep_end,
+                "Start Half": 0, "End Half": 1,
+                "Duration Days": None, "Half Units": None,
+                "Type": "Prep",
+                "Thick Bottom": False
             })
 
-        launch_end = add_workdays(launch_date_obj, launch_task_config["days"])
-        schedule.append({
-            "Task": launch_task_config["task"], "Owner": launch_task_config["owner"],
-            "Start Date": launch_date_obj, "End Date": launch_end, "Type": "Launch"
-        })
+        launch_row, _ = schedule_row(launch_task_config, (ensure_workday_forward(launch_date_obj), 0))
+        schedule.append(launch_row)
 
     return pd.DataFrame(schedule), warning_msg, holidays_dt
 
@@ -909,10 +978,12 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     fmt_bar_prep = F(bg_color=EXCEL_COLOR_PREP_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_legend_client = F(bg_color=EXCEL_COLOR_CLIENT_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_legend_ad2 = F(bg_color=EXCEL_COLOR_AD2_BAR, align="center", valign="vcenter", **border_fmt)
+    fmt_legend_joint = F(bg_color=EXCEL_COLOR_PREP_BAR, align="center", valign="vcenter", **border_fmt)
     fmt_break_merge = F(align="center", valign="vcenter", **border_fmt)
 
     worksheet.write(0, 2, "客戶", fmt_legend_client)
     worksheet.write(0, 3, "Ad2", fmt_legend_ad2)
+    worksheet.write(0, 4, "Ad2＋客戶", fmt_legend_joint)
     worksheet.merge_range(1, 0, 3, 0, "製作時程", fmt_header_main)
     worksheet.merge_range(1, 1, 3, 1, "Action by", fmt_header_main)
     worksheet.set_column(0, 0, 20)
@@ -959,6 +1030,8 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             bar_fmt = fmt_bar_launch
         elif item["Type"] == "Prep":
             bar_fmt = fmt_bar_prep
+        elif item["Owner"] == "Ad2＋客戶":
+            bar_fmt = fmt_bar_prep
         elif "客戶" in item["Owner"]:
             bar_fmt = fmt_bar_client
         else:
@@ -971,7 +1044,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             d_date = col_item.date()
             if item["Start Date"] <= d_date <= item["End Date"]:
                 if item["Type"] in ["Launch", "Prep"] or is_workday(d_date):
-                    worksheet.write(row, col, "", bar_fmt)
+                    worksheet.write(row, col, "1300" if float(item.get("Duration Days") or 0) == 0.5 else "", bar_fmt)
                 else:
                     worksheet.write(row, col, "", fmt_weekend)
             else:
@@ -985,6 +1058,33 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             worksheet.merge_range(row_start, c1, last_task_row, c2, block["name"], fmt_holiday_merged)
 
     writer.close()
+
+    # 批次輸入若以「--」標記階段分隔，會在上一個任務列套用粗下框線。
+    thick_rows = []
+    if "Thick Bottom" in df_schedule.columns:
+        for idx, item in df_schedule.iterrows():
+            if bool(item.get("Thick Bottom", False)):
+                thick_rows.append(row_start + int(idx) + 1)  # openpyxl row is 1-based
+
+    if thick_rows:
+        output.seek(0)
+        wb = load_workbook(output)
+        ws = wb["時程表"]
+        thick_side = Side(style="thick", color="000000")
+        last_col = ws.max_column
+        for excel_row in thick_rows:
+            for col in range(1, last_col + 1):
+                cell = ws.cell(row=excel_row, column=col)
+                if isinstance(cell, MergedCell):
+                    continue
+                border = copy(cell.border)
+                border.bottom = thick_side
+                cell.border = border
+        patched_output = io.BytesIO()
+        wb.save(patched_output)
+        patched_output.seek(0)
+        return patched_output.getvalue(), display_columns
+
     output.seek(0)
     return output.getvalue(), display_columns
 
@@ -1053,23 +1153,26 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
                         cls = "bar-launch"
                     elif row["Type"] == "Prep":
                         cls = "bar-prep"
+                    elif row["Owner"] == "Ad2＋客戶":
+                        cls = "bar-prep"
                     elif "客戶" in row["Owner"]:
                         cls = "bar-client"
                     else:
                         cls = "bar-ad2"
-                    cells.append(f'<td class="{cls}"></td>')
+                    cells.append(f'<td class="{cls}">{"1300" if float(row.get("Duration Days") or 0) == 0.5 else ""}</td>')
                 else:
                     cells.append(f'<td class="{base_cls}"></td>')
             else:
                 cells.append(f'<td class="{base_cls}"></td>')
-        rows.append("<tr>" + "".join(cells) + "</tr>")
+        row_class = " class='separator-row'" if bool(row.get("Thick Bottom", False)) else ""
+        rows.append(f"<tr{row_class}>" + "".join(cells) + "</tr>")
 
     return f"""
     <div class="legend">
       <span class="legend-item"><span class="legend-dot" style="background:{UI_AD2};"></span>Ad2</span>
       <span class="legend-item"><span class="legend-dot" style="background:{UI_CLIENT};"></span>客戶</span>
+      <span class="legend-item"><span class="legend-dot" style="background:{UI_PREP};"></span>Ad2＋客戶／預備上線</span>
       <span class="legend-item"><span class="legend-dot" style="background:{UI_LAUNCH};"></span>上線</span>
-      <span class="legend-item"><span class="legend-dot" style="background:{UI_PREP};"></span>預備上線</span>
     </div>
     <div class="timeline-wrap">
       <table class="timeline-table">
@@ -1105,8 +1208,9 @@ def add_task():
         "顯示": True,
         "任務名稱": "",
         "Action By": "Ad2",
-        "工作天數": 1,
+        "工作天數": 1.0,
         "上線日": False,
+        "粗下框線": False,
     })
 
 def move_task_up(idx: int):
@@ -1134,6 +1238,8 @@ def parse_batch_tasks(text: str):
     例如：提供素材 Ad2 2天
          廣告上線 Ad2 1天 上線
 
+    可用單獨一行 -- 作為階段分隔線，系統會在上一筆任務列加入粗下框線。
+
     也支援省略 Action By：
     任務名稱 工作天數 [上線日]
     省略時會自動判斷：任務名稱含「客戶」則為客戶，其餘預設為 Ad2。
@@ -1145,6 +1251,13 @@ def parse_batch_tasks(text: str):
     for line_no, raw_line in enumerate(text.splitlines(), start=1):
         line = raw_line.strip()
         if not line:
+            continue
+
+        if line in {"--", "－－", "—", "——"}:
+            if parsed_rows:
+                parsed_rows[-1]["粗下框線"] = True
+            else:
+                errors.append(f"第 {line_no} 行分隔線前沒有可套用的任務：{raw_line}")
             continue
 
         parts = re.split(r"\s+", line)
@@ -1160,21 +1273,28 @@ def parse_batch_tasks(text: str):
 
         days_token = parts[-1]
 
-        if len(parts) >= 3 and parts[-2] in ["Ad2", "客戶"]:
-            owner = parts[-2]
+        owner_candidate = OWNER_ALIASES.get(parts[-2], parts[-2]) if len(parts) >= 3 else ""
+        if len(parts) >= 3 and owner_candidate in OWNER_OPTIONS:
+            owner = owner_candidate
             task_name = " ".join(parts[:-2]).strip()
         else:
-            owner = "客戶" if "客戶" in " ".join(parts[:-1]) else "Ad2"
             task_name = " ".join(parts[:-1]).strip()
+            owner = normalize_owner("", task_name)
 
-        days_match = re.search(r"\d+", days_token)
-        if not days_match:
-            errors.append(f"第 {line_no} 行工作天數需包含數字，例如 2天 或 2：{raw_line}")
+        if days_token in {"半天", "0.5天", ".5天", "0.5", ".5"}:
+            days = 0.5
+        else:
+            days_match = re.search(r"\d+(?:\.5)?", days_token)
+            if not days_match:
+                errors.append(f"第 {line_no} 行工作天數需包含數字，例如 2天、0.5天 或 半天：{raw_line}")
+                continue
+            days = float(days_match.group())
+
+        if days < 0.5:
+            errors.append(f"第 {line_no} 行工作天數需至少 0.5 天：{raw_line}")
             continue
-
-        days = int(days_match.group())
-        if days <= 0:
-            errors.append(f"第 {line_no} 行工作天數需大於 0：{raw_line}")
+        if abs(days * 2 - round(days * 2)) > 1e-9:
+            errors.append(f"第 {line_no} 行工作天數需以 0.5 天為單位，例如 0.5、1、1.5：{raw_line}")
             continue
 
         if not task_name:
@@ -1188,6 +1308,7 @@ def parse_batch_tasks(text: str):
             "Action By": owner,
             "工作天數": days,
             "上線日": is_launch,
+            "粗下框線": False,
         })
 
     if not parsed_rows:
@@ -1208,7 +1329,8 @@ def _excel_rgb(cell):
     if color.type == "rgb" and color.rgb:
         return str(color.rgb).upper()[-6:]
 
-    # 部分 Excel 可能會以 indexed 色碼儲存；工具自產檔通常不會走到這裡，保留防呆。
+    # 部分 Excel 可能會以 indexed 或 theme 色碼儲存；theme 無法穩定換算 RGB，
+    # 但只要它是實心填色，就代表使用者手動標了時程色條，因此保留一個可計算的代碼。
     if color.type == "indexed" and color.indexed is not None:
         indexed_map = {
             64: "",
@@ -1216,7 +1338,11 @@ def _excel_rgb(cell):
             10: "FF0000",
             43: "92D050",
         }
-        return indexed_map.get(color.indexed, "")
+        return indexed_map.get(color.indexed, f"INDEXED:{color.indexed}")
+
+    if color.type == "theme" and color.theme is not None:
+        tint = getattr(color, "tint", 0) or 0
+        return f"THEME:{color.theme}:{round(float(tint), 4)}"
 
     return ""
 
@@ -1228,9 +1354,10 @@ def parse_generated_timeline_excel(uploaded_file):
     - A 欄：任務名稱
     - B 欄：Action By
     - 第 5 列起：任務列
-    - 色條格數：回推工作天數
+    - 色條格數：回推工作天數；若格內文字為 1300，視為半天
     - 紅色色條：標記為上線
-    - 綠色「預備上線」列：自動排程產物，不匯入批次流程
+    - 其他使用者手動標記的實心色條：也會計入工作天數
+    - 「預備上線」列：自動排程產物，不匯入批次流程
     """
     try:
         workbook = load_workbook(uploaded_file, data_only=True)
@@ -1242,13 +1369,12 @@ def parse_generated_timeline_excel(uploaded_file):
 
     ws = workbook["時程表"]
 
-    task_colors = {
-        EXCEL_COLOR_CLIENT_BAR.replace("#", "").upper(),
-        EXCEL_COLOR_AD2_BAR.replace("#", "").upper(),
-        EXCEL_COLOR_LAUNCH_BAR.replace("#", "").upper(),
-    }
     launch_color = EXCEL_COLOR_LAUNCH_BAR.replace("#", "").upper()
-    prep_color = EXCEL_COLOR_PREP_BAR.replace("#", "").upper()
+    ignored_colors = {
+        EXCEL_COLOR_WEEKEND.replace("#", "").upper(),
+        "FFFFFF",
+        "000000",
+    }
 
     imported_lines = []
     errors = []
@@ -1263,24 +1389,36 @@ def parse_generated_timeline_excel(uploaded_file):
 
         row_colors = [_excel_rgb(ws.cell(row=row_idx, column=col_idx)) for col_idx in range(3, ws.max_column + 1)]
 
-        # 「預備上線」是雙日期模式自動產生的緩衝列，不應回寫成流程項目。
-        if task_name == "預備上線" or prep_color in row_colors:
+        # 「預備上線」是雙日期模式自動產生的緩衝列，不應回寫成流程項目；
+        # 但其他任務即使使用綠色或自訂色，也應計入天數。
+        if task_name == "預備上線":
             continue
 
-        bar_days = sum(1 for color in row_colors if color in task_colors)
+        bar_days = 0.0
+        for col_offset, color in enumerate(row_colors, start=3):
+            if color and color not in ignored_colors:
+                cell_value = str(ws.cell(row=row_idx, column=col_offset).value or "").strip()
+                bar_days += 0.5 if cell_value == "1300" else 1.0
         is_launch = launch_color in row_colors or "上線" in task_name
 
         if bar_days <= 0:
             errors.append(f"「{task_name}」沒有讀到可辨識的時程色條，已略過。")
             continue
 
-        if owner not in ["Ad2", "客戶"]:
-            owner = "客戶" if "客戶" in task_name else "Ad2"
+        owner = normalize_owner(owner, task_name)
 
-        line = f"{task_name} {owner} {bar_days}天"
+        line = f"{task_name} {owner} {format_day_value(bar_days)}天"
         if is_launch:
             line += " 上線"
         imported_lines.append(line)
+
+        # 若匯入的時程表已有粗下框線，也回寫成批次輸入的 --，方便再次產出時保留分段。
+        row_has_thick_bottom = any(
+            getattr(ws.cell(row=row_idx, column=col_idx).border.bottom, "style", None) in {"medium", "thick", "double"}
+            for col_idx in range(1, ws.max_column + 1)
+        )
+        if row_has_thick_bottom:
+            imported_lines.append("--")
 
     if not imported_lines:
         extra = "\n" + "\n".join(errors) if errors else ""
@@ -1515,14 +1653,14 @@ with manual_tab:
                 key = f"owner_{rid}"
                 if key not in st.session_state:
                     st.session_state[key] = row["Action By"]
-                st.selectbox("Action By", ["Ad2", "客戶"], key=key, label_visibility="collapsed",
+                st.selectbox("Action By", OWNER_OPTIONS, key=key, label_visibility="collapsed",
                              on_change=sync_task_field, args=(rid, "Action By", key))
 
             with c4:
                 key = f"days_{rid}"
                 if key not in st.session_state:
-                    st.session_state[key] = int(row["工作天數"])
-                st.number_input("工作天數", min_value=1, step=1, key=key, label_visibility="collapsed",
+                    st.session_state[key] = float(row["工作天數"])
+                st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=key, label_visibility="collapsed",
                                 on_change=sync_task_field, args=(rid, "工作天數", key))
 
             with c5:
@@ -1562,14 +1700,14 @@ with batch_tab:
     with st.container(border=True):
         st.markdown('<div class="section-title">多時程項目批次輸入</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]；也可省略 Action By，系統會自動判斷。</div>',
+            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]；工作天數支援 0.5天／半天。若輸入單獨一行 --，會在上一筆任務下方加入粗分隔線。</div>',
             unsafe_allow_html=True,
         )
 
         uploaded_timeline_file = st.file_uploader(
             "匯入已產出的時程表",
             type=["xlsx"],
-            help="上傳由此工具下載的時程表 Excel，可自動將任務名稱、Action By 與工作天數帶回批次輸入。",
+            help="上傳由此工具下載的時程表 Excel，可自動將任務名稱、Action By 與工作天數帶回批次輸入；若有手動改色的特殊需求色條，也會納入天數計算。",
         )
         import_col1, import_col2 = st.columns([1, 5], vertical_alignment="center")
         with import_col1:
