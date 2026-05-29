@@ -147,31 +147,22 @@ MONTH_COLORS = {
 def get_month_color(month):
     return MONTH_COLORS.get(int(month), '#E8DFD0')
 
-# UI colors — 液態玻璃風格
-UI_PRIMARY = "#5B8FD4"        # 玻璃藍
-UI_PRIMARY_HOVER = "#4A7BC4"
-UI_BORDER = "rgba(180,200,230,0.45)"
-UI_MUTED = "#8899BB"
-UI_AD2 = "#5BA4D4"            # 玻璃藍
-UI_CLIENT = "#E8956A"         # 珊瑚橙
-UI_LAUNCH = "#E05C7A"         # 玫瑰紅
-UI_PREP = "#6EC4A0"           # 薄荷綠
+# UI colors — 純白霧玻璃風格（主色：薰衣草紫粉，背景真白）
+UI_PRIMARY = "#7C6FCD"        # 薰衣草紫
+UI_PRIMARY_HOVER = "#6A5EBB"
+UI_BORDER = "#EAE6F4"
+UI_MUTED = "#9B94B3"
+UI_AD2 = "#6AAED6"            # 天藍（Bar 專用）
+UI_CLIENT = "#F0956A"         # 珊瑚橙
+UI_LAUNCH = "#E85C7A"         # 玫瑰紅
+UI_PREP = "#5EC4A0"           # 薄荷綠
 
 st.markdown(f"""
 <style>
-/*
- * 字體策略：Noto Sans TC（思源黑體，Google Fonts 跨平台）
- * Mac 備援：PingFang TC / Helvetica Neue
- * Windows 備援：Microsoft JhengHei
- * 通用備援：sans-serif
- */
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap');
 
-/* ══════════════════════════════════════
-   全域基底 — 霧玻璃 / Liquid Glass 風格
-   背景主色：純淨淺白，帶極淡的藍紫漸層光暈
-   ══════════════════════════════════════ */
+/* 全域基底 */
 html, body, [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"] * {{
   font-family: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif !important;
@@ -180,24 +171,36 @@ html, body, [data-testid="stAppViewContainer"],
   letter-spacing: 0.04em !important;
 }}
 
-/* 主背景：淺白 + 彩色光暈裝飾 */
-html, body {{
-  background: #F7F8FC !important;
-  color: #1A1D2E;
-}}
-[data-testid="stAppViewContainer"] {{
-  background:
-    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(120,160,255,0.10) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 50% at 85% 75%, rgba(180,120,255,0.08) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 35% at 55% 90%, rgba(80,210,180,0.07) 0%, transparent 60%),
-    #F7F8FC !important;
-  color: #1A1D2E;
-}}
-[data-testid="stAppViewBlock"] {{
-  background: transparent !important;
+/* 純白暖調背景 - 完全消除藍色 */
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewBlock"],
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {{
+  background: #FAFAF8 !important;
+  color: #1E1B2E !important;
 }}
 
-/* ── Sidebar 展開按鈕 ── */
+/* Sidebar */
+[data-testid="stSidebar"] {{
+  background: #FFFFFF !important;
+  border-right: 1px solid #EDE8E2 !important;
+}}
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] textarea,
+[data-testid="stSidebar"] .stTextArea label,
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
+  font-size: 0.8rem !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1.7 !important;
+}}
+[data-testid="stSidebar"] textarea {{
+  font-size: 0.8rem !important;
+  line-height: 1.65 !important;
+}}
+
+/* Sidebar 展開按鈕 */
 [data-testid="collapsedControl"],
 [data-testid="stSidebarCollapsedControl"],
 button[title="Open sidebar"],
@@ -208,12 +211,10 @@ button[aria-label="Close sidebar"] {{
   height: 2.35rem !important;
   min-width: 2.35rem !important;
   min-height: 2.35rem !important;
-  border: 1px solid rgba(160,185,240,0.5) !important;
+  border: 1px solid #E0DAF2 !important;
   border-radius: 999px !important;
-  background: rgba(255,255,255,0.72) !important;
-  backdrop-filter: blur(12px) saturate(1.4) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
-  box-shadow: 0 2px 10px rgba(91,143,212,0.12), 0 1px 3px rgba(0,0,0,0.06) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(100,80,160,0.10) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -225,8 +226,8 @@ button[title="Open sidebar"]:hover,
 button[title="Close sidebar"]:hover,
 button[aria-label="Open sidebar"]:hover,
 button[aria-label="Close sidebar"]:hover {{
-  background: rgba(235,242,255,0.88) !important;
-  border-color: rgba(91,143,212,0.5) !important;
+  background: #F5F1FF !important;
+  border-color: #C8BBEE !important;
 }}
 [data-testid="collapsedControl"] *,
 [data-testid="stSidebarCollapsedControl"] *,
@@ -264,7 +265,7 @@ svg, svg * {{
   letter-spacing: normal !important;
 }}
 
-/* ── 下拉選單文字對齊修正 ── */
+/* 下拉選單文字對齊修正 */
 [data-baseweb="select"] > div,
 [data-baseweb="select"] > div > div,
 [data-baseweb="select"] [role="listbox"],
@@ -287,110 +288,83 @@ svg, svg * {{
   padding-bottom: 4rem !important;
 }}
 
-/* ── Sidebar 玻璃風格 ── */
-[data-testid="stSidebar"] {{
-  background: rgba(255,255,255,0.75) !important;
-  backdrop-filter: blur(20px) saturate(1.5) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.5) !important;
-  border-right: 1px solid rgba(160,185,240,0.3) !important;
-}}
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] textarea,
-[data-testid="stSidebar"] .stTextArea label,
-[data-testid="stSidebar"] [data-testid="stWidgetLabel"] {{
-  font-size: 0.8rem !important;
-  letter-spacing: 0.04em !important;
-  line-height: 1.7 !important;
-}}
-[data-testid="stSidebar"] textarea {{
-  font-size: 0.8rem !important;
-  line-height: 1.65 !important;
-}}
-
-/* ── 頁面標題 ── */
+/* 頁面標題：紫粉漸層 */
 h1 {{
   font-size: 1.8rem !important;
   font-weight: 600 !important;
-  color: #1A1D2E !important;
   letter-spacing: 0.12em !important;
   line-height: 1.4 !important;
   margin-bottom: 0 !important;
-  background: linear-gradient(135deg, #3A6EC8 0%, #7B5EA7 55%, #3AA8C4 100%);
+  background: linear-gradient(120deg, #6B5DB8 0%, #C4608A 60%, #E8956A 100%);
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
 }}
 [data-testid="stCaptionContainer"] p {{
   font-size: 0.95rem !important;
-  color: #8899BB !important;
+  color: #A89EC0 !important;
   letter-spacing: 0.06em !important;
   line-height: 1.9 !important;
   font-weight: 300 !important;
 }}
 
-/* ══════════════════════════════════════
-   主要按鈕 — 玻璃漸層藍
-   ══════════════════════════════════════ */
+/* 主要按鈕：紫粉漸層 */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
-  background: linear-gradient(135deg, #5B8FD4 0%, #7B6EC8 100%) !important;
+  background: linear-gradient(135deg, #7C6FCD 0%, #C4608A 100%) !important;
   border: none !important;
   color: #ffffff !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   font-weight: 500 !important;
   font-size: 0.88rem !important;
   letter-spacing: 0.1em !important;
   line-height: 1.5 !important;
-  padding: 0.5rem 1.2rem !important;
-  box-shadow: 0 4px 15px rgba(91,143,212,0.30), 0 1px 4px rgba(0,0,0,0.08) !important;
-  transition: all 0.2s !important;
-  backdrop-filter: blur(8px) !important;
+  padding: 0.5rem 1.4rem !important;
+  min-width: 5rem !important;
+  box-shadow: 0 3px 12px rgba(124,111,205,0.30) !important;
+  transition: all 0.18s !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-  background: linear-gradient(135deg, #4A7EC3 0%, #6A5DB7 100%) !important;
-  box-shadow: 0 6px 20px rgba(91,143,212,0.40), 0 2px 6px rgba(0,0,0,0.10) !important;
+  background: linear-gradient(135deg, #6B5EBC 0%, #B35079 100%) !important;
+  box-shadow: 0 5px 16px rgba(124,111,205,0.40) !important;
   transform: translateY(-1px) !important;
 }}
 
-/* ── 次要按鈕 — 霧玻璃 ── */
+/* 次要按鈕：白底細邊框，min-width 夠寬 */
 div.stButton > button:not([kind="primary"]) {{
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   font-size: 0.85rem !important;
   letter-spacing: 0.05em !important;
   line-height: 1.5 !important;
-  border: 1px solid rgba(160,185,240,0.45) !important;
-  color: #4A6090 !important;
-  background: rgba(255,255,255,0.68) !important;
-  backdrop-filter: blur(10px) saturate(1.3) !important;
-  -webkit-backdrop-filter: blur(10px) saturate(1.3) !important;
-  box-shadow: 0 2px 8px rgba(91,143,212,0.10), inset 0 1px 0 rgba(255,255,255,0.8) !important;
-  transition: all 0.18s !important;
+  border: 1px solid #DDD8EE !important;
+  color: #5A4E8A !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 4px rgba(100,80,160,0.08) !important;
+  transition: all 0.15s !important;
+  min-width: 3.6rem !important;
+  padding-left: 0.8rem !important;
+  padding-right: 0.8rem !important;
 }}
 div.stButton > button:not([kind="primary"]):hover {{
-  background: rgba(235,242,255,0.85) !important;
-  border-color: rgba(91,143,212,0.5) !important;
-  box-shadow: 0 4px 12px rgba(91,143,212,0.18) !important;
-  transform: translateY(-1px) !important;
+  background: #F5F1FF !important;
+  border-color: #C8BBEE !important;
+  box-shadow: 0 2px 8px rgba(100,80,160,0.14) !important;
 }}
 
-/* ══════════════════════════════════════
-   區塊標題
-   ══════════════════════════════════════ */
+/* 區塊標題 */
 .section-title {{
   font-size: 1.05rem;
   font-weight: 600;
-  color: #2A3A5C;
+  color: #2A2040;
   margin-bottom: 0.15rem;
   letter-spacing: 0.15em;
   line-height: 1.6;
-  border-left: 3px solid transparent;
-  border-image: linear-gradient(to bottom, #5B8FD4, #9B6EC8) 1;
+  border-left: 3px solid {UI_PRIMARY};
   padding-left: 10px;
 }}
 .section-sub {{
-  color: #8899BB;
+  color: #A89EC0;
   font-size: 0.88rem;
   font-weight: 300;
   margin-bottom: 0.85rem;
@@ -399,38 +373,28 @@ div.stButton > button:not([kind="primary"]):hover {{
   padding-left: 13px;
 }}
 
-/* ══════════════════════════════════════
-   Card 容器 — 液態玻璃主視覺
-   ══════════════════════════════════════ */
+/* Card 容器：純白卡片，暖色陰影，無藍調 */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
-  border-radius: 18px !important;
-  border: 1px solid rgba(160,190,255,0.40) !important;
-  border-top: 1px solid rgba(200,215,255,0.65) !important;
-  background: rgba(255,255,255,0.65) !important;
-  backdrop-filter: blur(20px) saturate(1.6) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(1.6) !important;
+  border-radius: 16px !important;
+  border: 1px solid #EDE8E2 !important;
+  background: #FFFFFF !important;
   box-shadow:
-    0 8px 32px rgba(91,143,212,0.10),
-    0 2px 8px rgba(0,0,0,0.05),
-    inset 0 1px 0 rgba(255,255,255,0.85),
-    inset 0 -1px 0 rgba(160,190,255,0.15) !important;
+    0 1px 0 #FFFFFF inset,
+    0 4px 24px rgba(60,40,80,0.07),
+    0 1px 4px rgba(60,40,80,0.04) !important;
 }}
 
-/* ══════════════════════════════════════
-   Timeline wrapper — 玻璃面板
-   ══════════════════════════════════════ */
+/* Timeline wrapper */
 .timeline-wrap {{
   overflow-x: auto;
-  border: 1px solid rgba(160,190,255,0.35);
-  border-radius: 14px;
-  background: rgba(248,251,255,0.80);
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  box-shadow: 0 4px 20px rgba(91,143,212,0.09), inset 0 1px 0 rgba(255,255,255,0.9);
+  border: 1px solid #EDE8E2;
+  border-radius: 12px;
+  background: #FFFFFF;
+  box-shadow: 0 2px 12px rgba(60,40,80,0.06);
   margin-top: 8px;
 }}
 
-/* ── Timeline table base ── */
+/* Timeline table base */
 .timeline-table {{
   border-collapse: collapse;
   width: max-content;
@@ -440,65 +404,62 @@ div.stButton > button:not([kind="primary"]):hover {{
 }}
 .timeline-table th,
 .timeline-table td {{
-  border: 1px solid rgba(180,200,240,0.35);
+  border: 1px solid #EDE8E2;
   text-align: center;
   padding: 0;
   height: 33px;
 }}
 
-/* ── 月份 header：淡彩玻璃 ── */
+/* 月份 header */
 .timeline-table .month-row th {{
   height: 25px;
-  background: rgba(220,230,255,0.55);
+  background: #F5F1FF;
   font-weight: 600;
   font-size: 10.5px;
-  color: #5566AA;
+  color: #7C6FCD;
   letter-spacing: 2px;
   text-transform: uppercase;
-  backdrop-filter: blur(8px);
 }}
 
-/* ── 日期 & 星期 header ── */
+/* 日期 & 星期 */
 .timeline-table .date-head {{
   width: 32px; min-width: 32px; max-width: 32px;
   font-size: 10.5px;
   line-height: 1.2;
-  color: #6677AA;
-  background: rgba(235,242,255,0.60);
+  color: #8A849A;
+  background: #FAFAF8;
   font-weight: 300;
 }}
 .timeline-table .weekend-head {{
-  background: rgba(215,225,250,0.55) !important;
-  color: #99AACC !important;
+  background: #F0EDF8 !important;
+  color: #B8B0CC !important;
 }}
 .timeline-table .weekend-cell {{
-  background: rgba(235,240,255,0.35);
+  background: #F7F5FB;
 }}
 .timeline-table .empty-cell {{
-  background: rgba(248,251,255,0.50);
+  background: #FAFAF8;
 }}
 
-/* ── 固定左欄 ── */
+/* 固定左欄 */
 .timeline-table .task-col {{
   min-width: 186px; max-width: 186px; width: 186px;
   text-align: left; padding: 0 14px;
   font-weight: 400; font-size: 12px;
-  background: rgba(248,251,255,0.88);
+  background: #FFFFFF;
   position: sticky; left: 0; z-index: 3;
-  border-right: 1px solid rgba(160,185,240,0.35);
-  color: #1A2540;
+  border-right: 1px solid #EDE8E2;
+  color: #1E1B2E;
   letter-spacing: 0.4px;
-  backdrop-filter: blur(12px);
 }}
 .timeline-table .owner-col {{
   min-width: 90px; max-width: 90px; width: 90px;
-  background: rgba(248,251,255,0.88);
+  background: #FFFFFF;
   position: sticky; left: 186px; z-index: 3;
   font-size: 11.5px;
-  color: #7788AA;
-  border-right: 1px solid rgba(160,185,240,0.35);
+  color: #8A849A;
+  border-right: 1px solid #EDE8E2;
   font-weight: 300;
-  backdrop-filter: blur(12px);
 }}
 
 /* Sticky header cells */
@@ -508,46 +469,34 @@ tr:nth-child(2) .task-col,
 tr:nth-child(2) .owner-col,
 tr:nth-child(3) .task-col,
 tr:nth-child(3) .owner-col {{
-  background: rgba(220,230,255,0.75);
+  background: #F5F1FF;
 }}
 
-/* ── BREAK column ── */
+/* BREAK column */
 .timeline-table .break-cell {{
   width: 18px; min-width: 18px; max-width: 18px;
-  background: linear-gradient(to bottom, rgba(200,215,255,0.5), rgba(220,200,255,0.5));
-  color: #99AACC;
+  background: #F0EDF8;
+  color: #B8B0CC;
   font-weight: 400;
   font-size: 11px;
   writing-mode: vertical-rl;
   text-orientation: mixed;
   letter-spacing: 4px;
   vertical-align: middle;
-  border-left: 1px solid rgba(160,185,240,0.3);
-  border-right: 1px solid rgba(160,185,240,0.3);
+  border-left: 1px solid #EDE8E2;
+  border-right: 1px solid #EDE8E2;
 }}
 
-/* ── Bar cells — 彩色半透明 ── */
-.timeline-table .bar-ad2    {{
-  background: linear-gradient(135deg, rgba(91,164,212,0.85) 0%, rgba(100,140,220,0.85) 100%);
-  border-color: rgba(91,143,212,0.25);
-}}
-.timeline-table .bar-client {{
-  background: linear-gradient(135deg, rgba(232,149,106,0.85) 0%, rgba(240,130,100,0.85) 100%);
-  border-color: rgba(220,100,80,0.20);
-}}
-.timeline-table .bar-launch {{
-  background: linear-gradient(135deg, rgba(224,92,122,0.90) 0%, rgba(200,70,140,0.85) 100%);
-  border-color: rgba(200,70,120,0.20);
-}}
-.timeline-table .bar-prep   {{
-  background: linear-gradient(135deg, rgba(110,196,160,0.85) 0%, rgba(80,185,170,0.85) 100%);
-  border-color: rgba(80,185,160,0.20);
-}}
+/* Bar cells */
+.timeline-table .bar-ad2    {{ background: {UI_AD2};    border-color: rgba(0,0,0,0.06); }}
+.timeline-table .bar-client {{ background: {UI_CLIENT}; border-color: rgba(0,0,0,0.06); }}
+.timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.06); }}
+.timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.06); }}
 .timeline-table tr.separator-row td {{
-  border-bottom: 3px solid rgba(91,143,212,0.55) !important;
+  border-bottom: 2.5px solid #7C6FCD !important;
 }}
 
-/* ── Legend ── */
+/* Legend */
 .legend {{
   display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;
   font-size: 11px; color: {UI_MUTED};
@@ -558,15 +507,14 @@ tr:nth-child(3) .owner-col {{
 .legend-item {{ display: inline-flex; align-items: center; gap: 6px; }}
 .legend-dot {{
   width: 10px; height: 10px; border-radius: 3px; display: inline-block;
-  opacity: 0.9;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  opacity: 0.92;
 }}
 
-/* ── 任務清單標題列 ── */
+/* 任務清單標題列 */
 .task-head-label {{
   font-size: 11px;
   font-weight: 400;
-  color: #99AACC;
+  color: #B8B0CC;
   letter-spacing: 0.12em;
   line-height: 1.8;
   padding: 2px 0;
@@ -578,29 +526,27 @@ tr:nth-child(3) .owner-col {{
   justify-content: center;
 }}
 
-/* ── 斑馬條紋 ── */
+/* 斑馬條紋 */
 .task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: rgba(235,242,255,0.40); border-radius: 4px; }}
+.task-row-plain-alt {{ background: #F9F7FD; border-radius: 4px; }}
 
-/* ── 操作按鈕 ── */
+/* 操作按鈕 */
 .op-btn button {{
   font-size: 12px !important;
   padding: 0 !important;
   height: 2.1rem !important;
   min-height: 2.1rem !important;
-  border-radius: 8px !important;
+  border-radius: 6px !important;
 }}
 
-/* ── 任務行分隔線 ── */
+/* 任務行分隔線 */
 .flow-row-sep {{
   height: 1px;
-  background: linear-gradient(to right, rgba(160,185,240,0.4) 0%, rgba(200,215,255,0.2) 60%, transparent 100%);
+  background: linear-gradient(to right, #E0DAF2 0%, #EDE8F5 60%, transparent 100%);
   margin: 0.2rem 0 0.35rem 0;
 }}
 
-/* ══════════════════════════════════════
-   Input 共用 — 玻璃質感
-   ══════════════════════════════════════ */
+/* Input：白底，暖紫邊框 */
 [data-testid="stCheckbox"] {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -624,41 +570,38 @@ div.stButton {{
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {{
-  border-radius: 10px !important;
-  border: 1px solid rgba(160,185,240,0.45) !important;
-  background: rgba(255,255,255,0.72) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  border-radius: 8px !important;
+  border: 1px solid #DDD8EE !important;
+  background: #FFFFFF !important;
   font-size: 0.92rem !important;
   font-weight: 300 !important;
   height: 2.6rem !important;
-  color: #1A2540 !important;
+  color: #1E1B2E !important;
   letter-spacing: 0.05em !important;
   line-height: 1.6 !important;
-  box-shadow: 0 2px 8px rgba(91,143,212,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  box-shadow: 0 1px 3px rgba(60,40,80,0.06) !important;
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {{
-  border-color: rgba(91,143,212,0.65) !important;
-  box-shadow: 0 0 0 3px rgba(91,143,212,0.15), 0 2px 8px rgba(91,143,212,0.12) !important;
-  background: rgba(255,255,255,0.92) !important;
+  border-color: {UI_PRIMARY} !important;
+  box-shadow: 0 0 0 3px rgba(124,111,205,0.14) !important;
+  background: #FFFFFF !important;
 }}
 [data-testid="stSelectbox"] > div > div,
 [data-baseweb="select"] > div {{
   min-height: 2.6rem !important;
-  border-radius: 10px !important;
-  border: 1px solid rgba(160,185,240,0.45) !important;
-  background: rgba(255,255,255,0.72) !important;
-  backdrop-filter: blur(12px) !important;
-  box-shadow: 0 2px 8px rgba(91,143,212,0.08), inset 0 1px 0 rgba(255,255,255,0.9) !important;
+  border-radius: 8px !important;
+  border: 1px solid #DDD8EE !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(60,40,80,0.06) !important;
 }}
 [data-testid="stSelectbox"] [data-baseweb="select"] {{
   margin: 0 !important;
 }}
 [data-testid="stDateInput"] input {{
-  border-radius: 10px !important;
-  border: 1px solid rgba(160,185,240,0.45) !important;
-  background: rgba(255,255,255,0.72) !important;
+  border-radius: 8px !important;
+  border: 1px solid #DDD8EE !important;
+  background: #FFFFFF !important;
 }}
 [data-testid="column"] > div[data-testid="stVerticalBlock"] {{
   gap: 0.2rem !important;
@@ -667,45 +610,44 @@ div.stButton {{
   margin-bottom: 0.2rem !important;
 }}
 
-/* ── 間距 ── */
+/* 間距 */
 .small-gap {{ height: 0.3rem; }}
 .large-gap {{ height: 1.6rem; }}
 
-/* ── 訊息提示 ── */
+/* 訊息提示 */
 [data-testid="stAlert"] {{
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   border-left-width: 3px !important;
-  background: rgba(255,255,255,0.72) !important;
-  backdrop-filter: blur(10px) !important;
+  background: #FFFFFF !important;
   font-size: 0.85rem !important;
   font-weight: 300 !important;
   letter-spacing: 0.3px !important;
-  box-shadow: 0 2px 10px rgba(91,143,212,0.08) !important;
+  box-shadow: 0 1px 6px rgba(60,40,80,0.07) !important;
 }}
 
-/* ── Tabs 玻璃風格 ── */
+/* Tabs：白底，選中紫底線 */
 [data-testid="stTabs"] [role="tab"] {{
-  border-radius: 8px 8px 0 0 !important;
-  background: rgba(255,255,255,0.45) !important;
-  border: 1px solid rgba(160,185,240,0.30) !important;
-  border-bottom: none !important;
-  color: #6688AA !important;
+  background: transparent !important;
+  border: none !important;
+  color: #A89EC0 !important;
   font-size: 0.88rem !important;
   font-weight: 400 !important;
   letter-spacing: 0.08em !important;
+  padding-bottom: 0.5rem !important;
 }}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
-  background: rgba(255,255,255,0.80) !important;
+  background: transparent !important;
   color: {UI_PRIMARY} !important;
   font-weight: 600 !important;
-  border-color: rgba(91,143,212,0.35) !important;
-  box-shadow: 0 -2px 8px rgba(91,143,212,0.10) !important;
+  border-bottom: 2px solid {UI_PRIMARY} !important;
 }}
-
-/* ── Checkbox 色彩 ── */
-[data-testid="stCheckbox"] input:checked + div {{
-  background: {UI_PRIMARY} !important;
-  border-color: {UI_PRIMARY} !important;
+[data-testid="stTabs"] [role="tablist"] {{
+  border-bottom: 1px solid #EDE8E2 !important;
+  background: transparent !important;
+}}
+[data-testid="stTabContent"] {{
+  background: transparent !important;
+  padding-top: 1rem !important;
 }}
 </style>
 """, unsafe_allow_html=True)
