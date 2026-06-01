@@ -1697,19 +1697,18 @@ with manual_tab:
         with h2:
             st.button("新增任務", on_click=add_task, use_container_width=True)
 
-        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8, hc9 = st.columns([0.55, 2.85, 1.15, 0.82, 0.95, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
+        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.55, 2.85, 1.15, 1.85, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
         headers = [
             (hc1, "顯示"),
             (hc2, "任務名稱"),
             (hc3, "Action By"),
             (hc4, "工作天數"),
-            (hc5, "0.5文字"),
-            (hc6, "上線日"),
-            (hc7, "排序"),
-            (hc8, "複製"),
-            (hc9, "刪除"),
+            (hc5, "上線日"),
+            (hc6, "排序"),
+            (hc7, "複製"),
+            (hc8, "刪除"),
         ]
-        centered_headers = {"顯示", "工作天數", "0.5文字", "上線日", "排序", "複製", "刪除"}
+        centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
         for col, label in headers:
             with col:
                 cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
@@ -1717,7 +1716,7 @@ with manual_tab:
 
         for idx, row in enumerate(st.session_state.tasks):
             rid = row["id"]
-            c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns([0.55, 2.85, 1.15, 0.82, 0.95, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
+            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.55, 2.85, 1.15, 1.85, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
 
             with c1:
                 key = f"show_{rid}"
@@ -1743,20 +1742,28 @@ with manual_tab:
                              on_change=sync_task_field, args=(rid, "Action By", key))
 
             with c4:
-                key = f"days_{rid}"
-                if key not in st.session_state:
-                    st.session_state[key] = float(row["工作天數"])
-                st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=key, label_visibility="collapsed",
-                                on_change=sync_task_field, args=(rid, "工作天數", key))
+                days_key = f"days_{rid}"
+                if days_key not in st.session_state:
+                    st.session_state[days_key] = float(row["工作天數"])
+                current_days_value = float(st.session_state.get(days_key, row.get("工作天數", 1.0)) or 1.0)
+                has_half_day = abs((current_days_value * 2) % 2 - 1) < 1e-9
+                half_key = f"half_label_{rid}"
+                if half_key not in st.session_state:
+                    st.session_state[half_key] = row.get("半天標註", DEFAULT_HALF_DAY_LABEL)
+
+                if has_half_day:
+                    dc1, dc2 = st.columns([0.9, 1.1], vertical_alignment="center")
+                    with dc1:
+                        st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=days_key, label_visibility="collapsed",
+                                        on_change=sync_task_field, args=(rid, "工作天數", days_key))
+                    with dc2:
+                        st.text_input("0.5文字", key=half_key, label_visibility="collapsed", placeholder="1300",
+                                      on_change=sync_task_field, args=(rid, "半天標註", half_key))
+                else:
+                    st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=days_key, label_visibility="collapsed",
+                                    on_change=sync_task_field, args=(rid, "工作天數", days_key))
 
             with c5:
-                key = f"half_label_{rid}"
-                if key not in st.session_state:
-                    st.session_state[key] = row.get("半天標註", DEFAULT_HALF_DAY_LABEL)
-                st.text_input("0.5文字", key=key, label_visibility="collapsed", placeholder="1300",
-                              on_change=sync_task_field, args=(rid, "半天標註", key))
-
-            with c6:
                 key = f"launch_{rid}"
                 if key not in st.session_state:
                     st.session_state[key] = row["上線日"]
@@ -1765,7 +1772,7 @@ with manual_tab:
                     st.checkbox("上線日", key=key, label_visibility="collapsed",
                                 on_change=sync_task_field, args=(rid, "上線日", key))
 
-            with c7:
+            with c6:
                 s1, s2 = st.columns([1, 1], vertical_alignment="center")
                 with s1:
                     if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
@@ -1776,12 +1783,12 @@ with manual_tab:
                         move_task_down(idx)
                         st.rerun()
 
-            with c8:
+            with c7:
                 if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                     copy_task(idx)
                     st.rerun()
 
-            with c9:
+            with c8:
                 if st.button("✕", key=f"del_{rid}", use_container_width=True):
                     remove_task(idx)
                     st.rerun()
