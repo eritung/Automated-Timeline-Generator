@@ -1659,25 +1659,25 @@ with st.container(border=True):
         st.markdown('<div class="mini-reset">', unsafe_allow_html=True)
         st.button("重設", on_click=reset_defaults, use_container_width=True)
 
-    r1c1, r1c2, r1c3, r1c4 = st.columns([2.5,1.45,0.95,0.95], vertical_alignment="bottom")
+    r1c1, r1c2, r1c3 = st.columns([2.6,1.5,1.0], vertical_alignment="bottom")
     with r1c1:
         st.text_input("專案名稱", key="project_name", placeholder="請輸入專案名稱")
     with r1c2:
         st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
     with r1c3:
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
-    with r1c4:
-        st.text_input("半天標註", key="half_day_label", placeholder="1300", help="當工作天數為 0.5 天時，顯示在時程格內的文字，例如 1300、PM、下午。")
 
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3 = st.columns([1.5,1.5,1.0], vertical_alignment="bottom")
+    r2c1, r2c2, r2c3, r2c4 = st.columns([1.35,1.35,1.05,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
         st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled)
     with r2c3:
+        st.text_input("0.5天格內文字", key="half_day_label", placeholder="1300", help="當工作天數為 0.5 天時，顯示在時程格內的文字，例如 1300、PM、下午。")
+    with r2c4:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
