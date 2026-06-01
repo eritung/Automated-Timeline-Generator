@@ -1598,10 +1598,20 @@ def import_timeline_to_batch(uploaded_file):
         st.session_state.import_msg = str(e)
 
 def import_timeline_and_apply(uploaded_file):
-    """匯入已產出的時程表，並立即套用到流程設定。"""
+    """匯入已產出的時程表，並立即套用到流程設定。
+
+    只更新流程與批次文字；保留使用者在專案設定區已選好的開始日、上線日、
+    排程方式等欄位。避免 Streamlit rerun 後 date_input 被重設。
+    """
     if uploaded_file is None:
         st.session_state.import_msg = "請先選擇要匯入的時程表 Excel。"
         return
+
+    preserved_settings = {
+        key: st.session_state.get(key)
+        for key in PROJECT_SETTING_KEYS
+        if key in st.session_state
+    }
 
     try:
         batch_text, warnings = parse_generated_timeline_excel(uploaded_file)
@@ -1610,23 +1620,33 @@ def import_timeline_and_apply(uploaded_file):
         parsed_rows, errors = parse_batch_tasks(batch_text)
         if errors:
             st.session_state.import_msg = "匯入後解析批次內容時發生錯誤：\n" + "\n".join(errors)
+            for key, value in preserved_settings.items():
+                st.session_state[key] = value
             return
 
         if sum(1 for row in parsed_rows if row.get("上線日")) > 1:
             st.session_state.import_msg = "匯入內容中只能有一筆標記為上線日。"
+            for key, value in preserved_settings.items():
+                st.session_state[key] = value
             return
 
         st.session_state.tasks = parsed_rows
 
-        # 清掉舊任務 widget key，避免 Streamlit session state 殘留讓欄位看起來沒更新
+        # 清掉舊任務 widget key，避免 Streamlit session state 殘留讓欄位看起來沒更新。
+        # 注意：不要清到 launch_date_value；它是專案設定的上線日期，不是任務列 checkbox。
         for key in list(st.session_state.keys()):
             if key.startswith(("show_", "task_", "owner_", "days_", "half_label_", "launch_", "up_", "down_", "copy_", "del_")):
                 del st.session_state[key]
 
+        for key, value in preserved_settings.items():
+            st.session_state[key] = value
+
         warning_text = "\n" + "\n".join(warnings) if warnings else ""
-        st.session_state.import_msg = f"已匯入並套用 {len(parsed_rows)} 筆流程。{warning_text}"
+        st.session_state.import_msg = f"已匯入並套用 {len(parsed_rows)} 筆流程，並保留原本設定的上線日期。{warning_text}"
         st.session_state.batch_msg = ""
     except Exception as e:
+        for key, value in preserved_settings.items():
+            st.session_state[key] = value
         st.session_state.import_msg = str(e)
 
 def apply_batch_tasks(mode: str = "replace"):
