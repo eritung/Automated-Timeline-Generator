@@ -1400,13 +1400,15 @@ def parse_batch_tasks(text: str):
         half_day_label = DEFAULT_HALF_DAY_LABEL
         half_label_candidate = ""
 
-        if is_days_token(parts[-1]):
-            days_token = parts[-1]
-            info_parts = parts[:-1]
-        elif len(parts) >= 3 and is_days_token(parts[-2]):
+        # 先判斷「工作天數 + 0.5文字」格式，避免像 1300、1800 這類半天標註
+        # 被誤認成工作天數。例：客戶確認 客戶 0.5天 1300
+        if len(parts) >= 3 and is_days_token(parts[-2]):
             days_token = parts[-2]
             half_label_candidate = parts[-1].strip()
             info_parts = parts[:-2]
+        elif is_days_token(parts[-1]):
+            days_token = parts[-1]
+            info_parts = parts[:-1]
         else:
             errors.append(f"第 {line_no} 行工作天數需包含數字，例如 2天、0.5天 或 半天：{raw_line}")
             continue
