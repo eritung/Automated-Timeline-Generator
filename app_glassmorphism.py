@@ -96,6 +96,15 @@ BATCH_TEMPLATE_MAP = {
     "網頁製作時程": WEBSITE_BATCH_TASKS_TEXT,
 }
 
+# 載入批次範本時，僅更新批次輸入內容，不應影響專案設定區的日期與排程方式。
+PROJECT_SETTING_KEYS = [
+    "project_name",
+    "mode_display",
+    "start_date_value",
+    "launch_date_value",
+    "collapse_threshold",
+]
+
 DEFAULT_HOLIDAYS = {
     '2025-12-25': '行憲紀念日',
     '2026-01-01': '元旦',
@@ -1611,9 +1620,20 @@ def apply_batch_tasks(mode: str = "replace"):
     st.session_state.batch_msg = f"已{action_text} {len(parsed_rows)} 筆任務。"
 
 def load_batch_template():
+    # 只載入批次範本文字；保留使用者已設定的開始日期、上線日期與排程方式。
+    preserved_settings = {
+        key: st.session_state.get(key)
+        for key in PROJECT_SETTING_KEYS
+        if key in st.session_state
+    }
+
     template_name = st.session_state.get("batch_template_display", BATCH_TEMPLATE_OPTIONS[0])
     st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
     st.session_state.batch_msg = f"已載入「{template_name}」。"
+
+    for key, value in preserved_settings.items():
+        if value is not None:
+            st.session_state[key] = value
 
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None

@@ -72,29 +72,38 @@ DEFAULT_BATCH_TASKS_TEXT = """提供素材 客戶 1天
 客戶確認 客戶 1天
 廣告上線 Ad2 1天 上線"""
 
-WEBSITE_BATCH_TASKS_TEXT = """網站架構 2天
-客戶確認 1
-網站架構調整 2
-客戶確認 1
-視覺製作 5
-客戶確認 1
-網頁視覺調整 3
-客戶確認 1
-網頁切版 4
-動態程式 4
-客戶確認 1
-功能測試 2
-客戶確認 1
-網頁打包與測試 2
-客戶確認 1
-廣告進稿 1
-網站上線 1 上線"""
+WEBSITE_BATCH_TASKS_TEXT = """網站架構 Ad2 2天
+客戶確認 客戶 1天
+網站架構調整 Ad2 2天
+客戶確認 客戶 1天
+視覺製作 Ad2 5天
+客戶確認 客戶 1天
+網頁視覺調整 Ad2 3天
+客戶確認 客戶 1天
+網頁切版 Ad2 4天
+動態程式 Ad2 4天
+客戶確認 客戶 1天
+功能測試 Ad2 2天
+客戶確認 客戶 1天
+網頁打包與測試 Ad2 2天
+客戶確認 客戶 1天
+廣告進稿 Ad2 1天
+網站上線 Ad2 1天 上線"""
 
 BATCH_TEMPLATE_OPTIONS = ["一般製作時程", "網頁製作時程"]
 BATCH_TEMPLATE_MAP = {
     "一般製作時程": DEFAULT_BATCH_TASKS_TEXT,
     "網頁製作時程": WEBSITE_BATCH_TASKS_TEXT,
 }
+
+# 載入批次範本時，僅更新批次輸入內容，不應影響專案設定區的日期與排程方式。
+PROJECT_SETTING_KEYS = [
+    "project_name",
+    "mode_display",
+    "start_date_value",
+    "launch_date_value",
+    "collapse_threshold",
+]
 
 DEFAULT_HOLIDAYS = {
     '2025-12-25': '行憲紀念日',
@@ -1550,9 +1559,20 @@ def apply_batch_tasks(mode: str = "replace"):
     st.session_state.batch_msg = f"已{action_text} {len(parsed_rows)} 筆任務。"
 
 def load_batch_template():
+    # 只載入批次範本文字；保留使用者已設定的開始日期、上線日期與排程方式。
+    preserved_settings = {
+        key: st.session_state.get(key)
+        for key in PROJECT_SETTING_KEYS
+        if key in st.session_state
+    }
+
     template_name = st.session_state.get("batch_template_display", BATCH_TEMPLATE_OPTIONS[0])
     st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
     st.session_state.batch_msg = f"已載入「{template_name}」。"
+
+    for key, value in preserved_settings.items():
+        if value is not None:
+            st.session_state[key] = value
 
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
