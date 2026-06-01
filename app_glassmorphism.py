@@ -1597,6 +1597,38 @@ def import_timeline_to_batch(uploaded_file):
     except Exception as e:
         st.session_state.import_msg = str(e)
 
+def import_timeline_and_apply(uploaded_file):
+    """匯入已產出的時程表，並立即套用到流程設定。"""
+    if uploaded_file is None:
+        st.session_state.import_msg = "請先選擇要匯入的時程表 Excel。"
+        return
+
+    try:
+        batch_text, warnings = parse_generated_timeline_excel(uploaded_file)
+        st.session_state.batch_tasks_text = batch_text
+
+        parsed_rows, errors = parse_batch_tasks(batch_text)
+        if errors:
+            st.session_state.import_msg = "匯入後解析批次內容時發生錯誤：\n" + "\n".join(errors)
+            return
+
+        if sum(1 for row in parsed_rows if row.get("上線日")) > 1:
+            st.session_state.import_msg = "匯入內容中只能有一筆標記為上線日。"
+            return
+
+        st.session_state.tasks = parsed_rows
+
+        # 清掉舊任務 widget key，避免 Streamlit session state 殘留讓欄位看起來沒更新
+        for key in list(st.session_state.keys()):
+            if key.startswith(("show_", "task_", "owner_", "days_", "half_label_", "launch_", "up_", "down_", "copy_", "del_")):
+                del st.session_state[key]
+
+        warning_text = "\n" + "\n".join(warnings) if warnings else ""
+        st.session_state.import_msg = f"已匯入並套用 {len(parsed_rows)} 筆流程。{warning_text}"
+        st.session_state.batch_msg = ""
+    except Exception as e:
+        st.session_state.import_msg = str(e)
+
 def apply_batch_tasks(mode: str = "replace"):
     parsed_rows, errors = parse_batch_tasks(st.session_state.batch_tasks_text)
     if errors:
@@ -1892,13 +1924,13 @@ with batch_tab:
             type=["xlsx"],
             help="上傳由此工具下載的時程表 Excel，可自動將任務名稱、Action By 與工作天數帶回批次輸入；若有手動改色的特殊需求色條，也會納入天數計算。",
         )
-        import_col1, import_col2 = st.columns([1, 5], vertical_alignment="center")
+        import_col1, import_col2 = st.columns([1.35, 4.65], vertical_alignment="center")
         with import_col1:
-            if st.button("匯入時程表", use_container_width=True):
-                import_timeline_to_batch(uploaded_timeline_file)
+            if st.button("匯入並套用", use_container_width=True):
+                import_timeline_and_apply(uploaded_timeline_file)
                 st.rerun()
         with import_col2:
-            st.caption("匯入後會先寫入下方批次輸入區，確認內容後再按「套用到流程」。")
+            st.caption("上傳後會自動寫入批次輸入區，並直接取代目前流程。")
 
         if st.session_state.import_msg:
             if "無法" in st.session_state.import_msg or "找不到" in st.session_state.import_msg or "沒有讀到" in st.session_state.import_msg or "請先" in st.session_state.import_msg:
