@@ -1924,13 +1924,13 @@ with batch_tab:
             type=["xlsx"],
             help="上傳由此工具下載的時程表 Excel，可自動將任務名稱、Action By 與工作天數帶回批次輸入；若有手動改色的特殊需求色條，也會納入天數計算。",
         )
-        import_col1, import_col2 = st.columns([1.35, 4.65], vertical_alignment="center")
+        import_col1, import_col2 = st.columns([1.8, 4.2], vertical_alignment="center")
         with import_col1:
-            if st.button("匯入並套用", use_container_width=True):
+            if st.button("匯入時程表並套用到流程", key="import_and_apply_timeline", use_container_width=True):
                 import_timeline_and_apply(uploaded_timeline_file)
                 st.rerun()
         with import_col2:
-            st.caption("上傳後會自動寫入批次輸入區，並直接取代目前流程。")
+            st.caption("上傳 Excel 後按一次即可完成匯入＋套用，不需要再按下方手動批次按鈕。")
 
         if st.session_state.import_msg:
             if "無法" in st.session_state.import_msg or "找不到" in st.session_state.import_msg or "沒有讀到" in st.session_state.import_msg or "請先" in st.session_state.import_msg:
@@ -1952,13 +1952,13 @@ with batch_tab:
             height=280,
             placeholder="提供素材 Ad2 2天\n客戶確認 客戶 1天\n廣告上線 Ad2 1天 上線",
         )
-        b1, b2 = st.columns([1, 5], vertical_alignment="center")
+        b1, b2 = st.columns([1.4, 4.6], vertical_alignment="center")
         with b1:
-            if st.button("套用到流程", use_container_width=True):
+            if st.button("套用手動批次內容", key="apply_manual_batch", use_container_width=True):
                 apply_batch_tasks("replace")
                 st.rerun()
         with b2:
-            st.caption("套用後會取代目前流程；若沒有標記「上線」，系統仍會沿用原本邏輯：產出時自動將最後一筆視為上線日。")
+            st.caption("只有手動修改上方批次文字時才需要按這顆；匯入 Excel 請直接按「匯入時程表並套用到流程」。")
 
         if st.session_state.batch_msg:
             if "錯誤" in st.session_state.batch_msg or "第 " in st.session_state.batch_msg or "只能" in st.session_state.batch_msg or "尚未" in st.session_state.batch_msg:
