@@ -1246,6 +1246,32 @@ def sync_task_field(task_id: str, field: str, widget_key: str):
             row[field] = st.session_state.get(widget_key)
             break
 
+def sync_all_task_widgets_from_state():
+    """
+    在按下「產出時程表」前，主動把畫面上的單筆輸入欄位同步回 tasks。
+
+    Streamlit 的 text_input 有時在使用者只改「0.5文字」後直接按按鈕時，
+    on_change 尚未把值寫回 tasks，導致匯出 Excel 仍使用舊標註。
+    這裡改為產出前統一讀取所有 widget key，確保半天標註、工作天數等欄位都會即時更新。
+    """
+    for row in st.session_state.tasks:
+        rid = row.get("id")
+        if not rid:
+            continue
+
+        field_map = {
+            f"show_{rid}": "顯示",
+            f"task_{rid}": "任務名稱",
+            f"owner_{rid}": "Action By",
+            f"days_{rid}": "工作天數",
+            f"half_label_{rid}": "半天標註",
+            f"launch_{rid}": "上線日",
+        }
+
+        for key, field in field_map.items():
+            if key in st.session_state:
+                row[field] = st.session_state.get(key)
+
 def sync_launch_field(task_id: str, widget_key: str):
     """讓上線日像單選題一樣運作，避免誤選兩筆造成產出錯誤。"""
     selected = bool(st.session_state.get(widget_key))
@@ -1605,6 +1631,9 @@ def load_batch_template():
 
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
+
+    # 產出前先同步單筆輸入欄位，避免只修改「0.5文字」時沒有更新到 Excel。
+    sync_all_task_widgets_from_state()
 
     try:
         holidays = parse_holidays(st.session_state.holidays_text)
