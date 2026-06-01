@@ -691,6 +691,8 @@ def init_state():
         st.session_state.batch_msg = ""
     if "import_msg" not in st.session_state:
         st.session_state.import_msg = ""
+    if "half_day_label" not in st.session_state:
+        st.session_state.half_day_label = "1300"
 
 init_state()
 
@@ -968,7 +970,8 @@ def compute_month_segments(display_columns, col_start):
 
     return segments
 
-def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold):
+def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold, half_day_label="1300"):
+    half_day_label = str(half_day_label or "1300").strip() or "1300"
     output = io.BytesIO()
     display_columns = prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_threshold)
 
@@ -1088,7 +1091,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             d_date = col_item.date()
             if item["Start Date"] <= d_date <= item["End Date"]:
                 if item["Type"] in ["Launch", "Prep"] or is_workday(d_date):
-                    worksheet.write(row, col, "1300" if float(item.get("Duration Days") or 0) == 0.5 else "", bar_fmt)
+                    worksheet.write(row, col, half_day_label if float(item.get("Duration Days") or 0) == 0.5 else "", bar_fmt)
                 else:
                     worksheet.write(row, col, "", fmt_weekend)
             else:
@@ -1132,7 +1135,8 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     output.seek(0)
     return output.getvalue(), display_columns
 
-def render_stable_preview(df_schedule, display_columns, holidays_dt):
+def render_stable_preview(df_schedule, display_columns, holidays_dt, half_day_label="1300"):
+    half_day_label = str(half_day_label or "1300").strip() or "1300"
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
@@ -1203,7 +1207,7 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
                         cls = "bar-client"
                     else:
                         cls = "bar-ad2"
-                    cells.append(f'<td class="{cls}">{"1300" if float(row.get("Duration Days") or 0) == 0.5 else ""}</td>')
+                    cells.append(f'<td class="{cls}">{half_day_label if float(row.get("Duration Days") or 0) == 0.5 else ""}</td>')
                 else:
                     cells.append(f'<td class="{base_cls}"></td>')
             else:
@@ -1397,7 +1401,7 @@ def parse_generated_timeline_excel(uploaded_file):
     - A 欄：任務名稱
     - B 欄：Action By
     - 第 5 列起：任務列
-    - 色條格數：回推工作天數；若格內文字為 1300，視為半天
+    - 色條格數：回推工作天數；若格內有半天標註文字，視為半天
     - 紅色色條：標記為上線
     - 其他使用者手動標記的實心色條：也會計入工作天數
     - 「預備上線」列：自動排程產物，不匯入批次流程
@@ -1441,7 +1445,9 @@ def parse_generated_timeline_excel(uploaded_file):
         for col_offset, color in enumerate(row_colors, start=3):
             if color and color not in ignored_colors:
                 cell_value = str(ws.cell(row=row_idx, column=col_offset).value or "").strip()
-                bar_days += 0.5 if cell_value == "1300" else 1.0
+                half_marker = str(st.session_state.get("half_day_label", "1300") or "1300").strip()
+                half_markers = {"1300", half_marker}
+                bar_days += 0.5 if (cell_value in half_markers or bool(cell_value)) else 1.0
         is_launch = launch_color in row_colors or "上線" in task_name
 
         if bar_days <= 0:
@@ -1536,6 +1542,7 @@ def generate_schedule():
             holidays_dt=holidays_dt,
             launch_date_obj=launch_date_obj,
             collapse_threshold=int(st.session_state.collapse_threshold),
+            half_day_label=st.session_state.get("half_day_label", "1300"),
         )
     except Exception as e:
         # 不讓 Streamlit 進入錯誤頁；保留使用者目前輸入與既有預覽。
@@ -1570,6 +1577,7 @@ def reset_defaults():
     st.session_state.batch_template_display = BATCH_TEMPLATE_OPTIONS[0]
     st.session_state.batch_msg = ""
     st.session_state.import_msg = ""
+    st.session_state.half_day_label = "1300"
 
 # =========================
 # UI
@@ -1590,13 +1598,15 @@ with st.container(border=True):
         st.markdown('<div class="mini-reset">', unsafe_allow_html=True)
         st.button("重設", on_click=reset_defaults, use_container_width=True)
 
-    r1c1, r1c2, r1c3 = st.columns([2.6,1.5,0.9], vertical_alignment="bottom")
+    r1c1, r1c2, r1c3, r1c4 = st.columns([2.5,1.45,0.95,0.95], vertical_alignment="bottom")
     with r1c1:
         st.text_input("專案名稱", key="project_name", placeholder="請輸入專案名稱")
     with r1c2:
         st.selectbox("排程方式", MODE_OPTIONS, key="mode_display")
     with r1c3:
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
+    with r1c4:
+        st.text_input("半天標註", key="half_day_label", placeholder="1300", help="當工作天數為 0.5 天時，顯示在時程格內的文字，例如 1300、PM、下午。")
 
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
@@ -1635,6 +1645,7 @@ if st.session_state.schedule_df is not None:
                 st.session_state.schedule_df,
                 st.session_state.display_columns,
                 st.session_state.holidays_dt,
+                st.session_state.get("half_day_label", "1300"),
             ),
             unsafe_allow_html=True,
         )
