@@ -53,14 +53,16 @@ def format_day_value(days):
         return days
     return int(value) if value.is_integer() else value
 
+DEFAULT_HALF_DAY_LABEL = "1300"
+
 DEFAULT_TASKS = [
-    {"id": "task_1", "顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
-    {"id": "task_2", "顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3.0, "上線日": False, "粗下框線": False},
-    {"id": "task_3", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
-    {"id": "task_4", "顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2.0, "上線日": False, "粗下框線": False},
-    {"id": "task_5", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "上線日": False, "粗下框線": False},
-    {"id": "task_6", "顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1.0, "上線日": False, "粗下框線": False},
-    {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1.0, "上線日": True, "粗下框線": False},
+    {"id": "task_1", "顯示": True, "任務名稱": "提供素材", "Action By": "客戶", "工作天數": 1.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_2", "顯示": True, "任務名稱": "視覺製作", "Action By": "Ad2", "工作天數": 3.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_3", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_4", "顯示": True, "任務名稱": "視覺調整", "Action By": "Ad2", "工作天數": 2.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_5", "顯示": True, "任務名稱": "客戶確認", "Action By": "客戶", "工作天數": 1.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_6", "顯示": True, "任務名稱": "廣告進稿", "Action By": "Ad2", "工作天數": 1.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": False, "粗下框線": False},
+    {"id": "task_7", "顯示": True, "任務名稱": "廣告上線", "Action By": "Ad2", "工作天數": 1.0, "半天標註": DEFAULT_HALF_DAY_LABEL, "上線日": True, "粗下框線": False},
 ]
 
 DEFAULT_BATCH_TASKS_TEXT = """提供素材 客戶 1天
@@ -805,10 +807,12 @@ def get_active_tasks():
             raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需至少 0.5 天。")
         if abs(days * 2 - round(days * 2)) > 1e-9:
             raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需以 0.5 天為單位。")
+        half_label = str(row.get("半天標註", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL).strip() or DEFAULT_HALF_DAY_LABEL
         tasks.append({
             "task": str(row.get("任務名稱", "")).strip(),
             "owner": str(row.get("Action By", "Ad2")).strip() or "Ad2",
             "days": days,
+            "half_day_label": half_label,
             "is_launch": bool(row.get("上線日", False)),
             "thick_bottom": bool(row.get("粗下框線", False)),
         })
@@ -888,6 +892,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
             "Start Half": start_slot[1],
             "End Half": end_slot[1],
             "Duration Days": float(t["days"]),
+            "Half Day Label": t.get("half_day_label", DEFAULT_HALF_DAY_LABEL),
             "Half Units": units,
             "Type": "Launch" if t["is_launch"] else "Normal",
             "Thick Bottom": bool(t.get("thick_bottom", False)),
@@ -1031,8 +1036,7 @@ def compute_month_segments(display_columns, col_start):
 
     return segments
 
-def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold, half_day_label="1300"):
-    half_day_label = str(half_day_label or "1300").strip() or "1300"
+def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj, collapse_threshold):
     output = io.BytesIO()
     display_columns = prepare_display_columns(df_schedule, holidays_dt, launch_date_obj, collapse_threshold)
 
@@ -1152,7 +1156,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             d_date = col_item.date()
             if item["Start Date"] <= d_date <= item["End Date"]:
                 if item["Type"] in ["Launch", "Prep"] or is_workday(d_date):
-                    worksheet.write(row, col, half_day_label if float(item.get("Duration Days") or 0) == 0.5 else "", bar_fmt)
+                    worksheet.write(row, col, str(item.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL) if (abs(float(item.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d_date == item["End Date"]) else "", bar_fmt)
                 else:
                     worksheet.write(row, col, "", fmt_weekend)
             else:
@@ -1196,8 +1200,7 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     output.seek(0)
     return output.getvalue(), display_columns
 
-def render_stable_preview(df_schedule, display_columns, holidays_dt, half_day_label="1300"):
-    half_day_label = str(half_day_label or "1300").strip() or "1300"
+def render_stable_preview(df_schedule, display_columns, holidays_dt):
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
@@ -1268,7 +1271,7 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, half_day_la
                         cls = "bar-client"
                     else:
                         cls = "bar-ad2"
-                    cells.append(f'<td class="{cls}">{half_day_label if float(row.get("Duration Days") or 0) == 0.5 else ""}</td>')
+                    cells.append(f'<td class="{cls}">{str(row.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL) if (abs(float(row.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d == row["End Date"]) else ""}</td>')
                 else:
                     cells.append(f'<td class="{base_cls}"></td>')
             else:
@@ -1317,6 +1320,7 @@ def add_task():
         "任務名稱": "",
         "Action By": "Ad2",
         "工作天數": 1.0,
+        "半天標註": DEFAULT_HALF_DAY_LABEL,
         "上線日": False,
         "粗下框線": False,
     })
@@ -1342,8 +1346,9 @@ def copy_task(idx: int):
 def parse_batch_tasks(text: str):
     """
     批次輸入格式：
-    任務名稱 ActionBy 工作天數 [上線日]
+    任務名稱 ActionBy 工作天數 [0.5天格內文字] [上線日]
     例如：提供素材 Ad2 2天
+         客戶確認 客戶 0.5天 1300
          廣告上線 Ad2 1天 上線
 
     可用單獨一行 -- 作為階段分隔線，系統會在上一筆任務列加入粗下框線。
@@ -1379,14 +1384,34 @@ def parse_batch_tasks(text: str):
             errors.append(f"第 {line_no} 行格式不足：{raw_line}")
             continue
 
-        days_token = parts[-1]
+        def is_days_token(token: str) -> bool:
+            token = str(token).strip()
+            return token in {"半天", "0.5天", ".5天", "0.5", ".5"} or bool(re.fullmatch(r"\d+(?:\.5)?(?:天)?", token))
 
-        owner_candidate = OWNER_ALIASES.get(parts[-2], parts[-2]) if len(parts) >= 3 else ""
-        if len(parts) >= 3 and owner_candidate in OWNER_OPTIONS:
-            owner = owner_candidate
-            task_name = " ".join(parts[:-2]).strip()
+        half_day_label = DEFAULT_HALF_DAY_LABEL
+        half_label_candidate = ""
+
+        if is_days_token(parts[-1]):
+            days_token = parts[-1]
+            info_parts = parts[:-1]
+        elif len(parts) >= 3 and is_days_token(parts[-2]):
+            days_token = parts[-2]
+            half_label_candidate = parts[-1].strip()
+            info_parts = parts[:-2]
         else:
-            task_name = " ".join(parts[:-1]).strip()
+            errors.append(f"第 {line_no} 行工作天數需包含數字，例如 2天、0.5天 或 半天：{raw_line}")
+            continue
+
+        if len(info_parts) < 1:
+            errors.append(f"第 {line_no} 行缺少任務名稱：{raw_line}")
+            continue
+
+        owner_candidate = OWNER_ALIASES.get(info_parts[-1], info_parts[-1]) if len(info_parts) >= 2 else ""
+        if len(info_parts) >= 2 and owner_candidate in OWNER_OPTIONS:
+            owner = owner_candidate
+            task_name = " ".join(info_parts[:-1]).strip()
+        else:
+            task_name = " ".join(info_parts).strip()
             owner = normalize_owner("", task_name)
 
         if days_token in {"半天", "0.5天", ".5天", "0.5", ".5"}:
@@ -1405,6 +1430,9 @@ def parse_batch_tasks(text: str):
             errors.append(f"第 {line_no} 行工作天數需以 0.5 天為單位，例如 0.5、1、1.5：{raw_line}")
             continue
 
+        if half_label_candidate and abs(days % 1 - 0.5) < 1e-9:
+            half_day_label = half_label_candidate
+
         if not task_name:
             errors.append(f"第 {line_no} 行缺少任務名稱：{raw_line}")
             continue
@@ -1415,6 +1443,7 @@ def parse_batch_tasks(text: str):
             "任務名稱": task_name,
             "Action By": owner,
             "工作天數": days,
+            "半天標註": half_day_label,
             "上線日": is_launch,
             "粗下框線": False,
         })
@@ -1503,12 +1532,16 @@ def parse_generated_timeline_excel(uploaded_file):
             continue
 
         bar_days = 0.0
+        half_label_from_sheet = ""
         for col_offset, color in enumerate(row_colors, start=3):
             if color and color not in ignored_colors:
                 cell_value = str(ws.cell(row=row_idx, column=col_offset).value or "").strip()
-                half_marker = str(st.session_state.get("half_day_label", "1300") or "1300").strip()
-                half_markers = {"1300", half_marker}
-                bar_days += 0.5 if (cell_value in half_markers or bool(cell_value)) else 1.0
+                if cell_value:
+                    bar_days += 0.5
+                    if not half_label_from_sheet:
+                        half_label_from_sheet = cell_value
+                else:
+                    bar_days += 1.0
         is_launch = launch_color in row_colors or "上線" in task_name
 
         if bar_days <= 0:
@@ -1518,6 +1551,8 @@ def parse_generated_timeline_excel(uploaded_file):
         owner = normalize_owner(owner, task_name)
 
         line = f"{task_name} {owner} {format_day_value(bar_days)}天"
+        if half_label_from_sheet and abs(bar_days % 1 - 0.5) < 1e-9:
+            line += f" {half_label_from_sheet}"
         if is_launch:
             line += " 上線"
         imported_lines.append(line)
@@ -1570,7 +1605,7 @@ def apply_batch_tasks(mode: str = "replace"):
 
     # 清掉舊任務 widget key，避免 Streamlit session state 殘留讓欄位看起來沒更新
     for key in list(st.session_state.keys()):
-        if key.startswith(("show_", "task_", "owner_", "days_", "launch_", "up_", "down_", "copy_", "del_")):
+        if key.startswith(("show_", "task_", "owner_", "days_", "half_label_", "launch_", "up_", "down_", "copy_", "del_")):
             del st.session_state[key]
 
     st.session_state.batch_msg = f"已{action_text} {len(parsed_rows)} 筆任務。"
@@ -1603,7 +1638,6 @@ def generate_schedule():
             holidays_dt=holidays_dt,
             launch_date_obj=launch_date_obj,
             collapse_threshold=int(st.session_state.collapse_threshold),
-            half_day_label=st.session_state.get("half_day_label", "1300"),
         )
     except Exception as e:
         # 不讓 Streamlit 進入錯誤頁；保留使用者目前輸入與既有預覽。
@@ -1670,14 +1704,12 @@ with st.container(border=True):
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3, r2c4 = st.columns([1.35,1.35,1.05,1.0], vertical_alignment="bottom")
+    r2c1, r2c2, r2c3 = st.columns([1.35,1.35,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
         st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled)
     with r2c3:
-        st.text_input("0.5天格內文字", key="half_day_label", placeholder="1300", help="當工作天數為 0.5 天時，顯示在時程格內的文字，例如 1300、PM、下午。")
-    with r2c4:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
@@ -1706,7 +1738,6 @@ if st.session_state.schedule_df is not None:
                 st.session_state.schedule_df,
                 st.session_state.display_columns,
                 st.session_state.holidays_dt,
-                st.session_state.get("half_day_label", "1300"),
             ),
             unsafe_allow_html=True,
         )
@@ -1727,18 +1758,19 @@ with manual_tab:
         with h2:
             st.button("新增任務", on_click=add_task, use_container_width=True)
 
-        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
+        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8, hc9 = st.columns([0.55, 2.85, 1.15, 0.82, 0.95, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
         headers = [
             (hc1, "顯示"),
             (hc2, "任務名稱"),
             (hc3, "Action By"),
             (hc4, "工作天數"),
-            (hc5, "上線日"),
-            (hc6, "排序"),
-            (hc7, "複製"),
-            (hc8, "刪除"),
+            (hc5, "0.5文字"),
+            (hc6, "上線日"),
+            (hc7, "排序"),
+            (hc8, "複製"),
+            (hc9, "刪除"),
         ]
-        centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
+        centered_headers = {"顯示", "工作天數", "0.5文字", "上線日", "排序", "複製", "刪除"}
         for col, label in headers:
             with col:
                 cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
@@ -1746,7 +1778,7 @@ with manual_tab:
 
         for idx, row in enumerate(st.session_state.tasks):
             rid = row["id"]
-            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.62, 3.2, 1.25, 0.9, 0.72, 1.15, 0.6, 0.6], vertical_alignment="center")
+            c1, c2, c3, c4, c5, c6, c7, c8, c9 = st.columns([0.55, 2.85, 1.15, 0.82, 0.95, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
 
             with c1:
                 key = f"show_{rid}"
@@ -1779,6 +1811,13 @@ with manual_tab:
                                 on_change=sync_task_field, args=(rid, "工作天數", key))
 
             with c5:
+                key = f"half_label_{rid}"
+                if key not in st.session_state:
+                    st.session_state[key] = row.get("半天標註", DEFAULT_HALF_DAY_LABEL)
+                st.text_input("0.5文字", key=key, label_visibility="collapsed", placeholder="1300",
+                              on_change=sync_task_field, args=(rid, "半天標註", key))
+
+            with c6:
                 key = f"launch_{rid}"
                 if key not in st.session_state:
                     st.session_state[key] = row["上線日"]
@@ -1787,7 +1826,7 @@ with manual_tab:
                     st.checkbox("上線日", key=key, label_visibility="collapsed",
                                 on_change=sync_task_field, args=(rid, "上線日", key))
 
-            with c6:
+            with c7:
                 s1, s2 = st.columns([1, 1], vertical_alignment="center")
                 with s1:
                     if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
@@ -1798,12 +1837,12 @@ with manual_tab:
                         move_task_down(idx)
                         st.rerun()
 
-            with c7:
+            with c8:
                 if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                     copy_task(idx)
                     st.rerun()
 
-            with c8:
+            with c9:
                 if st.button("✕", key=f"del_{rid}", use_container_width=True):
                     remove_task(idx)
                     st.rerun()
@@ -1815,7 +1854,7 @@ with batch_tab:
     with st.container(border=True):
         st.markdown('<div class="section-title">多時程項目批次輸入</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [上線]；工作天數支援 0.5天／半天。若輸入單獨一行 --，會在上一筆任務下方加入粗分隔線。</div>',
+            '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [0.5文字] [上線]；工作天數支援 0.5天／半天，例如「客戶確認 客戶 0.5天 1300」。若輸入單獨一行 --，會在上一筆任務下方加入粗分隔線。</div>',
             unsafe_allow_html=True,
         )
 
