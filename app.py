@@ -1507,15 +1507,31 @@ def parse_generated_timeline_excel(uploaded_file):
         if task_name == "預備上線":
             continue
 
+        def format_cell_label(cell):
+            """把 Excel 格內的半天標註轉成乾淨文字。
+
+            openpyxl 讀到像 1300、1800 這類數字時，可能會以 int/float 回傳；
+            若直接 str(1300.0) 會變成 1300.0，若讀不到則又會回到預設 1300。
+            這裡統一整理，讓匯入後可以保留原本 Excel 裡每一列自訂的 0.5 文字。
+            """
+            value = cell.value
+            if value is None:
+                return ""
+            if isinstance(value, float) and value.is_integer():
+                return str(int(value))
+            return str(value).strip()
+
         bar_days = 0.0
         half_label_from_sheet = ""
         for col_offset, color in enumerate(row_colors, start=3):
             if color and color not in ignored_colors:
-                cell_value = str(ws.cell(row=row_idx, column=col_offset).value or "").strip()
+                cell = ws.cell(row=row_idx, column=col_offset)
+                cell_value = format_cell_label(cell)
                 if cell_value:
+                    # 有文字的色條格代表該列的 0.5 天標註。
+                    # 需保留原文字，例如 1300 / 1800 / PM / 下午。
                     bar_days += 0.5
-                    if not half_label_from_sheet:
-                        half_label_from_sheet = cell_value
+                    half_label_from_sheet = cell_value
                 else:
                     bar_days += 1.0
         is_launch = launch_color in row_colors or "上線" in task_name
