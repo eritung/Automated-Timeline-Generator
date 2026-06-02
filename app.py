@@ -688,8 +688,6 @@ def init_state():
     # 上線日預設允許落在週末或國定假日；其他工作項目仍會避開假日。
     if "allow_launch_on_holiday" not in st.session_state:
         st.session_state.allow_launch_on_holiday = True
-    if "forward_launch_date_touched" not in st.session_state:
-        st.session_state.forward_launch_date_touched = False
     if "tasks" not in st.session_state:
         st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
     if "holidays_text" not in st.session_state:
@@ -837,7 +835,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
         return ensure_workday_backward(d)
 
     def advance_slot(slot, half_units):
-        """slot=(date, 0/1)，0=上午、1=下午；half_units 可正可負。"""
+        """slot=(date, 0/1)，0=上午、1=下午；half_units 可正可負；一般工作流程只走工作日。"""
         current_date, half = slot
         step = 1 if half_units >= 0 else -1
         for _ in range(abs(int(half_units))):
@@ -855,9 +853,29 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
                     half = 1
         return current_date, half
 
-    def schedule_row(t, start_slot):
+    def advance_slot_calendar(slot, half_units):
+        """slot=(date, 0/1)，0=上午、1=下午；上線日可走自然日，允許週末與國定假日。"""
+        current_date, half = slot
+        step = 1 if half_units >= 0 else -1
+        for _ in range(abs(int(half_units))):
+            if step > 0:
+                if half == 0:
+                    half = 1
+                else:
+                    current_date += timedelta(days=1)
+                    half = 0
+            else:
+                if half == 1:
+                    half = 0
+                else:
+                    current_date -= timedelta(days=1)
+                    half = 1
+        return current_date, half
+
+    def schedule_row(t, start_slot, use_calendar_days=False):
         units = ceil_day_units(t["days"])
-        end_slot = advance_slot(start_slot, units - 1)
+        slot_advancer = advance_slot_calendar if use_calendar_days else advance_slot
+        end_slot = slot_advancer(start_slot, units - 1)
         return {
             "Task": t["task"],
             "Owner": t["owner"],
@@ -870,7 +888,7 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
             "Half Units": units,
             "Type": "Launch" if t["is_launch"] else "Normal",
             "Thick Bottom": bool(t.get("thick_bottom", False)),
-        }, advance_slot(start_slot, units)
+        }, slot_advancer(start_slot, units)
 
     schedule = []
     warning_msg = ""
@@ -903,11 +921,24 @@ def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_
     elif calculation_mode == "forward":
         curr_start_date = ensure_workday_forward(start_date_obj or date.today())
         curr_slot = (curr_start_date, 0)
+        previous_end_slot = None
         for t in tasks_config:
-            if t["is_launch"] and launch_date_obj:
-                curr_slot = ((launch_date_obj if allow_launch_on_holiday else ensure_workday_forward(launch_date_obj)), 0)
-            row, curr_slot = schedule_row(t, curr_slot)
-            schedule.append(row)
+            if t["is_launch"]:
+                if launch_date_obj:
+                    # 指定上線日時，直接使用指定日期；上線日可落在週末或國定假日。
+                    curr_slot = ((launch_date_obj if allow_launch_on_holiday else ensure_workday_forward(launch_date_obj)), 0)
+                elif allow_launch_on_holiday and previous_end_slot is not None:
+                    # 製作日推進模式下，前面工作流程仍避開假日；但輪到上線任務時，
+                    # 從上一個任務結束後的「下一個自然半日」接續，因此推算出的上線日可落在假日。
+                    curr_slot = advance_slot_calendar(previous_end_slot, 1)
+                row, next_slot = schedule_row(t, curr_slot, use_calendar_days=allow_launch_on_holiday)
+                schedule.append(row)
+                previous_end_slot = (row["End Date"], row["End Half"])
+                curr_slot = next_slot if allow_launch_on_holiday else advance_slot((row["End Date"], row["End Half"]), 1)
+            else:
+                row, curr_slot = schedule_row(t, curr_slot)
+                schedule.append(row)
+                previous_end_slot = (row["End Date"], row["End Half"])
 
     else:
         if not start_date_obj or not launch_date_obj:
@@ -1751,12 +1782,6 @@ def load_batch_template():
     st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
     st.session_state.batch_msg = f"已載入「{template_name}」。"
 
-def mark_forward_launch_date_touched():
-    # 製作日推進模式下，上線日期原本不參與推算；
-    # 使用者一旦手動調整上線日期，就把它視為指定上線日。
-    st.session_state.forward_launch_date_touched = True
-
-
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
 
@@ -1768,10 +1793,7 @@ def generate_schedule():
         tasks = get_active_tasks()
         calculation_mode = MODE_MAP[st.session_state.mode_display]
         start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
-        if st.session_state.mode_display == "製作日推進":
-            launch_date_obj = st.session_state.launch_date_value if st.session_state.get("forward_launch_date_touched", False) else None
-        else:
-            launch_date_obj = st.session_state.launch_date_value
+        launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
 
         df_schedule, warning_msg, holidays_dt = build_scheduler(
             tasks_config=tasks,
@@ -1781,11 +1803,16 @@ def generate_schedule():
             launch_date_obj=launch_date_obj,
             allow_launch_on_holiday=True,
         )
+        preview_launch_date_obj = launch_date_obj
+        if preview_launch_date_obj is None and df_schedule is not None and not df_schedule.empty:
+            launch_rows = df_schedule[df_schedule["Type"] == "Launch"]
+            if not launch_rows.empty:
+                preview_launch_date_obj = launch_rows.iloc[-1]["Start Date"]
         excel_bytes, display_columns = build_excel_bytes(
             df_schedule=df_schedule,
             holidays_config=holidays,
             holidays_dt=holidays_dt,
-            launch_date_obj=launch_date_obj,
+            launch_date_obj=preview_launch_date_obj,
             collapse_threshold=int(st.session_state.collapse_threshold),
         )
     except Exception as e:
@@ -1800,7 +1827,7 @@ def generate_schedule():
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
     st.session_state.holidays_config = holidays
-    st.session_state.preview_launch_date_obj = launch_date_obj
+    st.session_state.preview_launch_date_obj = preview_launch_date_obj
     st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
     st.session_state.validation_error_msg = ""
     st.session_state.status_msg = "時程表已更新。" if had_previous_output else "已產出時程表。"
@@ -1827,7 +1854,6 @@ def reset_defaults():
     st.session_state.import_msg = ""
     st.session_state.half_day_label = "1300"
     st.session_state.allow_launch_on_holiday = True
-    st.session_state.forward_launch_date_touched = False
 
 # =========================
 # UI
@@ -1857,19 +1883,13 @@ with st.container(border=True):
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
     start_disabled = st.session_state.mode_display == "上線日回推"
-    launch_disabled = False
+    launch_disabled = st.session_state.mode_display == "製作日推進"
 
     r2c1, r2c2, r2c3 = st.columns([1.2,1.2,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
-        st.date_input(
-            "上線日期",
-            key="launch_date_value",
-            disabled=launch_disabled,
-            help="製作日推進模式下，若有手動調整此日期，上線日會以此日期為準，且可落在週末或國定假日；其他工作項目仍會避開假日。",
-            on_change=mark_forward_launch_date_touched,
-        )
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="上線日可直接指定週末或國定假日；其他工作項目仍會避開假日。")
     with r2c3:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
