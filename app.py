@@ -104,6 +104,8 @@ PROJECT_SETTING_KEYS = [
     "start_date_value",
     "launch_date_value",
     "allow_launch_on_holiday",
+    "skip_national_holidays",
+    "include_national_holidays",
     "collapse_threshold",
 ]
 
@@ -685,9 +687,14 @@ def init_state():
         st.session_state.launch_date_value = date.today()
     if "collapse_threshold" not in st.session_state:
         st.session_state.collapse_threshold = 2
-    # 上線日預設允許落在週末或國定假日；其他工作項目仍會避開假日。
+    # 預設略過國定假日；勾選「不略過國定假日」時，才會把國定假日視為可排程日期，且上線日也可落在國定假日。
+    if "include_national_holidays" not in st.session_state:
+        st.session_state.include_national_holidays = False
+    # 舊版相容 key：避免既有 session 或匯入流程找不到 key。
     if "allow_launch_on_holiday" not in st.session_state:
-        st.session_state.allow_launch_on_holiday = True
+        st.session_state.allow_launch_on_holiday = False
+    if "skip_national_holidays" not in st.session_state:
+        st.session_state.skip_national_holidays = True
     if "tasks" not in st.session_state:
         st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
     if "holidays_text" not in st.session_state:
@@ -722,7 +729,8 @@ def init_state():
         st.session_state.import_msg = ""
     if "half_day_label" not in st.session_state:
         st.session_state.half_day_label = "1300"
-    st.session_state.allow_launch_on_holiday = True
+    st.session_state.skip_national_holidays = not bool(st.session_state.get("include_national_holidays", False))
+    st.session_state.allow_launch_on_holiday = bool(st.session_state.get("include_national_holidays", False))
 
 init_state()
 
@@ -785,11 +793,12 @@ def get_active_tasks():
         })
     return tasks
 
-def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_obj, launch_date_obj, allow_launch_on_holiday=False):
-    holidays_dt = [pd.to_datetime(h).date() for h in holidays_config.keys()]
+def build_scheduler(tasks_config, holidays_config, calculation_mode, start_date_obj, launch_date_obj, allow_launch_on_holiday=False, skip_national_holidays=True):
+    all_holidays_dt = [pd.to_datetime(h).date() for h in holidays_config.keys()]
+    holidays_dt = all_holidays_dt if skip_national_holidays else []
 
     def is_workday(d):
-        return (d.weekday() < 5) and (d not in holidays_dt)
+        return (d.weekday() < 5) and ((not skip_national_holidays) or (d not in all_holidays_dt))
 
     def ceil_day_units(days):
         return int(round(float(days) * 2))
@@ -1795,14 +1804,21 @@ def generate_schedule():
         start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
         launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
 
+        include_national_holidays = bool(st.session_state.get("include_national_holidays", False))
+        skip_national_holidays = not include_national_holidays
+        st.session_state.skip_national_holidays = skip_national_holidays
+        st.session_state.allow_launch_on_holiday = include_national_holidays
+
         df_schedule, warning_msg, holidays_dt = build_scheduler(
             tasks_config=tasks,
             holidays_config=holidays,
             calculation_mode=calculation_mode,
             start_date_obj=start_date_obj,
             launch_date_obj=launch_date_obj,
-            allow_launch_on_holiday=True,
+            allow_launch_on_holiday=include_national_holidays,
+            skip_national_holidays=skip_national_holidays,
         )
+        effective_holidays = holidays if skip_national_holidays else {}
         preview_launch_date_obj = launch_date_obj
         if preview_launch_date_obj is None and df_schedule is not None and not df_schedule.empty:
             launch_rows = df_schedule[df_schedule["Type"] == "Launch"]
@@ -1810,7 +1826,7 @@ def generate_schedule():
                 preview_launch_date_obj = launch_rows.iloc[-1]["Start Date"]
         excel_bytes, display_columns = build_excel_bytes(
             df_schedule=df_schedule,
-            holidays_config=holidays,
+            holidays_config=effective_holidays,
             holidays_dt=holidays_dt,
             launch_date_obj=preview_launch_date_obj,
             collapse_threshold=int(st.session_state.collapse_threshold),
@@ -1826,7 +1842,7 @@ def generate_schedule():
     st.session_state.excel_bytes = excel_bytes
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
-    st.session_state.holidays_config = holidays
+    st.session_state.holidays_config = effective_holidays
     st.session_state.preview_launch_date_obj = preview_launch_date_obj
     st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
     st.session_state.validation_error_msg = ""
@@ -1853,7 +1869,9 @@ def reset_defaults():
     st.session_state.batch_msg = ""
     st.session_state.import_msg = ""
     st.session_state.half_day_label = "1300"
-    st.session_state.allow_launch_on_holiday = True
+    st.session_state.include_national_holidays = False
+    st.session_state.allow_launch_on_holiday = False
+    st.session_state.skip_national_holidays = True
 
 # =========================
 # UI
@@ -1885,13 +1903,20 @@ with st.container(border=True):
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3 = st.columns([1.2,1.2,1.0], vertical_alignment="bottom")
+    r2c1, r2c2, r2c3 = st.columns([1.25,1.25,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="上線日可直接指定週末或國定假日；其他工作項目仍會避開假日。")
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="預設會略過國定假日；若開啟下方選項，國定假日可被排程，上線日也可落在國定假日。")
     with r2c3:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
+
+    st.markdown('<div class="section-sub">國定假日排程設定</div>', unsafe_allow_html=True)
+    st.checkbox(
+        "國定假日也可排程（不略過）",
+        key="include_national_holidays",
+        help="預設關閉：一般工作與上線日都會避開國定假日。開啟後：國定假日視為可排程日期，上線日也可落在國定假日。",
+    )
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
