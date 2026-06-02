@@ -630,6 +630,23 @@ div.stButton {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }}
+
+/* 產出按鈕區：讓「上線日可排在國定假日」更貼近產出按鈕 */
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] {{
+  margin-bottom: -0.55rem !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] label {{
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] label p {{
+  line-height: 1.25 !important;
+  margin-bottom: 0 !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
+  margin-top: -0.15rem !important;
+}}
+
 [data-testid="stTextInput"] > div,
 [data-testid="stNumberInput"] > div,
 [data-testid="stSelectbox"] > div {{
@@ -1828,6 +1845,7 @@ with st.container(border=True):
     with r2c2:
         st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="一般工作流程固定略過國定假日；若勾選右側選項，上線日可落在國定假日。")
     with r2c3:
+        st.markdown('<div class="generate-action-anchor"></div>', unsafe_allow_html=True)
         st.checkbox("上線日可排在國定假日", key="include_national_holidays", help="預設不勾選：一般工作與上線日都會避開國定假日。勾選後：只有上線日可落在國定假日；其他工作流程仍會略過國定假日，且假日標示會保留。")
     with r2c4:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)

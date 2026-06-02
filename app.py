@@ -583,6 +583,23 @@ div.stButton {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }}
+
+/* 產出按鈕區：讓「上線日可排在國定假日」更貼近產出按鈕 */
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] {{
+  margin-bottom: -0.55rem !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] label {{
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) [data-testid="stCheckbox"] label p {{
+  line-height: 1.25 !important;
+  margin-bottom: 0 !important;
+}}
+div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
+  margin-top: -0.15rem !important;
+}}
+
 [data-testid="stTextInput"] > div,
 [data-testid="stNumberInput"] > div,
 [data-testid="stSelectbox"] > div {{
@@ -1912,6 +1929,7 @@ with st.container(border=True):
     with r2c2:
         st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="一般工作流程固定略過國定假日；若勾選右側選項，上線日可落在國定假日。")
     with r2c3:
+        st.markdown('<div class="generate-action-anchor"></div>', unsafe_allow_html=True)
         st.checkbox(
             "上線日可排在國定假日",
             key="include_national_holidays",
