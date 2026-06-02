@@ -1257,9 +1257,10 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_co
     rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(date_cells) + "</tr>")
     rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(weekday_cells) + "</tr>")
 
-    # 預覽用的國定假日合併標示：
-    # - 一般國定假日：整欄任務列合併顯示節日名稱。
-    # - 若上線日剛好是國定假日：上線格保留色條，上下區塊各自合併顯示節日名稱。
+    # 預覽用的國定假日／連假合併標示：
+    # - 連續的非工作日會視為同一段，例如「國定假日 + 後方週末」。
+    # - 只要該段內含國定假日名稱，就把整段連假都標示該節日名稱，讓預覽更貼近 Excel 輸出。
+    # - 若上線日落在該段中，上線格保留色條，其餘可合併區塊仍顯示節日名稱。
     schedule_rows = list(df_schedule.iterrows())
     task_count = len(schedule_rows)
     launch_row_pos = None
@@ -1270,28 +1271,75 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_co
     holiday_cell_starts = {}
     holiday_cell_skips = set()
 
-    def add_holiday_span(start_row_pos, end_row_pos, col_idx, label):
-        if start_row_pos is None or end_row_pos is None or start_row_pos > end_row_pos:
+    def add_holiday_span(start_row_pos, end_row_pos, start_col_idx, end_col_idx, label):
+        if (
+            start_row_pos is None
+            or end_row_pos is None
+            or start_col_idx is None
+            or end_col_idx is None
+            or start_row_pos > end_row_pos
+            or start_col_idx > end_col_idx
+        ):
             return
-        span = end_row_pos - start_row_pos + 1
-        holiday_cell_starts[(start_row_pos, col_idx)] = {"rowspan": span, "label": label}
-        for skip_row_pos in range(start_row_pos + 1, end_row_pos + 1):
-            holiday_cell_skips.add((skip_row_pos, col_idx))
+        rowspan = end_row_pos - start_row_pos + 1
+        colspan = end_col_idx - start_col_idx + 1
+        holiday_cell_starts[(start_row_pos, start_col_idx)] = {
+            "rowspan": rowspan,
+            "colspan": colspan,
+            "label": label,
+        }
+        for skip_row_pos in range(start_row_pos, end_row_pos + 1):
+            for skip_col_idx in range(start_col_idx, end_col_idx + 1):
+                if skip_row_pos == start_row_pos and skip_col_idx == start_col_idx:
+                    continue
+                holiday_cell_skips.add((skip_row_pos, skip_col_idx))
 
-    for col_idx, item in enumerate(display_columns):
-        if item == "BREAK":
-            continue
-        d = item.date()
-        holiday_name = holidays_config.get(d.strftime("%Y-%m-%d"))
-        if not holiday_name or is_workday(d):
-            continue
+    def add_holiday_block_span(start_col_idx, end_col_idx, label):
+        launch_col_idx = None
+        if launch_date_obj:
+            for c in range(start_col_idx, end_col_idx + 1):
+                item = display_columns[c]
+                if item != "BREAK" and item.date() == launch_date_obj:
+                    launch_col_idx = c
+                    break
 
-        is_launch_holiday = bool(launch_date_obj and d == launch_date_obj and launch_row_pos is not None)
-        if is_launch_holiday:
-            add_holiday_span(0, launch_row_pos - 1, col_idx, holiday_name)
-            add_holiday_span(launch_row_pos + 1, task_count - 1, col_idx, holiday_name)
+        if launch_col_idx is not None and launch_row_pos is not None:
+            # 非上線列：整段連假都顯示節日名稱。
+            add_holiday_span(0, launch_row_pos - 1, start_col_idx, end_col_idx, label)
+            add_holiday_span(launch_row_pos + 1, task_count - 1, start_col_idx, end_col_idx, label)
+            # 上線列：保留上線當日色條，左右相鄰假日仍標示。
+            add_holiday_span(launch_row_pos, launch_row_pos, start_col_idx, launch_col_idx - 1, label)
+            add_holiday_span(launch_row_pos, launch_row_pos, launch_col_idx + 1, end_col_idx, label)
         else:
-            add_holiday_span(0, task_count - 1, col_idx, holiday_name)
+            add_holiday_span(0, task_count - 1, start_col_idx, end_col_idx, label)
+
+    current_block_start = None
+    current_block_dates = []
+    for col_idx, item in enumerate(display_columns):
+        is_non_workday = item != "BREAK" and not is_workday(item.date())
+        if is_non_workday:
+            if current_block_start is None:
+                current_block_start = col_idx
+            current_block_dates.append(item.date())
+            continue
+
+        if current_block_start is not None:
+            holiday_name = next(
+                (holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config),
+                None,
+            )
+            if holiday_name:
+                add_holiday_block_span(current_block_start, col_idx - 1, holiday_name)
+            current_block_start = None
+            current_block_dates = []
+
+    if current_block_start is not None:
+        holiday_name = next(
+            (holidays_config[d.strftime("%Y-%m-%d")] for d in current_block_dates if d.strftime("%Y-%m-%d") in holidays_config),
+            None,
+        )
+        if holiday_name:
+            add_holiday_block_span(current_block_start, len(display_columns) - 1, holiday_name)
 
     for row_pos, (_, row) in enumerate(schedule_rows):
         cells = [
@@ -1305,7 +1353,9 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_co
                 continue
             if (row_pos, col_idx) in holiday_cell_starts:
                 info = holiday_cell_starts[(row_pos, col_idx)]
-                cells.append(f'<td class="holiday-merged" rowspan="{info["rowspan"]}">{holiday_label_text(info["label"])}</td>')
+                rowspan_attr = f' rowspan="{info["rowspan"]}"' if info.get("rowspan", 1) > 1 else ""
+                colspan_attr = f' colspan="{info["colspan"]}"' if info.get("colspan", 1) > 1 else ""
+                cells.append(f'<td class="holiday-merged"{rowspan_attr}{colspan_attr}>{holiday_label_text(info["label"])}</td>')
                 continue
 
             d = item.date()
