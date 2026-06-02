@@ -1,4 +1,5 @@
 
+import html
 import io
 import re
 import uuid
@@ -446,6 +447,15 @@ div.stButton > button:not([kind="primary"]):hover {{
 .timeline-table .weekend-cell {{
   background: #F7F5FB;
 }}
+.timeline-table .holiday-merged {{
+  background: #F0EDF8;
+  color: #9B6F86;
+  font-weight: 600;
+  font-size: 10.5px;
+  line-height: 1.25;
+  white-space: normal;
+  vertical-align: middle;
+}}
 .timeline-table .empty-cell {{
   background: #FAFAF8;
 }}
@@ -690,6 +700,10 @@ def init_state():
         st.session_state.display_columns = None
     if "holidays_dt" not in st.session_state:
         st.session_state.holidays_dt = None
+    if "holidays_config" not in st.session_state:
+        st.session_state.holidays_config = None
+    if "preview_launch_date_obj" not in st.session_state:
+        st.session_state.preview_launch_date_obj = None
     if "warning_msg" not in st.session_state:
         st.session_state.warning_msg = ""
     if "last_generated_name" not in st.session_state:
@@ -1187,9 +1201,16 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
     output.seek(0)
     return output.getvalue(), display_columns
 
-def render_stable_preview(df_schedule, display_columns, holidays_dt):
+def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_config=None, launch_date_obj=None):
+    holidays_config = holidays_config or {}
+
     def is_workday(d):
         return (d.weekday() < 5) and (d not in holidays_dt)
+
+    def holiday_label_text(name: str) -> str:
+        # 預覽表格不支援 Excel 那種逐字直排，改用 <br> 模擬同樣的節日標示感。
+        return "<br>".join(html.escape(ch) for ch in str(name))
+
     weekday_map = {0: "一", 1: "二", 2: "三", 3: "四", 4: "五", 5: "六", 6: "日"}
 
     # 3 header rows (month / date / weekday) + all task rows
@@ -1236,14 +1257,57 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
     rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(date_cells) + "</tr>")
     rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(weekday_cells) + "</tr>")
 
-    for _, row in df_schedule.iterrows():
+    # 預覽用的國定假日合併標示：
+    # - 一般國定假日：整欄任務列合併顯示節日名稱。
+    # - 若上線日剛好是國定假日：上線格保留色條，上下區塊各自合併顯示節日名稱。
+    schedule_rows = list(df_schedule.iterrows())
+    task_count = len(schedule_rows)
+    launch_row_pos = None
+    for pos, (_, schedule_row) in enumerate(schedule_rows):
+        if schedule_row.get("Type") == "Launch":
+            launch_row_pos = pos
+
+    holiday_cell_starts = {}
+    holiday_cell_skips = set()
+
+    def add_holiday_span(start_row_pos, end_row_pos, col_idx, label):
+        if start_row_pos is None or end_row_pos is None or start_row_pos > end_row_pos:
+            return
+        span = end_row_pos - start_row_pos + 1
+        holiday_cell_starts[(start_row_pos, col_idx)] = {"rowspan": span, "label": label}
+        for skip_row_pos in range(start_row_pos + 1, end_row_pos + 1):
+            holiday_cell_skips.add((skip_row_pos, col_idx))
+
+    for col_idx, item in enumerate(display_columns):
+        if item == "BREAK":
+            continue
+        d = item.date()
+        holiday_name = holidays_config.get(d.strftime("%Y-%m-%d"))
+        if not holiday_name or is_workday(d):
+            continue
+
+        is_launch_holiday = bool(launch_date_obj and d == launch_date_obj and launch_row_pos is not None)
+        if is_launch_holiday:
+            add_holiday_span(0, launch_row_pos - 1, col_idx, holiday_name)
+            add_holiday_span(launch_row_pos + 1, task_count - 1, col_idx, holiday_name)
+        else:
+            add_holiday_span(0, task_count - 1, col_idx, holiday_name)
+
+    for row_pos, (_, row) in enumerate(schedule_rows):
         cells = [
-            f'<td class="task-col">{row["Task"]}</td>',
-            f'<td class="owner-col">{row["Owner"]}</td>',
+            f'<td class="task-col">{html.escape(str(row["Task"]))}</td>',
+            f'<td class="owner-col">{html.escape(str(row["Owner"]))}</td>',
         ]
-        for item in display_columns:
+        for col_idx, item in enumerate(display_columns):
             if item == "BREAK":
                 continue  # already merged by rowspan — skip this cell
+            if (row_pos, col_idx) in holiday_cell_skips:
+                continue
+            if (row_pos, col_idx) in holiday_cell_starts:
+                info = holiday_cell_starts[(row_pos, col_idx)]
+                cells.append(f'<td class="holiday-merged" rowspan="{info["rowspan"]}">{holiday_label_text(info["label"])}</td>')
+                continue
+
             d = item.date()
             base_cls = "weekend-cell" if not is_workday(d) else "empty-cell"
             if row["Start Date"] <= d <= row["End Date"]:
@@ -1258,7 +1322,8 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt):
                         cls = "bar-client"
                     else:
                         cls = "bar-ad2"
-                    cells.append(f'<td class="{cls}">{str(row.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL) if (abs(float(row.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d == row["End Date"]) else ""}</td>')
+                    half_label = html.escape(str(row.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL))
+                    cells.append(f'<td class="{cls}">{half_label if (abs(float(row.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d == row["End Date"]) else ""}</td>')
                 else:
                     cells.append(f'<td class="{base_cls}"></td>')
             else:
@@ -1723,6 +1788,8 @@ def generate_schedule():
     st.session_state.excel_bytes = excel_bytes
     st.session_state.display_columns = display_columns
     st.session_state.holidays_dt = holidays_dt
+    st.session_state.holidays_config = holidays
+    st.session_state.preview_launch_date_obj = launch_date_obj
     st.session_state.last_generated_name = st.session_state.project_name or "未命名專案"
     st.session_state.validation_error_msg = ""
     st.session_state.status_msg = "時程表已更新。" if had_previous_output else "已產出時程表。"
@@ -1738,6 +1805,8 @@ def reset_defaults():
     st.session_state.excel_bytes = None
     st.session_state.display_columns = None
     st.session_state.holidays_dt = None
+    st.session_state.holidays_config = None
+    st.session_state.preview_launch_date_obj = None
     st.session_state.warning_msg = ""
     st.session_state.last_generated_name = "未命名專案"
     st.session_state.status_msg = ""
@@ -1812,6 +1881,8 @@ if st.session_state.schedule_df is not None:
                 st.session_state.schedule_df,
                 st.session_state.display_columns,
                 st.session_state.holidays_dt,
+                st.session_state.holidays_config,
+                st.session_state.preview_launch_date_obj,
             ),
             unsafe_allow_html=True,
         )
