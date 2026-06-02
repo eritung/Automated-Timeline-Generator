@@ -675,8 +675,9 @@ def init_state():
         st.session_state.launch_date_value = date.today()
     if "collapse_threshold" not in st.session_state:
         st.session_state.collapse_threshold = 2
+    # 上線日預設允許落在週末或國定假日；其他工作項目仍會避開假日。
     if "allow_launch_on_holiday" not in st.session_state:
-        st.session_state.allow_launch_on_holiday = False
+        st.session_state.allow_launch_on_holiday = True
     if "tasks" not in st.session_state:
         st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
     if "holidays_text" not in st.session_state:
@@ -707,6 +708,7 @@ def init_state():
         st.session_state.import_msg = ""
     if "half_day_label" not in st.session_state:
         st.session_state.half_day_label = "1300"
+    st.session_state.allow_launch_on_holiday = True
 
 init_state()
 
@@ -1027,6 +1029,17 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
         if found_name:
             holiday_blocks_info.append({"start_col": current_block_start, "end_col": len(display_columns) - 1, "name": "\n".join(list(found_name))})
 
+    # 若上線日剛好是國定假日：上線格保留上線色條，其餘任務列同一般國定假日合併標示節日名稱。
+    launch_holiday_info = None
+    if launch_date_obj:
+        launch_date_key = launch_date_obj.strftime("%Y-%m-%d")
+        launch_holiday_name = holidays_config.get(launch_date_key)
+        if launch_holiday_name:
+            for i, col_item in enumerate(display_columns):
+                if col_item != "BREAK" and col_item.date() == launch_date_obj:
+                    launch_holiday_info = {"col": i, "name": "\n".join(list(launch_holiday_name))}
+                    break
+
     writer = pd.ExcelWriter(output, engine="xlsxwriter")
     workbook = writer.book
     worksheet = workbook.add_worksheet("時程表")
@@ -1124,6 +1137,24 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             worksheet.merge_range(row_start, c1, last_task_row, c1, block["name"], fmt_holiday_merged)
         else:
             worksheet.merge_range(row_start, c1, last_task_row, c2, block["name"], fmt_holiday_merged)
+
+    def write_or_merge_vertical(r1, r2, c, value, fmt):
+        if r1 > r2:
+            return
+        if r1 == r2:
+            worksheet.write(r1, c, value, fmt)
+        else:
+            worksheet.merge_range(r1, c, r2, c, value, fmt)
+
+    if launch_holiday_info:
+        launch_excel_col = col_start + launch_holiday_info["col"]
+        launch_rows = [row_start + int(idx) for idx, item in df_schedule.iterrows() if item.get("Type") == "Launch"]
+        if launch_rows:
+            launch_excel_row = launch_rows[-1]
+            write_or_merge_vertical(row_start, launch_excel_row - 1, launch_excel_col, launch_holiday_info["name"], fmt_holiday_merged)
+            write_or_merge_vertical(launch_excel_row + 1, last_task_row, launch_excel_col, launch_holiday_info["name"], fmt_holiday_merged)
+        else:
+            write_or_merge_vertical(row_start, last_task_row, launch_excel_col, launch_holiday_info["name"], fmt_holiday_merged)
 
     writer.close()
 
@@ -1672,7 +1703,7 @@ def generate_schedule():
             calculation_mode=calculation_mode,
             start_date_obj=start_date_obj,
             launch_date_obj=launch_date_obj,
-            allow_launch_on_holiday=bool(st.session_state.get("allow_launch_on_holiday", False)),
+            allow_launch_on_holiday=True,
         )
         excel_bytes, display_columns = build_excel_bytes(
             df_schedule=df_schedule,
@@ -1715,6 +1746,7 @@ def reset_defaults():
     st.session_state.batch_msg = ""
     st.session_state.import_msg = ""
     st.session_state.half_day_label = "1300"
+    st.session_state.allow_launch_on_holiday = True
 
 # =========================
 # UI
@@ -1746,14 +1778,12 @@ with st.container(border=True):
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3, r2c4 = st.columns([1.2,1.2,1.25,1.0], vertical_alignment="bottom")
+    r2c1, r2c2, r2c3 = st.columns([1.2,1.2,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled)
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="上線日可直接指定週末或國定假日；其他工作項目仍會避開假日。")
     with r2c3:
-        st.checkbox("允許上線日為假日", key="allow_launch_on_holiday", disabled=launch_disabled, help="勾選後，上線日若落在週末或國定假日，仍會排在指定日期，不會自動提前或順延。")
-    with r2c4:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
