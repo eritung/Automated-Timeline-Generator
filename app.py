@@ -688,6 +688,8 @@ def init_state():
     # 上線日預設允許落在週末或國定假日；其他工作項目仍會避開假日。
     if "allow_launch_on_holiday" not in st.session_state:
         st.session_state.allow_launch_on_holiday = True
+    if "forward_launch_date_touched" not in st.session_state:
+        st.session_state.forward_launch_date_touched = False
     if "tasks" not in st.session_state:
         st.session_state.tasks = [row.copy() for row in DEFAULT_TASKS]
     if "holidays_text" not in st.session_state:
@@ -1749,6 +1751,12 @@ def load_batch_template():
     st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
     st.session_state.batch_msg = f"已載入「{template_name}」。"
 
+def mark_forward_launch_date_touched():
+    # 製作日推進模式下，上線日期原本不參與推算；
+    # 使用者一旦手動調整上線日期，就把它視為指定上線日。
+    st.session_state.forward_launch_date_touched = True
+
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
 
@@ -1760,7 +1768,10 @@ def generate_schedule():
         tasks = get_active_tasks()
         calculation_mode = MODE_MAP[st.session_state.mode_display]
         start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
-        launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
+        if st.session_state.mode_display == "製作日推進":
+            launch_date_obj = st.session_state.launch_date_value if st.session_state.get("forward_launch_date_touched", False) else None
+        else:
+            launch_date_obj = st.session_state.launch_date_value
 
         df_schedule, warning_msg, holidays_dt = build_scheduler(
             tasks_config=tasks,
@@ -1816,6 +1827,7 @@ def reset_defaults():
     st.session_state.import_msg = ""
     st.session_state.half_day_label = "1300"
     st.session_state.allow_launch_on_holiday = True
+    st.session_state.forward_launch_date_touched = False
 
 # =========================
 # UI
@@ -1845,13 +1857,19 @@ with st.container(border=True):
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
     start_disabled = st.session_state.mode_display == "上線日回推"
-    launch_disabled = st.session_state.mode_display == "製作日推進"
+    launch_disabled = False
 
     r2c1, r2c2, r2c3 = st.columns([1.2,1.2,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="上線日可直接指定週末或國定假日；其他工作項目仍會避開假日。")
+        st.date_input(
+            "上線日期",
+            key="launch_date_value",
+            disabled=launch_disabled,
+            help="製作日推進模式下，若有手動調整此日期，上線日會以此日期為準，且可落在週末或國定假日；其他工作項目仍會避開假日。",
+            on_change=mark_forward_launch_date_touched,
+        )
     with r2c3:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
 

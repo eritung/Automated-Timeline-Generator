@@ -1672,6 +1672,12 @@ def load_batch_template():
     st.session_state.batch_tasks_text = BATCH_TEMPLATE_MAP.get(template_name, DEFAULT_BATCH_TASKS_TEXT)
     st.session_state.batch_msg = f"已載入「{template_name}」。"
 
+def mark_forward_launch_date_touched():
+    # 製作日推進模式下，上線日期原本不參與推算；
+    # 使用者一旦手動調整上線日期，就把它視為指定上線日。
+    st.session_state.forward_launch_date_touched = True
+
+
 def generate_schedule():
     had_previous_output = st.session_state.schedule_df is not None
 
@@ -1680,7 +1686,10 @@ def generate_schedule():
         tasks = get_active_tasks()
         calculation_mode = MODE_MAP[st.session_state.mode_display]
         start_date_obj = None if st.session_state.mode_display == "上線日回推" else st.session_state.start_date_value
-        launch_date_obj = None if st.session_state.mode_display == "製作日推進" else st.session_state.launch_date_value
+        if st.session_state.mode_display == "製作日推進":
+            launch_date_obj = st.session_state.launch_date_value if st.session_state.get("forward_launch_date_touched", False) else None
+        else:
+            launch_date_obj = st.session_state.launch_date_value
 
         df_schedule, warning_msg, holidays_dt = build_scheduler(
             tasks_config=tasks,
@@ -1760,7 +1769,7 @@ with st.container(border=True):
         st.number_input("日期縮略門檻", min_value=1, max_value=30, step=1, key="collapse_threshold")
 
     start_disabled = st.session_state.mode_display == "上線日回推"
-    launch_disabled = st.session_state.mode_display == "製作日推進"
+    launch_disabled = False
 
     r2c1, r2c2, r2c3, r2c4 = st.columns([1.2,1.2,1.25,1.0], vertical_alignment="bottom")
     with r2c1:
