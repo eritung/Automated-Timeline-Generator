@@ -1903,20 +1903,19 @@ with st.container(border=True):
     start_disabled = st.session_state.mode_display == "上線日回推"
     launch_disabled = st.session_state.mode_display == "製作日推進"
 
-    r2c1, r2c2, r2c3 = st.columns([1.25,1.25,1.0], vertical_alignment="bottom")
+    r2c1, r2c2, r2c3, r2c4 = st.columns([1.2,1.2,1.25,1.0], vertical_alignment="bottom")
     with r2c1:
         st.date_input("開始日期", key="start_date_value", disabled=start_disabled)
     with r2c2:
-        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="預設會略過國定假日；若開啟下方選項，國定假日可被排程，上線日也可落在國定假日。")
+        st.date_input("上線日期", key="launch_date_value", disabled=launch_disabled, help="預設會略過國定假日；若勾選右側選項，國定假日可被排程，上線日也可落在國定假日。")
     with r2c3:
+        st.checkbox(
+            "國定假日也可排程",
+            key="include_national_holidays",
+            help="預設不勾選：一般工作與上線日都會避開國定假日。勾選後：國定假日視為可排程日期，上線日也可落在國定假日。",
+        )
+    with r2c4:
         st.button("產出時程表", type="primary", use_container_width=True, on_click=generate_schedule)
-
-    st.markdown('<div class="section-sub">國定假日排程設定</div>', unsafe_allow_html=True)
-    st.checkbox(
-        "國定假日也可排程（不略過）",
-        key="include_national_holidays",
-        help="預設關閉：一般工作與上線日都會避開國定假日。開啟後：國定假日視為可排程日期，上線日也可落在國定假日。",
-    )
 
 st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
 
