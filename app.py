@@ -258,7 +258,7 @@ html, body,
 }}
 [data-testid="stSidebar"] h3,
 [data-testid="stSidebar"] .stSubheader {{
-  font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
+  font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   letter-spacing: 0.02em !important;
   font-size: 0.95rem !important;
   font-weight: 600 !important;
@@ -358,7 +358,7 @@ svg, svg * {{
    注意：選擇器需要比全域字體規則更高的優先度，否則會被蓋掉，因此加上容器前綴 */
 h1,
 [data-testid="stAppViewContainer"] h1 {{
-  font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
+  font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   font-size: 2rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.01em !important;
@@ -450,7 +450,7 @@ div.stButton > button:not([kind="primary"]):hover {{
 }}
 .section-title,
 [data-testid="stAppViewContainer"] .section-title {{
-  font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
+  font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   font-size: 1.3rem;
   font-weight: 600;
   color: {UI_INK};
@@ -835,29 +835,16 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   padding-top: 1rem !important;
 }}
 
-/* 使用說明對話框：外層遮罩改為霧化模糊（可看到底下網頁內容），不再整片變成不透明白色 */
+/* 使用說明對話框 */
 [data-testid="stDialog"] {{
-  background: rgba(43,38,32,0.38) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
-}}
-[data-testid="stDialog"]::backdrop {{
-  background: rgba(43,38,32,0.38) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-}}
-/* 對話框本體（實際卡片）維持不透明白底，確保文字清楚可讀 */
-[data-testid="stDialog"] > div {{
   background: {UI_CANVAS} !important;
-  border-radius: 14px !important;
-  box-shadow: 0 12px 40px rgba(43,38,32,0.28) !important;
+  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
 }}
 [data-testid="stDialog"] h1,
 [data-testid="stDialog"] h2,
 [data-testid="stDialog"] h3,
 [data-testid="stDialog"] h4 {{
-  font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
+  font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   font-weight: 600 !important;
   color: {UI_PRIMARY} !important;
 }}
