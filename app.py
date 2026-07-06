@@ -162,35 +162,31 @@ MONTH_COLORS = {
 def get_month_color(month):
     return MONTH_COLORS.get(int(month), '#E8DFD0')
 
-# UI colors — 依新版 DESIGN.md（Meta 商品化風格）：白畫布 + 黑色行銷按鈕 + 鈷藍色購買/主行動色
-UI_INK_DEEP = "#0A1317"
-UI_INK = "#1C1E21"
-UI_CHARCOAL = "#444950"
-UI_SLATE = "#4B4C4F"
-UI_STEEL = "#5D6C7B"
-UI_STONE = "#8595A4"
+# UI colors — 依新版 DESIGN.md（Slacc 風格）：酒紅色主色 + 奶油／薰衣草底色，解決「太白」問題
+UI_PRIMARY = "#4A154B"           # Aubergine 酒紅色，唯一主色
+UI_PRIMARY_DEEP = "#481A54"
+UI_PRIMARY_PRESS = "#611F69"
+UI_PRIMARY_TINT = "#592466"
+UI_ON_PRIMARY = "#FFFFFF"
+UI_INK = "#1D1D1D"
+UI_INK_MUTE = "#696969"
+UI_LINK_BLUE = "#1264A3"
+UI_LINK_HOVER = "#3860BE"
 UI_CANVAS = "#FFFFFF"
-UI_SURFACE_SOFT = "#F1F4F7"
-UI_HAIRLINE = "#CED0D4"
-UI_HAIRLINE_SOFT = "#DEE3E9"
-UI_DISABLED_TEXT = "#BCC0C4"
-UI_MUTED = UI_STEEL
+UI_CANVAS_CREAM = "#F4EDE4"      # 奶油底色，取代大面積純白
+UI_CANVAS_LAVENDER = "#F9F0FF"  # 薰衣草底色，次要按鈕／區塊底色
+UI_SURFACE_AUBERGINE = "#4A154B"
+UI_HAIRLINE = "#E6E6E6"
+UI_HAIRLINE_STRONG = "#000000"
+UI_SEMANTIC_ERROR = "#CC4117"
+UI_SEMANTIC_SUCCESS = "#007A5A"
+UI_ON_AUBERGINE_MUTE = "#D9BDDE"
 
-# 品牌／強調色
-UI_INK_BUTTON = "#000000"          # 行銷／一般動作用的黑色按鈕
-UI_COBALT = "#0064E0"              # 主要行動（產出、下載）— 對應 colors.primary
-UI_COBALT_DEEP = "#0457CB"         # 按下狀態
-UI_COBALT_SOFT = "#0091FF"
-UI_FB_BLUE = "#1876F2"             # 表單 focus / 選取色
-UI_SUCCESS = "#31A24C"
-UI_ATTENTION = "#F2A918"
-UI_WARNING = "#F7B928"
-UI_CRITICAL = "#E41E3F"
-UI_CRITICAL_STRONG = "#F0284A"
+UI_MUTED = UI_INK_MUTE
+UI_SURFACE_SOFT = UI_CANVAS_LAVENDER
+UI_HAIRLINE_SOFT = "#EFE7F0"
 
 # 向下相容：舊變數名稱，供時程表 Bar 顏色與既有邏輯使用（維持原本語意色，不隨主題改動）
-UI_PRIMARY = UI_INK_BUTTON
-UI_PRIMARY_HOVER = UI_CHARCOAL
 UI_BORDER = UI_HAIRLINE
 UI_AD2 = "#6AAED6"            # 天藍（Bar 專用）
 UI_CLIENT = "#F0956A"         # 珊瑚橙
@@ -198,39 +194,42 @@ UI_LAUNCH = "#E85C7A"         # 玫瑰紅
 UI_PREP = "#5EC4A0"           # 薄荷綠
 
 
+
+
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
 
 /* =========================================================
-   DESIGN.md 對應（Meta 商品化風格）：
-   白畫布 + 黑色行銷按鈕 + 鈷藍色主行動 + Optimistic VF（以 Montserrat 為替代字）
+   DESIGN.md 對應（Slacc 風格）：
+   酒紅色（Aubergine）主色 + 奶油／薰衣草底色 + 藍色連結
+   以奶油、薰衣草底色取代大面積純白，解決「介面太白」問題
    ========================================================= */
 
 /* 全域基底 */
 html, body, [data-testid="stAppViewContainer"],
 [data-testid="stAppViewContainer"] * {{
-  font-family: 'Montserrat', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
+  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
   -webkit-font-smoothing: antialiased;
   line-height: 1.55 !important;
   letter-spacing: 0 !important;
 }}
 
-/* 純白畫布（colors.canvas）*/
+/* 主畫布：奶油暖白，取代純白背景 */
 html, body,
 [data-testid="stAppViewContainer"],
 [data-testid="stAppViewBlock"],
 [data-testid="stMain"],
 [data-testid="stMainBlockContainer"] {{
-  background: {UI_CANVAS} !important;
+  background: {UI_CANVAS_CREAM} !important;
   color: {UI_INK} !important;
 }}
 
-/* Sidebar */
+/* Sidebar：薰衣草底色 */
 [data-testid="stSidebar"] {{
-  background: {UI_SURFACE_SOFT} !important;
-  border-right: 1px solid {UI_HAIRLINE_SOFT} !important;
+  background: {UI_CANVAS_LAVENDER} !important;
+  border-right: 1px solid {UI_HAIRLINE} !important;
 }}
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] p,
@@ -244,15 +243,16 @@ html, body,
 [data-testid="stSidebar"] textarea {{
   font-size: 0.8rem !important;
   line-height: 1.5 !important;
+  background: {UI_CANVAS} !important;
 }}
 [data-testid="stSidebar"] h3,
 [data-testid="stSidebar"] .stSubheader {{
-  font-family: 'Montserrat', 'Noto Sans TC', sans-serif !important;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif !important;
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   font-size: 0.8rem !important;
   font-weight: 700 !important;
-  color: {UI_INK_DEEP} !important;
+  color: {UI_PRIMARY} !important;
 }}
 
 /* Sidebar 展開按鈕 */
@@ -269,7 +269,7 @@ button[aria-label="Close sidebar"] {{
   border: 1px solid {UI_HAIRLINE} !important;
   border-radius: 999px !important;
   background: {UI_CANVAS} !important;
-  box-shadow: 0 1px 4px rgba(20,22,26,0.12) !important;
+  box-shadow: rgba(0,0,0,0.1) 0 5px 20px 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -281,8 +281,8 @@ button[title="Open sidebar"]:hover,
 button[title="Close sidebar"]:hover,
 button[aria-label="Open sidebar"]:hover,
 button[aria-label="Close sidebar"]:hover {{
-  background: {UI_SURFACE_SOFT} !important;
-  border-color: {UI_COBALT} !important;
+  background: {UI_CANVAS_LAVENDER} !important;
+  border-color: {UI_PRIMARY} !important;
 }}
 [data-testid="collapsedControl"] *,
 [data-testid="stSidebarCollapsedControl"] *,
@@ -300,7 +300,7 @@ button[aria-label="Close sidebar"] * {{
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  color: {UI_INK_DEEP} !important;
+  color: {UI_PRIMARY} !important;
   font-feature-settings: 'liga' !important;
   -webkit-font-feature-settings: 'liga' !important;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
@@ -343,18 +343,18 @@ svg, svg * {{
   padding-bottom: 4rem !important;
 }}
 
-/* 頁面標題：對應 typography.heading-lg（36px / weight 500） */
+/* 頁面標題：對應 typography.heading-lg，酒紅色 */
 h1 {{
   font-size: 2rem !important;
-  font-weight: 500 !important;
-  letter-spacing: 0 !important;
-  line-height: 1.28 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
   margin-bottom: 0 !important;
-  color: {UI_INK_DEEP} !important;
+  color: {UI_PRIMARY} !important;
 }}
 [data-testid="stCaptionContainer"] p {{
   font-size: 0.95rem !important;
-  color: {UI_STEEL} !important;
+  color: {UI_INK_MUTE} !important;
   letter-spacing: 0 !important;
   line-height: 1.6 !important;
   font-weight: 400 !important;
@@ -363,111 +363,113 @@ h1 {{
 .app-header-anchor {{ display: none; }}
 
 /* 主要按鈕（Streamlit type="primary"，用於「產出時程表」「下載 Excel」）
-   對應 components.button-buy-cta：鈷藍色膠囊 */
+   對應 components.button-primary-pill：酒紅色膠囊，90px 圓角 */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
-  background: {UI_COBALT} !important;
+  background: {UI_PRIMARY} !important;
   border: none !important;
-  color: {UI_CANVAS} !important;
-  border-radius: 100px !important;
+  color: {UI_ON_PRIMARY} !important;
+  border-radius: 90px !important;
   font-weight: 700 !important;
-  font-size: 0.88rem !important;
-  letter-spacing: -0.14px !important;
-  line-height: 1.43 !important;
-  padding: 0.6rem 1.6rem !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 0.02em !important;
+  line-height: 1.38 !important;
+  padding: 0.7rem 1.7rem !important;
   min-width: 5rem !important;
-  box-shadow: none !important;
+  box-shadow: rgba(0,0,0,0.1) 0 5px 20px 0 !important;
   transition: all 0.15s !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-  background: {UI_COBALT_DEEP} !important;
-  box-shadow: 0 2px 10px rgba(0,100,224,0.28) !important;
+  background: {UI_PRIMARY_PRESS} !important;
+  box-shadow: rgba(74,21,75,0.35) 0 6px 20px 0 !important;
   transform: translateY(-1px) !important;
 }}
 
-/* 次要按鈕：白底黑邊膠囊，對應 components.button-secondary */
+/* 次要按鈕：薰衣草底色膠囊，對應 components.button-secondary-pill */
 div.stButton > button:not([kind="primary"]) {{
-  border-radius: 100px !important;
-  font-size: 0.85rem !important;
-  letter-spacing: -0.14px !important;
-  line-height: 1.43 !important;
-  border: 2px solid {UI_INK_DEEP} !important;
-  color: {UI_INK_DEEP} !important;
-  background: transparent !important;
+  border-radius: 90px !important;
+  font-size: 0.86rem !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1.38 !important;
+  border: 1px solid transparent !important;
+  color: {UI_INK} !important;
+  background: {UI_CANVAS_LAVENDER} !important;
   box-shadow: none !important;
   transition: all 0.15s !important;
   min-width: 3.6rem !important;
-  padding-left: 0.9rem !important;
-  padding-right: 0.9rem !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
   font-weight: 700 !important;
 }}
 div.stButton > button:not([kind="primary"]):hover {{
-  background: {UI_INK_DEEP} !important;
-  color: {UI_CANVAS} !important;
-  border-color: {UI_INK_DEEP} !important;
+  background: {UI_ON_AUBERGINE_MUTE} !important;
+  color: {UI_PRIMARY} !important;
+  border-color: {UI_PRIMARY_TINT} !important;
 }}
 
-/* 小型圖示操作按鈕（↑ ↓ ⧉ ✕）：圓形，對應 components.button-icon-circular */
+/* 小型圖示操作按鈕（↑ ↓ ⧉ ✕）：圓形 */
 .op-btn button {{
   font-size: 12px !important;
   padding: 0 !important;
   height: 2.1rem !important;
   min-height: 2.1rem !important;
   border-radius: 999px !important;
-  border-width: 1px !important;
 }}
 
-/* 區塊標題：badge eyebrow（caption-bold）＋ heading-sm ＋ body-sm */
+/* 區塊標題：badge eyebrow（micro-cap）＋ heading-sm ＋ body-md */
 .section-eyebrow {{
-  font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: {UI_CANVAS};
-  background: {UI_INK_DEEP};
+  letter-spacing: 0.08em;
+  color: {UI_ON_PRIMARY};
+  background: {UI_PRIMARY};
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin-bottom: 10px;
+  padding: 4px 12px;
+  border-radius: 90px;
+  margin-bottom: 12px;
+  margin-top: 2px;
 }}
-.section-eyebrow--cobalt {{ background: {UI_COBALT}; }}
-.section-eyebrow--success {{ background: {UI_SUCCESS}; }}
-.section-eyebrow--attention {{ background: {UI_ATTENTION}; color: {UI_INK_DEEP}; }}
+.section-eyebrow--cobalt {{ background: {UI_LINK_BLUE}; }}
+.section-eyebrow--success {{ background: {UI_SEMANTIC_SUCCESS}; }}
+.section-eyebrow--cream {{ background: {UI_CANVAS_CREAM}; color: {UI_INK}; }}
 
 .section-title {{
   font-size: 1.2rem;
-  font-weight: 500;
-  color: {UI_INK_DEEP};
+  font-weight: 700;
+  color: {UI_INK};
   margin-bottom: 0.15rem;
-  letter-spacing: 0;
-  line-height: 1.3;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
 }}
 .section-sub {{
-  color: {UI_STEEL};
+  color: {UI_INK_MUTE};
   font-size: 0.86rem;
   font-weight: 400;
   margin-bottom: 0.85rem;
   line-height: 1.6;
-  letter-spacing: -0.1px;
+  letter-spacing: 0;
 }}
 
-/* Card 容器：白底，hairline-soft 邊框，極輕陰影，對應 components.card-checkout-summary */
+/* Card 容器：白底卡片，柔和陰影，圓角對應 rounded.xl (16px)，並保留上緣空間避免 eyebrow 被裁切 */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
-  border-radius: 24px !important;
-  border: 1px solid {UI_HAIRLINE_SOFT} !important;
+  border-radius: 16px !important;
+  border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
-  box-shadow: rgba(20,22,26,0.10) 0px 1px 4px 0px !important;
+  box-shadow: rgba(0,0,0,0.08) 0 4px 18px 0 !important;
+  padding-top: 4px !important;
+  overflow: visible !important;
 }}
 
 /* Timeline wrapper */
 .timeline-wrap {{
   overflow-x: auto;
-  border: 1px solid {UI_HAIRLINE_SOFT};
+  border: 1px solid {UI_HAIRLINE};
   border-radius: 16px;
   background: {UI_CANVAS};
-  box-shadow: rgba(20,22,26,0.10) 0px 1px 4px 0px;
+  box-shadow: rgba(0,0,0,0.08) 0 4px 18px 0;
   margin-top: 8px;
 }}
 
@@ -481,7 +483,7 @@ div.stButton > button:not([kind="primary"]):hover {{
 }}
 .timeline-table th,
 .timeline-table td {{
-  border: 1px solid {UI_HAIRLINE_SOFT};
+  border: 1px solid {UI_HAIRLINE};
   text-align: center;
   padding: 0;
   height: 33px;
@@ -490,10 +492,10 @@ div.stButton > button:not([kind="primary"]):hover {{
 /* 月份 header */
 .timeline-table .month-row th {{
   height: 25px;
-  background: {UI_INK_DEEP};
+  background: {UI_PRIMARY};
   font-weight: 700;
   font-size: 10.5px;
-  color: {UI_CANVAS};
+  color: {UI_ON_PRIMARY};
   letter-spacing: 2px;
   text-transform: uppercase;
 }}
@@ -503,20 +505,20 @@ div.stButton > button:not([kind="primary"]):hover {{
   width: 32px; min-width: 32px; max-width: 32px;
   font-size: 10.5px;
   line-height: 1.2;
-  color: {UI_STEEL};
-  background: {UI_SURFACE_SOFT};
+  color: {UI_INK_MUTE};
+  background: {UI_CANVAS_LAVENDER};
   font-weight: 400;
 }}
 .timeline-table .weekend-head {{
-  background: {UI_HAIRLINE_SOFT} !important;
-  color: {UI_STONE} !important;
+  background: #EFE1F5 !important;
+  color: #A98FB0 !important;
 }}
 .timeline-table .weekend-cell {{
-  background: #F7F9FB;
+  background: #FBF6FE;
 }}
 .timeline-table .holiday-merged {{
-  background: rgba(228,30,63,0.10);
-  color: {UI_CRITICAL};
+  background: rgba(204,65,23,0.10);
+  color: {UI_SEMANTIC_ERROR};
   font-weight: 700;
   font-size: 10.5px;
   line-height: 1.25;
@@ -534,17 +536,17 @@ div.stButton > button:not([kind="primary"]):hover {{
   font-weight: 500; font-size: 12px;
   background: {UI_CANVAS};
   position: sticky; left: 0; z-index: 3;
-  border-right: 1px solid {UI_HAIRLINE_SOFT};
-  color: {UI_INK_DEEP};
-  letter-spacing: -0.1px;
+  border-right: 1px solid {UI_HAIRLINE};
+  color: {UI_INK};
+  letter-spacing: 0;
 }}
 .timeline-table .owner-col {{
   min-width: 90px; max-width: 90px; width: 90px;
   background: {UI_CANVAS};
   position: sticky; left: 186px; z-index: 3;
   font-size: 11.5px;
-  color: {UI_STEEL};
-  border-right: 1px solid {UI_HAIRLINE_SOFT};
+  color: {UI_INK_MUTE};
+  border-right: 1px solid {UI_HAIRLINE};
   font-weight: 400;
 }}
 
@@ -555,22 +557,22 @@ tr:nth-child(2) .task-col,
 tr:nth-child(2) .owner-col,
 tr:nth-child(3) .task-col,
 tr:nth-child(3) .owner-col {{
-  background: {UI_SURFACE_SOFT};
+  background: {UI_CANVAS_LAVENDER};
 }}
 
 /* BREAK column */
 .timeline-table .break-cell {{
   width: 18px; min-width: 18px; max-width: 18px;
-  background: {UI_HAIRLINE_SOFT};
-  color: {UI_STONE};
+  background: #EFE1F5;
+  color: #A98FB0;
   font-weight: 500;
   font-size: 11px;
   writing-mode: vertical-rl;
   text-orientation: mixed;
   letter-spacing: 4px;
   vertical-align: middle;
-  border-left: 1px solid {UI_HAIRLINE_SOFT};
-  border-right: 1px solid {UI_HAIRLINE_SOFT};
+  border-left: 1px solid {UI_HAIRLINE};
+  border-right: 1px solid {UI_HAIRLINE};
 }}
 
 /* Bar cells：維持原本語意色（對應 Excel 產出色），不隨主題調整 */
@@ -579,13 +581,13 @@ tr:nth-child(3) .owner-col {{
 .timeline-table .bar-launch {{ background: {UI_LAUNCH}; border-color: rgba(0,0,0,0.06); }}
 .timeline-table .bar-prep   {{ background: {UI_PREP};   border-color: rgba(0,0,0,0.06); }}
 .timeline-table tr.separator-row td {{
-  border-bottom: 2.5px solid {UI_INK_DEEP} !important;
+  border-bottom: 2.5px solid {UI_PRIMARY} !important;
 }}
 
 /* Legend */
 .legend {{
   display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;
-  font-size: 11px; color: {UI_STEEL};
+  font-size: 11px; color: {UI_INK_MUTE};
   align-items: center;
   padding: 4px 0;
   letter-spacing: 0.02em;
@@ -599,10 +601,10 @@ tr:nth-child(3) .owner-col {{
 
 /* 任務清單標題列 */
 .task-head-label {{
-  font-family: 'Montserrat', 'Noto Sans TC', sans-serif;
+  font-family: 'Inter', 'Noto Sans TC', sans-serif;
   font-size: 10.5px;
   font-weight: 700;
-  color: {UI_STONE};
+  color: {UI_INK_MUTE};
   letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1.8;
@@ -617,16 +619,16 @@ tr:nth-child(3) .owner-col {{
 
 /* 斑馬條紋 */
 .task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: {UI_SURFACE_SOFT}; border-radius: 4px; }}
+.task-row-plain-alt {{ background: {UI_CANVAS_LAVENDER}; border-radius: 4px; }}
 
 /* 任務行分隔線 */
 .flow-row-sep {{
   height: 1px;
-  background: {UI_HAIRLINE_SOFT};
+  background: {UI_HAIRLINE};
   margin: 0.2rem 0 0.35rem 0;
 }}
 
-/* Input：白底，hairline 邊框，focus 用 fb-blue，對應 components.text-input */
+/* Input：白底，hairline 邊框，focus 用酒紅色 */
 [data-testid="stCheckbox"] {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -667,27 +669,27 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {{
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
   font-size: 0.92rem !important;
   font-weight: 400 !important;
   height: 2.6rem !important;
   color: {UI_INK} !important;
-  letter-spacing: -0.16px !important;
+  letter-spacing: 0 !important;
   line-height: 1.5 !important;
   box-shadow: none !important;
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {{
-  border: 2px solid {UI_FB_BLUE} !important;
-  box-shadow: none !important;
+  border: 1px solid {UI_PRIMARY} !important;
+  box-shadow: rgb(97,31,105) 0 0 0 1px inset !important;
   background: {UI_CANVAS} !important;
 }}
 [data-testid="stSelectbox"] > div > div,
 [data-baseweb="select"] > div {{
   min-height: 2.6rem !important;
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
   box-shadow: none !important;
@@ -696,7 +698,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   margin: 0 !important;
 }}
 [data-testid="stDateInput"] input {{
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
 }}
@@ -707,54 +709,89 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   margin-bottom: 0.2rem !important;
 }}
 
+/* 連結：藍色，對應 colors.link-blue */
+[data-testid="stMarkdownContainer"] a {{
+  color: {UI_LINK_BLUE} !important;
+}}
+[data-testid="stMarkdownContainer"] a:hover {{
+  color: {UI_LINK_HOVER} !important;
+}}
+
 /* 間距 */
 .small-gap {{ height: 0.3rem; }}
 .large-gap {{ height: 1.6rem; }}
 
-/* 訊息提示：對應 semantic 色票，柔和底色＋窄左邊界 */
+/* 訊息提示 */
 [data-testid="stAlert"] {{
   border-radius: 12px !important;
   border-left-width: 3px !important;
   background: {UI_CANVAS} !important;
-  border: 1px solid {UI_HAIRLINE_SOFT} !important;
+  border: 1px solid {UI_HAIRLINE} !important;
   font-size: 0.85rem !important;
   font-weight: 400 !important;
   letter-spacing: 0 !important;
-  box-shadow: rgba(20,22,26,0.08) 0px 1px 4px 0px !important;
+  box-shadow: rgba(0,0,0,0.06) 0 2px 10px 0 !important;
 }}
 
-/* Tabs：白底 hairline 邊框膠囊，選中態黑底白字，對應 button-pill-tab / button-pill-tab-active */
+/* =========================================================
+   Tabs：修正「頁籤設計很怪」的問題
+   1) 隱藏 BaseWeb 預設的紅色底線／滑動指示條與整條灰色分隔線
+   2) 改為乾淨的膠囊分頁：未選中＝白底＋hairline 邊框；選中＝酒紅底＋白字
+   ========================================================= */
+[data-baseweb="tab-highlight"] {{
+  display: none !important;
+}}
+[data-baseweb="tab-border"] {{
+  display: none !important;
+}}
 [data-testid="stTabs"] [role="tablist"] {{
   border-bottom: none !important;
   background: transparent !important;
+  gap: 8px !important;
+  margin-bottom: 4px !important;
+}}
+[data-testid="stTabs"] [data-baseweb="tab-list"] {{
+  border-bottom: none !important;
   gap: 8px !important;
 }}
 [data-testid="stTabs"] [role="tab"] {{
   background: {UI_CANVAS} !important;
   border: 1px solid {UI_HAIRLINE} !important;
-  border-radius: 100px !important;
+  border-radius: 90px !important;
   color: {UI_INK} !important;
   font-size: 0.86rem !important;
   font-weight: 700 !important;
-  letter-spacing: -0.14px !important;
-  padding: 0.5rem 1.2rem !important;
+  letter-spacing: 0.01em !important;
+  padding: 0.55rem 1.3rem !important;
+  box-shadow: none !important;
+}}
+[data-testid="stTabs"] [role="tab"]:hover {{
+  background: {UI_CANVAS_LAVENDER} !important;
+  color: {UI_PRIMARY} !important;
 }}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
-  background: {UI_INK_DEEP} !important;
-  border-color: {UI_INK_DEEP} !important;
-  color: {UI_CANVAS} !important;
+  background: {UI_PRIMARY} !important;
+  border-color: {UI_PRIMARY} !important;
+  color: {UI_ON_PRIMARY} !important;
+}}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover {{
+  background: {UI_PRIMARY_PRESS} !important;
+  color: {UI_ON_PRIMARY} !important;
 }}
 [data-testid="stTabContent"] {{
   background: transparent !important;
   padding-top: 1rem !important;
 }}
 
-/* 使用說明對話框內容排版 */
+/* 使用說明對話框內容排版：對話框內也採用分頁瀏覽 */
+[data-testid="stDialog"] {{
+  background: {UI_CANVAS} !important;
+}}
 [data-testid="stDialog"] h4 {{
   font-size: 1rem !important;
   font-weight: 700 !important;
-  color: {UI_INK_DEEP} !important;
-  margin-top: 1.1rem !important;
+  color: {UI_PRIMARY} !important;
+  margin-top: 0.6rem !important;
   margin-bottom: 0.3rem !important;
 }}
 [data-testid="stDialog"] p, [data-testid="stDialog"] li {{
@@ -762,8 +799,13 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   line-height: 1.7 !important;
   color: {UI_INK} !important;
 }}
+[data-testid="stDialog"] [data-testid="stTabs"] [role="tab"] {{
+  font-size: 0.8rem !important;
+  padding: 0.45rem 1rem !important;
+}}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
@@ -1975,69 +2017,85 @@ def reset_defaults():
 # =========================
 @st.dialog("使用說明", width="large")
 def show_usage_guide():
-    st.markdown("#### 這個工具在做什麼")
-    st.markdown(
-        "依「開始日」「上線日」與工作流程，自動排出每個任務的工作天數與日期，"
-        "並產出一份可下載、可直接給客戶或內部團隊使用的 Excel 時程表。"
-    )
+    guide_tabs = st.tabs(["快速上手", "STEP 1・專案設定", "STEP 2・流程設定", "STEP 3・產出與下載", "小提醒"])
 
-    st.markdown("#### 1. 專案設定")
-    st.markdown(
-        "- **專案名稱**：會作為下載檔名的一部分。\n"
-        "- **排程方式**：\n"
-        "  - 製作日推進：從「開始日期」往後推算，自動算出上線日。\n"
-        "  - 上線日回推：從「上線日期」往前推算，自動算出開始日。\n"
-        "  - 同時指定開始與上線日期：兩個日期都固定，系統會依流程天數檢查是否吻合。\n"
-        "- **日期縮略門檻**：時程表欄位過多時，超過此天數的區間會自動縮略顯示，避免表格過寬。\n"
-        "- **上線日可排在國定假日**：預設不勾選，所有流程（含上線日）都會避開國定假日；勾選後只有"
-        "「上線日」可以落在國定假日，其餘一般工作流程仍會自動避開。\n"
-        "- **重設**：一鍵清空專案設定、流程與已產出的時程表，回到預設狀態。"
-    )
+    with guide_tabs[0]:
+        st.markdown("#### 這個工具在做什麼")
+        st.markdown(
+            "依「開始日」「上線日」與工作流程，自動排出每個任務的工作天數與日期，"
+            "並產出一份可下載、可直接給客戶或內部團隊使用的 Excel 時程表。"
+        )
+        st.markdown("#### 三個步驟就能完成")
+        st.markdown(
+            "1. **STEP 1・專案設定**：決定排程方式、開始日／上線日，並在側邊欄設定假日清單。\n"
+            "2. **STEP 2・流程設定**：用「單筆編輯」逐筆調整任務，或用「批次輸入」一次貼上整套流程。\n"
+            "3. **STEP 3・產出與下載**：按「產出時程表」預覽結果，確認無誤後下載 Excel。"
+        )
+        st.markdown("其餘分頁會依序說明每個步驟的詳細操作，也可以直接切換到需要的分頁查看。")
 
-    st.markdown("#### 2. 假日設定（左側側邊欄）")
-    st.markdown(
-        "在側邊欄的文字框中設定國定假日清單，格式為每行一筆：`YYYY-MM-DD,假日名稱`。"
-        "這份清單會用來判斷一般工作日與上線日是否要避開假日，並在時程表上標示假日名稱。"
-    )
+    with guide_tabs[1]:
+        st.markdown("#### 專案設定")
+        st.markdown(
+            "- **專案名稱**：會作為下載檔名的一部分。\n"
+            "- **排程方式**：\n"
+            "  - 製作日推進：從「開始日期」往後推算，自動算出上線日。\n"
+            "  - 上線日回推：從「上線日期」往前推算，自動算出開始日。\n"
+            "  - 同時指定開始與上線日期：兩個日期都固定，系統會依流程天數檢查是否吻合。\n"
+            "- **日期縮略門檻**：時程表欄位過多時，超過此天數的區間會自動縮略顯示，避免表格過寬。\n"
+            "- **上線日可排在國定假日**：預設不勾選，所有流程（含上線日）都會避開國定假日；勾選後只有"
+            "「上線日」可以落在國定假日，其餘一般工作流程仍會自動避開。\n"
+            "- **重設**：一鍵清空專案設定、流程與已產出的時程表，回到預設狀態。"
+        )
+        st.markdown("#### 假日設定（左側側邊欄）")
+        st.markdown(
+            "在側邊欄的文字框中設定國定假日清單，格式為每行一筆：`YYYY-MM-DD,假日名稱`。"
+            "這份清單會用來判斷一般工作日與上線日是否要避開假日，並在時程表上標示假日名稱。"
+        )
 
-    st.markdown("#### 3. 產出與下載")
-    st.markdown(
-        "設定完成後按「產出時程表」，畫面會出現「排程預覽」區塊，可直接檢視結果；"
-        "確認無誤後按「下載 Excel」即可取得可分享的時程表檔案。"
-    )
+    with guide_tabs[2]:
+        st.markdown("#### 流程設定（單筆編輯）")
+        st.markdown(
+            "以逐筆卡片的方式管理每一項工作流程，可對每一列任務進行：\n"
+            "- **顯示**：勾選才會計入排程；取消勾選可暫時停用某筆任務而不用刪除。\n"
+            "- **任務名稱 / Action By**：Action By 可選 Ad2、客戶，或 Ad2＋客戶（雙方共同執行）。\n"
+            "- **工作天數**：支援 0.5 天的半天單位；當天數包含半天時，會多出一個「半天標註」文字欄位"
+            "（例如 1300，代表下午 1 點的節點名稱），可自訂顯示文字。\n"
+            "- **上線日**：勾選代表這筆任務是最終上線／交付節點，全流程僅能勾選一筆，系統也會自動確保至少有一筆被標記為上線日。\n"
+            "- **排序（↑ / ↓）**：調整任務的先後順序。\n"
+            "- **複製（⧉）**：快速新增一筆與目前設定相同的任務。\n"
+            "- **刪除（✕）**：移除該筆任務。\n"
+            "- **新增任務**：在清單最後加入一筆全新的空白任務。"
+        )
+        st.markdown("#### 流程設定（批次輸入）")
+        st.markdown(
+            "適合一次貼上多筆任務或套用範本：\n"
+            "- **格式**：每行一筆，用空白分隔「任務名稱 Action By 工作天數 [半天文字] [上線]」，"
+            "例如 `客戶確認 客戶 0.5天 1300` 或 `廣告上線 Ad2 1天 上線`。\n"
+            "- **--（分隔線）**：單獨一行輸入 `--`，會在上一筆任務下方加上一條粗分隔線，方便標示階段。\n"
+            "- **套用範本**：內建「一般製作時程」「網頁製作時程」兩種常用流程範本，選好後按「載入範本」即可帶入批次輸入框。\n"
+            "- **套用手動批次內容**：手動編輯批次文字後，需按此按鈕才會真正套用到流程設定。\n"
+            "- **匯入已產出的時程表**：可上傳本工具先前下載的 Excel 檔，自動回填任務名稱、Action By 與工作天數"
+            "（含手動改色的特殊色條天數），按「匯入時程表並套用到流程」即可完成匯入並直接套用，不需要再按批次按鈕。"
+        )
 
-    st.markdown("#### 4. 流程設定（單筆編輯）")
-    st.markdown(
-        "以逐筆卡片的方式管理每一項工作流程，可對每一列任務進行：\n"
-        "- **顯示**：勾選才會計入排程；取消勾選可暫時停用某筆任務而不用刪除。\n"
-        "- **任務名稱 / Action By**：Action By 可選 Ad2、客戶，或 Ad2＋客戶（雙方共同執行）。\n"
-        "- **工作天數**：支援 0.5 天的半天單位；當天數包含半天時，會多出一個「半天標註」文字欄位"
-        "（例如 1300，代表下午 1 點的節點名稱），可自訂顯示文字。\n"
-        "- **上線日**：勾選代表這筆任務是最終上線／交付節點，全流程僅能勾選一筆，系統也會自動確保至少有一筆被標記為上線日。\n"
-        "- **排序（↑ / ↓）**：調整任務的先後順序。\n"
-        "- **複製（⧉）**：快速新增一筆與目前設定相同的任務。\n"
-        "- **刪除（✕）**：移除該筆任務。\n"
-        "- **新增任務**：在清單最後加入一筆全新的空白任務。"
-    )
+    with guide_tabs[3]:
+        st.markdown("#### 產出與下載")
+        st.markdown(
+            "設定完成後按「產出時程表」，畫面會出現「排程預覽」區塊，可直接檢視結果；"
+            "確認無誤後按「下載 Excel」即可取得可分享的時程表檔案。"
+        )
+        st.markdown(
+            "- 下載檔名格式為「月日_專案名稱.xlsx」，方便依日期排序管理。\n"
+            "- 若之後需要調整流程再重新產出，直接修改上方設定或流程後再按一次「產出時程表」即可，不需要重新整理頁面。"
+        )
 
-    st.markdown("#### 5. 批次輸入")
-    st.markdown(
-        "適合一次貼上多筆任務或套用範本：\n"
-        "- **格式**：每行一筆，用空白分隔「任務名稱 Action By 工作天數 [半天文字] [上線]」，"
-        "例如 `客戶確認 客戶 0.5天 1300` 或 `廣告上線 Ad2 1天 上線`。\n"
-        "- **--（分隔線）**：單獨一行輸入 `--`，會在上一筆任務下方加上一條粗分隔線，方便標示階段。\n"
-        "- **套用範本**：內建「一般製作時程」「網頁製作時程」兩種常用流程範本，選好後按「載入範本」即可帶入批次輸入框。\n"
-        "- **套用手動批次內容**：手動編輯批次文字後，需按此按鈕才會真正套用到流程設定。\n"
-        "- **匯入已產出的時程表**：可上傳本工具先前下載的 Excel 檔，自動回填任務名稱、Action By 與工作天數"
-        "（含手動改色的特殊色條天數），按「匯入時程表並套用到流程」即可完成匯入並直接套用，不需要再按批次按鈕。"
-    )
-
-    st.markdown("#### 小提醒")
-    st.markdown(
-        "- 三種排程方式切換時，會自動鎖定不需要手動輸入的日期欄位。\n"
-        "- 若流程中沒有任何一筆勾選「上線日」，系統會自動將最後一筆任務標記為上線日。\n"
-        "- 側邊欄的假日清單、批次輸入範本，都可以依專案需求自由修改保存於畫面中，但重新整理頁面或按「重設」後會回到預設值。"
-    )
+    with guide_tabs[4]:
+        st.markdown("#### 小提醒")
+        st.markdown(
+            "- 三種排程方式切換時，會自動鎖定不需要手動輸入的日期欄位。\n"
+            "- 若流程中沒有任何一筆勾選「上線日」，系統會自動將最後一筆任務標記為上線日。\n"
+            "- 側邊欄的假日清單、批次輸入範本，都可以依專案需求自由修改保存於畫面中，但重新整理頁面或按「重設」後會回到預設值。"
+        )
 
 # =========================
 # UI
