@@ -26,7 +26,6 @@
 ```text
 Automated-Timeline-Generator-main/
 ├── app.py                  # Streamlit 主程式
-├── app_glassmorphism.py    # 另一版視覺樣式程式
 ├── requirements.txt        # Python 套件需求
 └── README.md               # 專案說明文件
 ```
