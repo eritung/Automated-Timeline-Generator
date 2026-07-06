@@ -162,29 +162,29 @@ MONTH_COLORS = {
 def get_month_color(month):
     return MONTH_COLORS.get(int(month), '#E8DFD0')
 
-# UI colors — 依新版 DESIGN.md（Slacc 風格）：酒紅色主色 + 奶油／薰衣草底色，解決「太白」問題
-UI_PRIMARY = "#4A154B"           # Aubergine 酒紅色，唯一主色
-UI_PRIMARY_DEEP = "#481A54"
-UI_PRIMARY_PRESS = "#611F69"
-UI_PRIMARY_TINT = "#592466"
+# UI colors — 依訪談結果：活潑有品牌感（單一飽和主色：藍紫色 Indigo/Violet）
+# 中圓角（8-12px，卡片感）＋ 米灰底色（非死白）＋ 大色塊標頭
+UI_PRIMARY = "#5B3DF0"           # 主色：藍紫 Indigo/Violet，唯一飽和色，用於主按鈕／大色塊／標題／月份列
+UI_PRIMARY_DEEP = "#4527B8"      # 按下狀態、較深變化
+UI_PRIMARY_TINT = "#EDEAFE"      # 極淺主色調，用於次要按鈕、hover 底色
+UI_PRIMARY_TINT_STRONG = "#DCD5FC"
 UI_ON_PRIMARY = "#FFFFFF"
-UI_INK = "#1D1D1D"
-UI_INK_MUTE = "#696969"
-UI_LINK_BLUE = "#1264A3"
-UI_LINK_HOVER = "#3860BE"
-UI_CANVAS = "#FFFFFF"
-UI_CANVAS_CREAM = "#F4EDE4"      # 奶油底色，取代大面積純白
-UI_CANVAS_LAVENDER = "#F9F0FF"  # 薰衣草底色，次要按鈕／區塊底色
-UI_SURFACE_AUBERGINE = "#4A154B"
-UI_HAIRLINE = "#E6E6E6"
-UI_HAIRLINE_STRONG = "#000000"
-UI_SEMANTIC_ERROR = "#CC4117"
-UI_SEMANTIC_SUCCESS = "#007A5A"
-UI_ON_AUBERGINE_MUTE = "#D9BDDE"
+UI_INK = "#211D2E"               # 帶一點藍紫調的近黑色
+UI_INK_MUTE = "#6B667A"
+UI_LINK_BLUE = "#4C3FE0"
+UI_LINK_HOVER = "#3A2FB8"
+UI_CANVAS = "#FFFFFF"            # 卡片白
+UI_APP_BG = "#F5F3F0"            # 米灰底色，取代死白頁面背景
+UI_HAIRLINE = "#E4E1E8"
+UI_HAIRLINE_STRONG = "#211D2E"
+UI_SEMANTIC_ERROR = "#C0392B"
+UI_SEMANTIC_SUCCESS = "#1E9E6B"
 
 UI_MUTED = UI_INK_MUTE
-UI_SURFACE_SOFT = UI_CANVAS_LAVENDER
-UI_HAIRLINE_SOFT = "#EFE7F0"
+UI_SURFACE_SOFT = UI_PRIMARY_TINT
+UI_HAIRLINE_SOFT = "#ECE9EF"
+UI_CANVAS_CREAM = UI_APP_BG
+UI_CANVAS_LAVENDER = UI_PRIMARY_TINT
 
 # 向下相容：舊變數名稱，供時程表 Bar 顏色與既有邏輯使用（維持原本語意色，不隨主題改動）
 UI_BORDER = UI_HAIRLINE
@@ -196,15 +196,20 @@ UI_PREP = "#5EC4A0"           # 薄荷綠
 
 
 
+
+
+
+
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap');
 
 /* =========================================================
-   DESIGN.md 對應（Slacc 風格）：
-   酒紅色（Aubergine）主色 + 奶油／薰衣草底色 + 藍色連結
-   以奶油、薰衣草底色取代大面積純白，解決「介面太白」問題
+   依訪談結果的設計方向：
+   - 活潑有品牌感：單一飽和主色（藍紫 Indigo/Violet）＋ 大色塊標頭
+   - 按鈕：中圓角（10px 左右，卡片感）
+   - 背景：帶一點灰／米色調，不要死白
    ========================================================= */
 
 /* 全域基底 */
@@ -216,19 +221,19 @@ html, body, [data-testid="stAppViewContainer"],
   letter-spacing: 0 !important;
 }}
 
-/* 主畫布：奶油暖白，取代純白背景 */
+/* 主畫布：米灰底色，取代死白 */
 html, body,
 [data-testid="stAppViewContainer"],
 [data-testid="stAppViewBlock"],
 [data-testid="stMain"],
 [data-testid="stMainBlockContainer"] {{
-  background: {UI_CANVAS_CREAM} !important;
+  background: {UI_APP_BG} !important;
   color: {UI_INK} !important;
 }}
 
-/* Sidebar：薰衣草底色 */
+/* Sidebar：淺主色調，與整體主色呼應 */
 [data-testid="stSidebar"] {{
-  background: {UI_CANVAS_LAVENDER} !important;
+  background: {UI_PRIMARY_TINT} !important;
   border-right: 1px solid {UI_HAIRLINE} !important;
 }}
 [data-testid="stSidebar"] label,
@@ -244,6 +249,7 @@ html, body,
   font-size: 0.8rem !important;
   line-height: 1.5 !important;
   background: {UI_CANVAS} !important;
+  border-radius: 10px !important;
 }}
 [data-testid="stSidebar"] h3,
 [data-testid="stSidebar"] .stSubheader {{
@@ -267,9 +273,9 @@ button[aria-label="Close sidebar"] {{
   min-width: 2.35rem !important;
   min-height: 2.35rem !important;
   border: 1px solid {UI_HAIRLINE} !important;
-  border-radius: 999px !important;
+  border-radius: 10px !important;
   background: {UI_CANVAS} !important;
-  box-shadow: rgba(0,0,0,0.1) 0 5px 20px 0 !important;
+  box-shadow: 0 2px 8px rgba(91,61,240,0.12) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -281,7 +287,7 @@ button[title="Open sidebar"]:hover,
 button[title="Close sidebar"]:hover,
 button[aria-label="Open sidebar"]:hover,
 button[aria-label="Close sidebar"]:hover {{
-  background: {UI_CANVAS_LAVENDER} !important;
+  background: {UI_PRIMARY_TINT} !important;
   border-color: {UI_PRIMARY} !important;
 }}
 [data-testid="collapsedControl"] *,
@@ -343,7 +349,7 @@ svg, svg * {{
   padding-bottom: 4rem !important;
 }}
 
-/* 頁面標題：對應 typography.heading-lg，酒紅色 */
+/* 頁面標題：主色藍紫 */
 h1 {{
   font-size: 2rem !important;
   font-weight: 700 !important;
@@ -363,79 +369,96 @@ h1 {{
 .app-header-anchor {{ display: none; }}
 
 /* 主要按鈕（Streamlit type="primary"，用於「產出時程表」「下載 Excel」）
-   對應 components.button-primary-pill：酒紅色膠囊，90px 圓角 */
+   單一飽和主色：藍紫實色，中圓角 10px */
 div.stButton > button[kind="primary"],
 div.stDownloadButton > button[kind="primary"] {{
   background: {UI_PRIMARY} !important;
   border: none !important;
   color: {UI_ON_PRIMARY} !important;
-  border-radius: 90px !important;
-  font-weight: 700 !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
   font-size: 0.9rem !important;
-  letter-spacing: 0.02em !important;
-  line-height: 1.38 !important;
-  padding: 0.7rem 1.7rem !important;
+  letter-spacing: 0.01em !important;
+  line-height: 1.4 !important;
+  padding: 0.65rem 1.6rem !important;
   min-width: 5rem !important;
-  box-shadow: rgba(0,0,0,0.1) 0 5px 20px 0 !important;
+  box-shadow: 0 3px 12px rgba(91,61,240,0.28) !important;
   transition: all 0.15s !important;
 }}
 div.stButton > button[kind="primary"]:hover,
 div.stDownloadButton > button[kind="primary"]:hover {{
-  background: {UI_PRIMARY_PRESS} !important;
-  box-shadow: rgba(74,21,75,0.35) 0 6px 20px 0 !important;
+  background: {UI_PRIMARY_DEEP} !important;
+  box-shadow: 0 5px 16px rgba(91,61,240,0.38) !important;
   transform: translateY(-1px) !important;
 }}
 
-/* 次要按鈕：薰衣草底色膠囊，對應 components.button-secondary-pill */
+/* 次要按鈕：淺主色調底，中圓角，對應「卡片感」按鈕 */
 div.stButton > button:not([kind="primary"]) {{
-  border-radius: 90px !important;
+  border-radius: 10px !important;
   font-size: 0.86rem !important;
   letter-spacing: 0.01em !important;
-  line-height: 1.38 !important;
-  border: 1px solid transparent !important;
-  color: {UI_INK} !important;
-  background: {UI_CANVAS_LAVENDER} !important;
+  line-height: 1.4 !important;
+  border: 1px solid {UI_PRIMARY_TINT_STRONG} !important;
+  color: {UI_PRIMARY} !important;
+  background: {UI_PRIMARY_TINT} !important;
   box-shadow: none !important;
   transition: all 0.15s !important;
   min-width: 3.6rem !important;
   padding-left: 1rem !important;
   padding-right: 1rem !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }}
 div.stButton > button:not([kind="primary"]):hover {{
-  background: {UI_ON_AUBERGINE_MUTE} !important;
-  color: {UI_PRIMARY} !important;
-  border-color: {UI_PRIMARY_TINT} !important;
+  background: {UI_PRIMARY_TINT_STRONG} !important;
+  color: {UI_PRIMARY_DEEP} !important;
+  border-color: {UI_PRIMARY} !important;
 }}
 
-/* 小型圖示操作按鈕（↑ ↓ ⧉ ✕）：圓形 */
+/* 小型圖示操作按鈕（↑ ↓ ⧉ ✕） */
 .op-btn button {{
   font-size: 12px !important;
   padding: 0 !important;
   height: 2.1rem !important;
   min-height: 2.1rem !important;
-  border-radius: 999px !important;
+  border-radius: 8px !important;
 }}
 
-/* 區塊標題：badge eyebrow（micro-cap）＋ heading-sm ＋ body-md */
-.section-eyebrow {{
+/* 區塊標頭：大色塊（單一飽和主色實心），置於卡片最上緣、滿版寬度 */
+.section-band {{
+  background: {UI_PRIMARY};
+  color: {UI_ON_PRIMARY};
+  border-radius: 12px 12px 0 0;
+  padding: 20px 24px 18px;
+  margin: -1px -1px 18px -1px;
+}}
+.section-band .section-eyebrow {{
   font-family: 'Inter', 'Noto Sans TC', sans-serif;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: {UI_ON_PRIMARY};
-  background: {UI_PRIMARY};
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 90px;
-  margin-bottom: 12px;
-  margin-top: 2px;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.85);
+  display: block;
+  margin-bottom: 6px;
 }}
-.section-eyebrow--cobalt {{ background: {UI_LINK_BLUE}; }}
-.section-eyebrow--success {{ background: {UI_SEMANTIC_SUCCESS}; }}
-.section-eyebrow--cream {{ background: {UI_CANVAS_CREAM}; color: {UI_INK}; }}
+.section-band .section-title {{
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: {UI_ON_PRIMARY};
+  margin-bottom: 0.1rem;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}}
+.section-band .section-sub {{
+  color: rgba(255,255,255,0.82);
+  font-size: 0.86rem;
+  font-weight: 400;
+  margin-bottom: 0;
+  line-height: 1.6;
+  letter-spacing: 0;
+}}
 
+/* 舊版相容：若沒有色塊標頭，section-title/section-sub 單獨使用時仍可讀 */
 .section-title {{
   font-size: 1.2rem;
   font-weight: 700;
@@ -453,23 +476,22 @@ div.stButton > button:not([kind="primary"]):hover {{
   letter-spacing: 0;
 }}
 
-/* Card 容器：白底卡片，柔和陰影，圓角對應 rounded.xl (16px)，並保留上緣空間避免 eyebrow 被裁切 */
+/* Card 容器：白底卡片，中圓角 12px，柔和陰影 */
 [data-testid="stVerticalBlock"] > [data-testid="element-container"] > div[style*="border"] {{
-  border-radius: 16px !important;
+  border-radius: 12px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
-  box-shadow: rgba(0,0,0,0.08) 0 4px 18px 0 !important;
-  padding-top: 4px !important;
-  overflow: visible !important;
+  box-shadow: 0 4px 18px rgba(33,29,46,0.06) !important;
+  overflow: hidden !important;
 }}
 
 /* Timeline wrapper */
 .timeline-wrap {{
   overflow-x: auto;
   border: 1px solid {UI_HAIRLINE};
-  border-radius: 16px;
+  border-radius: 12px;
   background: {UI_CANVAS};
-  box-shadow: rgba(0,0,0,0.08) 0 4px 18px 0;
+  box-shadow: 0 4px 18px rgba(33,29,46,0.06);
   margin-top: 8px;
 }}
 
@@ -506,18 +528,18 @@ div.stButton > button:not([kind="primary"]):hover {{
   font-size: 10.5px;
   line-height: 1.2;
   color: {UI_INK_MUTE};
-  background: {UI_CANVAS_LAVENDER};
+  background: {UI_PRIMARY_TINT};
   font-weight: 400;
 }}
 .timeline-table .weekend-head {{
-  background: #EFE1F5 !important;
-  color: #A98FB0 !important;
+  background: {UI_PRIMARY_TINT_STRONG} !important;
+  color: #9C90C9 !important;
 }}
 .timeline-table .weekend-cell {{
-  background: #FBF6FE;
+  background: #F6F4FE;
 }}
 .timeline-table .holiday-merged {{
-  background: rgba(204,65,23,0.10);
+  background: rgba(192,57,43,0.10);
   color: {UI_SEMANTIC_ERROR};
   font-weight: 700;
   font-size: 10.5px;
@@ -557,14 +579,14 @@ tr:nth-child(2) .task-col,
 tr:nth-child(2) .owner-col,
 tr:nth-child(3) .task-col,
 tr:nth-child(3) .owner-col {{
-  background: {UI_CANVAS_LAVENDER};
+  background: {UI_PRIMARY_TINT};
 }}
 
 /* BREAK column */
 .timeline-table .break-cell {{
   width: 18px; min-width: 18px; max-width: 18px;
-  background: #EFE1F5;
-  color: #A98FB0;
+  background: {UI_PRIMARY_TINT_STRONG};
+  color: #9C90C9;
   font-weight: 500;
   font-size: 11px;
   writing-mode: vertical-rl;
@@ -619,7 +641,7 @@ tr:nth-child(3) .owner-col {{
 
 /* 斑馬條紋 */
 .task-row-plain     {{ background: transparent; }}
-.task-row-plain-alt {{ background: {UI_CANVAS_LAVENDER}; border-radius: 4px; }}
+.task-row-plain-alt {{ background: {UI_PRIMARY_TINT}; border-radius: 4px; }}
 
 /* 任務行分隔線 */
 .flow-row-sep {{
@@ -628,7 +650,7 @@ tr:nth-child(3) .owner-col {{
   margin: 0.2rem 0 0.35rem 0;
 }}
 
-/* Input：白底，hairline 邊框，focus 用酒紅色 */
+/* Input：白底，hairline 邊框，focus 用主色，中圓角 */
 [data-testid="stCheckbox"] {{
   margin-top: 0 !important;
   margin-bottom: 0 !important;
@@ -669,7 +691,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 }}
 [data-testid="stTextInput"] input,
 [data-testid="stNumberInput"] input {{
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
   font-size: 0.92rem !important;
@@ -682,14 +704,14 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 }}
 [data-testid="stTextInput"] input:focus,
 [data-testid="stNumberInput"] input:focus {{
-  border: 1px solid {UI_PRIMARY} !important;
-  box-shadow: rgb(97,31,105) 0 0 0 1px inset !important;
+  border-color: {UI_PRIMARY} !important;
+  box-shadow: 0 0 0 3px rgba(91,61,240,0.16) !important;
   background: {UI_CANVAS} !important;
 }}
 [data-testid="stSelectbox"] > div > div,
 [data-baseweb="select"] > div {{
   min-height: 2.6rem !important;
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
   box-shadow: none !important;
@@ -698,7 +720,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   margin: 0 !important;
 }}
 [data-testid="stDateInput"] input {{
-  border-radius: 4px !important;
+  border-radius: 8px !important;
   border: 1px solid {UI_HAIRLINE} !important;
   background: {UI_CANVAS} !important;
 }}
@@ -709,7 +731,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   margin-bottom: 0.2rem !important;
 }}
 
-/* 連結：藍色，對應 colors.link-blue */
+/* 連結 */
 [data-testid="stMarkdownContainer"] a {{
   color: {UI_LINK_BLUE} !important;
 }}
@@ -723,20 +745,19 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 
 /* 訊息提示 */
 [data-testid="stAlert"] {{
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   border-left-width: 3px !important;
   background: {UI_CANVAS} !important;
   border: 1px solid {UI_HAIRLINE} !important;
   font-size: 0.85rem !important;
   font-weight: 400 !important;
   letter-spacing: 0 !important;
-  box-shadow: rgba(0,0,0,0.06) 0 2px 10px 0 !important;
+  box-shadow: 0 2px 10px rgba(33,29,46,0.05) !important;
 }}
 
 /* =========================================================
-   Tabs：修正「頁籤設計很怪」的問題
-   1) 隱藏 BaseWeb 預設的紅色底線／滑動指示條與整條灰色分隔線
-   2) 改為乾淨的膠囊分頁：未選中＝白底＋hairline 邊框；選中＝酒紅底＋白字
+   Tabs：修正底層紅色指示條的問題，改為中圓角分段式控制項
+   未選中＝淺主色調底；選中＝主色實心＋白字
    ========================================================= */
 [data-baseweb="tab-highlight"] {{
   display: none !important;
@@ -747,27 +768,27 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 [data-testid="stTabs"] [role="tablist"] {{
   border-bottom: none !important;
   background: transparent !important;
-  gap: 8px !important;
+  gap: 6px !important;
   margin-bottom: 4px !important;
 }}
 [data-testid="stTabs"] [data-baseweb="tab-list"] {{
   border-bottom: none !important;
-  gap: 8px !important;
+  gap: 6px !important;
 }}
 [data-testid="stTabs"] [role="tab"] {{
-  background: {UI_CANVAS} !important;
-  border: 1px solid {UI_HAIRLINE} !important;
-  border-radius: 90px !important;
-  color: {UI_INK} !important;
+  background: {UI_PRIMARY_TINT} !important;
+  border: 1px solid transparent !important;
+  border-radius: 10px !important;
+  color: {UI_PRIMARY} !important;
   font-size: 0.86rem !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   letter-spacing: 0.01em !important;
-  padding: 0.55rem 1.3rem !important;
+  padding: 0.55rem 1.2rem !important;
   box-shadow: none !important;
 }}
 [data-testid="stTabs"] [role="tab"]:hover {{
-  background: {UI_CANVAS_LAVENDER} !important;
-  color: {UI_PRIMARY} !important;
+  background: {UI_PRIMARY_TINT_STRONG} !important;
+  color: {UI_PRIMARY_DEEP} !important;
 }}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
   background: {UI_PRIMARY} !important;
@@ -775,7 +796,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   color: {UI_ON_PRIMARY} !important;
 }}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover {{
-  background: {UI_PRIMARY_PRESS} !important;
+  background: {UI_PRIMARY_DEEP} !important;
   color: {UI_ON_PRIMARY} !important;
 }}
 [data-testid="stTabContent"] {{
@@ -783,7 +804,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   padding-top: 1rem !important;
 }}
 
-/* 使用說明對話框內容排版：對話框內也採用分頁瀏覽 */
+/* 使用說明對話框 */
 [data-testid="stDialog"] {{
   background: {UI_CANVAS} !important;
 }}
@@ -805,6 +826,7 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 
@@ -2117,9 +2139,11 @@ with st.container(border=True):
     c1, c2 = st.columns([6,0.65], vertical_alignment="center")
     with c1:
         st.markdown(
+            '<div class="section-band">'
             '<span class="section-eyebrow">STEP 01 · SETUP</span>'
             '<div class="section-title">專案設定</div>'
-            '<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>',
+            '<div class="section-sub">先決定排程方式與日期，再按下「產出時程表」。</div>'
+            '</div>',
             unsafe_allow_html=True,
         )
     with c2:
@@ -2167,8 +2191,10 @@ if st.session_state.schedule_df is not None:
         p1, p2 = st.columns([5.4,1.05], vertical_alignment="center")
         with p1:
             st.markdown(
-                '<span class="section-eyebrow section-eyebrow--success">STEP 03 · PREVIEW</span>'
-                '<div class="section-title">排程預覽</div>',
+                '<div class="section-band">'
+                '<span class="section-eyebrow">STEP 03 · PREVIEW</span>'
+                '<div class="section-title">排程預覽</div>'
+                '</div>',
                 unsafe_allow_html=True,
             )
         with p2:
@@ -2199,9 +2225,11 @@ with manual_tab:
         h1, h2 = st.columns([5,1.05], vertical_alignment="center")
         with h1:
             st.markdown(
-                '<span class="section-eyebrow section-eyebrow--cobalt">STEP 02 · TASKS</span>'
+                '<div class="section-band">'
+                '<span class="section-eyebrow">STEP 02 · TASKS</span>'
                 '<div class="section-title">流程設定</div>'
-                '<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>',
+                '<div class="section-sub">可新增、複製、刪除、排序與修改任務。</div>'
+                '</div>',
                 unsafe_allow_html=True,
             )
         with h2:
@@ -2309,10 +2337,12 @@ with manual_tab:
 with batch_tab:
     with st.container(border=True):
         st.markdown(
-            '<span class="section-eyebrow section-eyebrow--cobalt">STEP 02 · TASKS (BATCH)</span>'
+            '<div class="section-band">'
+            '<span class="section-eyebrow">STEP 02 · TASKS (BATCH)</span>'
             '<div class="section-title">多時程項目批次輸入</div>'
             '<div class="section-sub">每行一筆任務，使用空白區隔資訊。格式：任務名稱 ActionBy 工作天數 [0.5文字] [上線]；'
-            '工作天數支援 0.5天／半天，例如「客戶確認 客戶 0.5天 1300」。若輸入單獨一行 --，會在上一筆任務下方加入粗分隔線。</div>',
+            '工作天數支援 0.5天／半天，例如「客戶確認 客戶 0.5天 1300」。若輸入單獨一行 --，會在上一筆任務下方加入粗分隔線。</div>'
+            '</div>',
             unsafe_allow_html=True,
         )
 
