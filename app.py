@@ -835,28 +835,27 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   padding-top: 1rem !important;
 }}
 
-/* 使用說明對話框：外層遮罩改為霧化模糊（可看到底下網頁內容），不再整片變成不透明白色 */
-[data-testid="stDialog"] {{
-  background: rgba(43,38,32,0.38) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
-}}
+/* 使用說明對話框：只針對瀏覽器原生 ::backdrop 遮罩加上霧化模糊，
+   不直接改動對話框本體的 background／backdrop-filter，避免影響其版面定位 */
 [data-testid="stDialog"]::backdrop {{
   background: rgba(43,38,32,0.38) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
 }}
-/* 對話框本體（實際卡片）維持不透明白底，確保文字清楚可讀 */
-[data-testid="stDialog"] > div {{
-  background: {UI_CANVAS} !important;
-  border-radius: 14px !important;
-  box-shadow: 0 12px 40px rgba(43,38,32,0.28) !important;
+[data-testid="stDialog"] {{
+  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
 }}
+/* 對話框標題（含 Streamlit 內建的彈窗標題列，不一定是 h1~h4 標籤，故加上多個保險選擇器） */
 [data-testid="stDialog"] h1,
 [data-testid="stDialog"] h2,
 [data-testid="stDialog"] h3,
-[data-testid="stDialog"] h4 {{
+[data-testid="stDialog"] h4,
+[data-testid="stDialogHeader"],
+[data-testid="stDialogHeader"] *,
+[data-testid="stDialogTitle"],
+[aria-modal="true"] h1,
+[aria-modal="true"] h2,
+[aria-modal="true"] h3 {{
   font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
   font-weight: 600 !important;
   color: {UI_PRIMARY} !important;
