@@ -354,8 +354,10 @@ svg, svg * {{
   padding-bottom: 4rem !important;
 }}
 
-/* 頁面標題：襯線字，呼應參考畫面「HTML Email 產生器」標題風格 */
-h1 {{
+/* 頁面標題：襯線字（思源宋體／Noto Serif TC，兩者為同一套字型的不同稱呼），呼應編輯感標題
+   注意：選擇器需要比全域字體規則更高的優先度，否則會被蓋掉，因此加上容器前綴 */
+h1,
+[data-testid="stAppViewContainer"] h1 {{
   font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   font-size: 2rem !important;
   font-weight: 600 !important;
@@ -366,6 +368,7 @@ h1 {{
 }}
 [data-testid="stCaptionContainer"] p {{
   font-size: 0.92rem !important;
+
   color: {UI_INK_MUTE} !important;
   letter-spacing: 0 !important;
   line-height: 1.6 !important;
@@ -445,8 +448,9 @@ div.stButton > button:not([kind="primary"]):hover {{
   border-radius: 6px;
   margin-bottom: 12px;
 }}
-.section-title {{
-  font-family: 'Noto Serif TC', 'Noto Sans TC', serif;
+.section-title,
+[data-testid="stAppViewContainer"] .section-title {{
+  font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
   font-size: 1.3rem;
   font-weight: 600;
   color: {UI_INK};
@@ -524,13 +528,13 @@ div.stButton > button:not([kind="primary"]):hover {{
   height: 33px;
 }}
 
-/* 月份 header */
+/* 月份 header：月份色塊為淺色系（依月份主題色），故文字改用深色以確保可讀性 */
 .timeline-table .month-row th {{
   height: 25px;
-  background: {UI_PRIMARY};
-  font-weight: 600;
+  background: {UI_TAN_LIGHT};
+  font-weight: 700;
   font-size: 10.5px;
-  color: {UI_ON_PRIMARY};
+  color: {UI_INK} !important;
   letter-spacing: 2px;
   text-transform: uppercase;
 }}
@@ -585,14 +589,11 @@ div.stButton > button:not([kind="primary"]):hover {{
   font-weight: 400;
 }}
 
-/* Sticky header cells */
+/* Sticky header cells：任務名稱／Action By 表頭已合併為單一跨列儲存格 */
 .timeline-table .month-row .task-col,
-.timeline-table .month-row .owner-col,
-tr:nth-child(2) .task-col,
-tr:nth-child(2) .owner-col,
-tr:nth-child(3) .task-col,
-tr:nth-child(3) .owner-col {{
+.timeline-table .month-row .owner-col {{
   background: {UI_TAN_LIGHT};
+  vertical-align: middle;
 }}
 
 /* BREAK column */
@@ -837,12 +838,18 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
 /* 使用說明對話框 */
 [data-testid="stDialog"] {{
   background: {UI_CANVAS} !important;
+  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
 }}
+[data-testid="stDialog"] h1,
+[data-testid="stDialog"] h2,
+[data-testid="stDialog"] h3,
 [data-testid="stDialog"] h4 {{
   font-family: 'Noto Serif TC', 'Noto Sans TC', serif !important;
-  font-size: 1.02rem !important;
   font-weight: 600 !important;
   color: {UI_PRIMARY} !important;
+}}
+[data-testid="stDialog"] h4 {{
+  font-size: 1.02rem !important;
   margin-top: 0.6rem !important;
   margin-bottom: 0.3rem !important;
 }}
@@ -973,7 +980,8 @@ def get_active_tasks():
             raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需至少 0.5 天。")
         if abs(days * 2 - round(days * 2)) > 1e-9:
             raise ValueError(f"任務「{row.get('任務名稱','未命名')}」的工作天數需以 0.5 天為單位。")
-        half_label = str(row.get("半天標註", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL).strip() or DEFAULT_HALF_DAY_LABEL
+        half_label_raw = row.get("半天標註", None)
+        half_label = DEFAULT_HALF_DAY_LABEL if half_label_raw is None else str(half_label_raw).strip()
         tasks.append({
             "task": str(row.get("任務名稱", "")).strip(),
             "owner": str(row.get("Action By", "Ad2")).strip() or "Ad2",
@@ -1372,7 +1380,9 @@ def build_excel_bytes(df_schedule, holidays_config, holidays_dt, launch_date_obj
             d_date = col_item.date()
             if item["Start Date"] <= d_date <= item["End Date"]:
                 if item["Type"] in ["Launch", "Prep"] or is_workday(d_date):
-                    worksheet.write(row, col, str(item.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL) if (abs(float(item.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d_date == item["End Date"]) else "", bar_fmt)
+                    _half_label_raw = item.get("Half Day Label", None)
+                    _half_label_val = DEFAULT_HALF_DAY_LABEL if _half_label_raw is None else str(_half_label_raw)
+                    worksheet.write(row, col, _half_label_val if (abs(float(item.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d_date == item["End Date"]) else "", bar_fmt)
                 else:
                     worksheet.write(row, col, "", fmt_weekend)
             else:
@@ -1483,12 +1493,12 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_co
     rows = []
     rows.append(
         "<tr class='month-row'>"
-        "<th class='task-col'>任務名稱</th>"
-        "<th class='owner-col'>Action By</th>"
+        "<th class='task-col' rowspan='3'>任務名稱</th>"
+        "<th class='owner-col' rowspan='3'>Action By</th>"
         + "".join(month_cells) + "</tr>"
     )
-    rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(date_cells) + "</tr>")
-    rows.append("<tr><th class='task-col'></th><th class='owner-col'></th>" + "".join(weekday_cells) + "</tr>")
+    rows.append("<tr>" + "".join(date_cells) + "</tr>")
+    rows.append("<tr>" + "".join(weekday_cells) + "</tr>")
 
     # 預覽用的國定假日合併標示：
     # - 一般國定假日：整欄任務列合併顯示節日名稱。
@@ -1555,7 +1565,8 @@ def render_stable_preview(df_schedule, display_columns, holidays_dt, holidays_co
                         cls = "bar-client"
                     else:
                         cls = "bar-ad2"
-                    half_label = html.escape(str(row.get("Half Day Label", DEFAULT_HALF_DAY_LABEL) or DEFAULT_HALF_DAY_LABEL))
+                    half_label_raw = row.get("Half Day Label", None)
+                    half_label = html.escape(DEFAULT_HALF_DAY_LABEL if half_label_raw is None else str(half_label_raw))
                     cells.append(f'<td class="{cls}">{half_label if (abs(float(row.get("Duration Days") or 0) % 1 - 0.5) < 1e-9 and d == row["End Date"]) else ""}</td>')
                 else:
                     cells.append(f'<td class="{base_cls}"></td>')
@@ -2113,7 +2124,7 @@ def show_usage_guide():
             "- **顯示**：勾選才會計入排程；取消勾選可暫時停用某筆任務而不用刪除。\n"
             "- **任務名稱 / Action By**：Action By 可選 Ad2、客戶，或 Ad2＋客戶（雙方共同執行）。\n"
             "- **工作天數**：支援 0.5 天的半天單位；當天數包含半天時，會多出一個「半天標註」文字欄位"
-            "（例如 1300，代表下午 1 點的節點名稱），可自訂顯示文字。\n"
+            "（例如 1300，代表下午 1 點的節點名稱），可自訂顯示文字；把文字清空即代表該半天格不顯示任何文字。\n"
             "- **上線日**：勾選代表這筆任務是最終上線／交付節點，全流程僅能勾選一筆，系統也會自動確保至少有一筆被標記為上線日。\n"
             "- **排序（↑ / ↓）**：調整任務的先後順序。\n"
             "- **複製（⧉）**：快速新增一筆與目前設定相同的任務。\n"
@@ -2330,7 +2341,7 @@ with manual_tab:
                         st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=days_key, label_visibility="collapsed",
                                         on_change=sync_task_field, args=(rid, "工作天數", days_key))
                     with dc2:
-                        st.text_input("0.5文字", key=half_key, label_visibility="collapsed", placeholder="1300",
+                        st.text_input("0.5文字", key=half_key, label_visibility="collapsed", placeholder="留空＝不顯示文字",
                                       on_change=sync_task_field, args=(rid, "半天標註", half_key))
                 else:
                     st.number_input("工作天數", min_value=0.5, step=0.5, format="%.1f", key=days_key, label_visibility="collapsed",
