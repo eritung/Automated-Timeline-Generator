@@ -807,13 +807,26 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   background: {UI_TAN_LIGHTER} !important;
   color: {UI_PRIMARY} !important;
 }}
+[data-testid="stTabs"] [role="tab"] p {{
+  color: inherit !important;
+}}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {{
   background: {UI_PRIMARY} !important;
   border-color: {UI_PRIMARY} !important;
   color: {UI_ON_PRIMARY} !important;
 }}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] p,
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] div,
+[data-testid="stTabs"] [role="tab"][aria-selected="true"] span {{
+  color: {UI_ON_PRIMARY} !important;
+}}
 [data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover {{
   background: {UI_PRIMARY_DEEP} !important;
+  color: {UI_ON_PRIMARY} !important;
+}}
+[data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover p,
+[data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover div,
+[data-testid="stTabs"] [role="tab"][aria-selected="true"]:hover span {{
   color: {UI_ON_PRIMARY} !important;
 }}
 [data-testid="stTabContent"] {{
