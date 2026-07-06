@@ -8,7 +8,6 @@ from copy import copy
 
 import pandas as pd
 import streamlit as st
-from streamlit_sortables import sort_items
 from openpyxl import load_workbook
 from openpyxl.styles import Side
 from openpyxl.cell.cell import MergedCell
@@ -836,27 +835,28 @@ div[data-testid="stVerticalBlock"]:has(.generate-action-anchor) div.stButton {{
   padding-top: 1rem !important;
 }}
 
-/* 使用說明對話框：只針對瀏覽器原生 ::backdrop 遮罩加上霧化模糊，
-   不直接改動對話框本體的 background／backdrop-filter，避免影響其版面定位 */
+/* 使用說明對話框：外層遮罩改為霧化模糊（可看到底下網頁內容），不再整片變成不透明白色 */
+[data-testid="stDialog"] {{
+  background: rgba(43,38,32,0.38) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
+}}
 [data-testid="stDialog"]::backdrop {{
   background: rgba(43,38,32,0.38) !important;
   backdrop-filter: blur(10px) !important;
   -webkit-backdrop-filter: blur(10px) !important;
 }}
-[data-testid="stDialog"] {{
-  font-family: 'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', Arial, sans-serif !important;
+/* 對話框本體（實際卡片）維持不透明白底，確保文字清楚可讀 */
+[data-testid="stDialog"] > div {{
+  background: {UI_CANVAS} !important;
+  border-radius: 14px !important;
+  box-shadow: 0 12px 40px rgba(43,38,32,0.28) !important;
 }}
-/* 對話框標題（含 Streamlit 內建的彈窗標題列，不一定是 h1~h4 標籤，故加上多個保險選擇器） */
 [data-testid="stDialog"] h1,
 [data-testid="stDialog"] h2,
 [data-testid="stDialog"] h3,
-[data-testid="stDialog"] h4,
-[data-testid="stDialogHeader"],
-[data-testid="stDialogHeader"] *,
-[data-testid="stDialogTitle"],
-[aria-modal="true"] h1,
-[aria-modal="true"] h2,
-[aria-modal="true"] h3 {{
+[data-testid="stDialog"] h4 {{
   font-family: 'Noto Serif TC', 'Songti TC', 'PMingLiU', 'SimSun', serif !important;
   font-weight: 600 !important;
   color: {UI_PRIMARY} !important;
@@ -1660,12 +1660,13 @@ def add_task():
         "粗下框線": False,
     })
 
-def reorder_tasks(new_order_indices):
-    """依拖曳排序後的原始索引順序，重新排列 st.session_state.tasks。"""
-    tasks = st.session_state.tasks
-    if sorted(new_order_indices) != list(range(len(tasks))):
-        return
-    st.session_state.tasks = [tasks[i] for i in new_order_indices]
+def move_task_up(idx: int):
+    if 0 < idx < len(st.session_state.tasks):
+        st.session_state.tasks[idx - 1], st.session_state.tasks[idx] = st.session_state.tasks[idx], st.session_state.tasks[idx - 1]
+
+def move_task_down(idx: int):
+    if 0 <= idx < len(st.session_state.tasks) - 1:
+        st.session_state.tasks[idx + 1], st.session_state.tasks[idx] = st.session_state.tasks[idx], st.session_state.tasks[idx + 1]
 
 def remove_task(idx: int):
     if 0 <= idx < len(st.session_state.tasks):
@@ -2138,7 +2139,7 @@ def show_usage_guide():
             "- **工作天數**：支援 0.5 天的半天單位；當天數包含半天時，會多出一個「半天標註」文字欄位"
             "（例如 1300，代表下午 1 點的節點名稱），可自訂顯示文字；把文字清空即代表該半天格不顯示任何文字。\n"
             "- **上線日**：勾選代表這筆任務是最終上線／交付節點，全流程僅能勾選一筆，系統也會自動確保至少有一筆被標記為上線日。\n"
-            "- **排序（拖曳）**：在清單上方的「拖曳排序」區塊按住任務名稱上下拖動，即可調整任務先後順序。\n"
+            "- **排序（↑ / ↓）**：調整任務的先後順序。\n"
             "- **複製（⧉）**：快速新增一筆與目前設定相同的任務。\n"
             "- **刪除（✕）**：移除該筆任務。\n"
             "- **新增任務**：在清單最後加入一筆全新的空白任務。"
@@ -2293,48 +2294,18 @@ with manual_tab:
         with h2:
             st.button("新增任務", on_click=add_task, use_container_width=True)
 
-        drag_labels = [f"{i+1}. {(row.get('任務名稱') or '').strip() or '（未命名任務）'}" for i, row in enumerate(st.session_state.tasks)]
-        st.markdown('<div class="task-head-label" style="margin-bottom:4px;">拖曳排序</div>', unsafe_allow_html=True)
-        sorted_labels = sort_items(
-            drag_labels,
-            direction="vertical",
-            key="task_drag_sort",
-            custom_style=f"""
-            .sortable-component {{ background: transparent; padding: 0; }}
-            .sortable-container {{ background: transparent; }}
-            .sortable-item {{
-                background: {UI_TAN_LIGHT};
-                border: 1px solid {UI_HAIRLINE};
-                border-radius: 8px;
-                padding: 8px 14px;
-                margin-bottom: 6px;
-                color: {UI_INK};
-                font-size: 0.86rem;
-                cursor: grab;
-            }}
-            """,
-        )
-        if sorted_labels != drag_labels:
-            try:
-                new_order_indices = [int(lbl.split(". ", 1)[0]) - 1 for lbl in sorted_labels]
-                reorder_tasks(new_order_indices)
-                st.rerun()
-            except (ValueError, IndexError):
-                pass
-
-        st.markdown('<div class="small-gap"></div>', unsafe_allow_html=True)
-
-        hc1, hc2, hc3, hc4, hc5, hc6, hc7 = st.columns([0.55, 3.4, 1.15, 1.85, 0.68, 0.55, 0.55], vertical_alignment="center")
+        hc1, hc2, hc3, hc4, hc5, hc6, hc7, hc8 = st.columns([0.55, 2.85, 1.15, 1.85, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
         headers = [
             (hc1, "顯示"),
             (hc2, "任務名稱"),
             (hc3, "Action By"),
             (hc4, "工作天數"),
             (hc5, "上線日"),
-            (hc6, "複製"),
-            (hc7, "刪除"),
+            (hc6, "排序"),
+            (hc7, "複製"),
+            (hc8, "刪除"),
         ]
-        centered_headers = {"顯示", "工作天數", "上線日", "複製", "刪除"}
+        centered_headers = {"顯示", "工作天數", "上線日", "排序", "複製", "刪除"}
         for col, label in headers:
             with col:
                 cls = "task-head-label task-head-center" if label in centered_headers else "task-head-label"
@@ -2342,7 +2313,7 @@ with manual_tab:
 
         for idx, row in enumerate(st.session_state.tasks):
             rid = row["id"]
-            c1, c2, c3, c4, c5, c6, c7 = st.columns([0.55, 3.4, 1.15, 1.85, 0.68, 0.55, 0.55], vertical_alignment="center")
+            c1, c2, c3, c4, c5, c6, c7, c8 = st.columns([0.55, 2.85, 1.15, 1.85, 0.68, 1.05, 0.55, 0.55], vertical_alignment="center")
 
             with c1:
                 key = f"show_{rid}"
@@ -2399,11 +2370,22 @@ with manual_tab:
                                 on_change=sync_task_field, args=(rid, "上線日", key))
 
             with c6:
+                s1, s2 = st.columns([1, 1], vertical_alignment="center")
+                with s1:
+                    if st.button("↑", key=f"up_{rid}", use_container_width=True, disabled=(idx == 0)):
+                        move_task_up(idx)
+                        st.rerun()
+                with s2:
+                    if st.button("↓", key=f"down_{rid}", use_container_width=True, disabled=(idx == len(st.session_state.tasks) - 1)):
+                        move_task_down(idx)
+                        st.rerun()
+
+            with c7:
                 if st.button("⧉", key=f"copy_{rid}", use_container_width=True):
                     copy_task(idx)
                     st.rerun()
 
-            with c7:
+            with c8:
                 if st.button("✕", key=f"del_{rid}", use_container_width=True):
                     remove_task(idx)
                     st.rerun()
